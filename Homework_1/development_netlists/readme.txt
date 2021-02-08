@@ -1,0 +1,30 @@
+Benchmark Information
+
+********************************************************************
+
+I. BM NEAR-OPTIMAL CUTSET DETAILS
+
+ -----------------------------------------
+|   Filename	| Near-Optimal cutset cost|
+ -----------------------------------------
+|	B2	| 	   1 	 	  |
+ -----------------------------------------
+|	B4	|	   3		  |
+ -----------------------------------------
+|	B6	|	   6		  |
+ -----------------------------------------
+|	B11	|	   25		  |
+ -----------------------------------------
+|	B12	|	   35		  |
+ -----------------------------------------
+|	B16	|	   150		  |
+ -----------------------------------------
+
+II. FAQs
+
+1) Will the number of cells be even in evaluation benchmarks?
+	yes.
+2) Can benchmarks have standalone cells?
+	yes.
+3) Can there be parallel edges between two nodes?
+	yes.
