@@ -14,6 +14,9 @@
 #include <vector>
 #include <chrono>
 #include <random>
+#include <climits>
+#include <cstring> //c strings should be replaced with std::string
+
 
 #define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
 
@@ -60,7 +63,7 @@ int LoadFile(const char* szFilename, int iLength) {
 
         //update the cellsize and netsize
         if (getline(myfile, szline)) {
-            if (empty(szline)) return -1;
+            if (szline.empty()) return -1;
             stream.clear();
             stream << szline;
             stream >> iCellSize;
@@ -68,7 +71,7 @@ int LoadFile(const char* szFilename, int iLength) {
         }
 
         if (getline(myfile, szline)) {
-            if (empty(szline)) return -1;
+            if (szline.empty()) return -1;
             stream.clear();
             stream << szline;
             stream >> iNetSize;
@@ -92,7 +95,7 @@ int LoadFile(const char* szFilename, int iLength) {
         int j;
         for (j = 0; j < iNetSize && getline(myfile, szline, '\n'); j++) {
             int a = 0, b = 0;
-            if (empty(szline)) break;
+            if (szline.empty()) break;
 
             stream.clear();
             stream << szline;
@@ -302,6 +305,7 @@ int KLAlgorithm(){
 }
 
 // premade file names, assumes there is a folder with the name dev_net in the same location as the .exe
+// Should this be a vector of strings? Best to stay with C++ data types than revert to arrays of char*
 const char* szfilename[] = {"development_netlists/bench_2.net",
                             "development_netlists/bench_4.net",
                             "development_netlists/bench_6.net",
