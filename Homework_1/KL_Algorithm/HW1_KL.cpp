@@ -79,7 +79,9 @@ int LoadFile(const char* szFilename, int iLength) {
         }
 
         printf("cellsize is: %d\n", iCellSize);
+	    fflush(stdout);
         printf("netsize is: %d\n", iNetSize);
+        fflush(stdout);
 
         //resize the column vectors to fit all the numbers in a column
         if (iCellSize > 0 && iNetSize > 0) {
@@ -286,11 +288,13 @@ int KLAlgorithm(){
                 external++;
     }
     printf("\nCutset size is: %d", external/2); //divide external wires by 2 since they are counted twice
-
+    fflush(stdout);
     printf("\nGroup A is: ");
+    fflush(stdout);
     for (int i = 0; i < iCellSize; i++) {
         if (vGroup[i] == 0) {
             printf("%d ", i+1);
+            fflush(stdout);
         }
     }
     
@@ -298,6 +302,7 @@ int KLAlgorithm(){
     for (int i = 0; i < iCellSize; i++) {
         if (vGroup[i] == 1) {
             printf("%d ", i+1);
+            fflush(stdout);
         }
     }
 
@@ -328,9 +333,12 @@ int UserInput() {
     if (iReturnVal == 1) {
         for (int j = 0; j < ArrayLength; j++) {
             printf("Type %d to use %s\n", j, szfilename[j]);
+            fflush(stdout);
         }
         printf("Type here: ");
+        fflush(stdout);
         cin >> i;
+        fflush(stdout);
     }
 
     return i;
@@ -362,7 +370,7 @@ int main() {
     const int ArrayLength = ARRAY_LEN(szfilename);
     int iReturnVal = 1;
 
-    ios::sync_with_stdio(false); //This may speed up reading file functions
+    //ios::sync_with_stdio(false); //This may speed up reading file functions
 
     while (iReturnVal > 0) {
         int i = UserInput();                                //Get the user input
@@ -377,24 +385,31 @@ int main() {
         iReturnVal = LoadFile(szfilename[i], iFileLength);  //First step is to load the file
         if (iReturnVal < 0) return -1;
 
+        auto end = chrono::steady_clock::now();
+        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
+
         iReturnVal = SetupNetlist();                        //Then setup the netlist
         if (iReturnVal < 0) return -1;
+
+        end = chrono::steady_clock::now();
+        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
 
         iReturnVal = KLAlgorithm();                         //Then implement the KL algorithm
         if (iReturnVal < 0) return -1;
 
         printf("\nEnd of Program\n");
+        fflush(stdout);
         fflush(stdout); //printf might not work right on linux :p
 
-        auto end = chrono::steady_clock::now();
-        cout << "Elapsed time in milliseconds : "
-            << chrono::duration_cast<chrono::milliseconds>(end - start).count()
-            << " ms" << '\n';
-
+        end = chrono::steady_clock::now();
+        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
+        fflush(stdout);
         CleanUp(); //terminal uses memory, dunno how to clear
 
         printf("\nWould you like to repeat? Type 0 for no: ");
+        fflush(stdout);
         cin >> iReturnVal;
+        fflush(stdout);
     }
 
     CleanUp();
