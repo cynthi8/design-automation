@@ -366,24 +366,34 @@ int CleanUp() {
 }
 
 // entry point for code
-int main() {
+int main(int argc, char* argv[]) {
     const int ArrayLength = ARRAY_LEN(szfilename);
     int iReturnVal = 1;
-
+    char* szfilenameUse;
     //ios::sync_with_stdio(false); //This may speed up reading file functions
 
-    while (iReturnVal > 0) {
-        int i = UserInput();                                //Get the user input
+    do {
+        if(argc == 1){
+            int i = UserInput();                                //Get the user input
+            if (i < 0 || i > ArrayLength) i = 1;
+            szfilenameUse = (char*)szfilename[i];
+        }
+        else if (argc == 2) {
+           szfilenameUse = argv[1];
+        }
+        else {
+            return -1;
+        }
 
-        if (i < 0 || i > ArrayLength) i = 1;
-        int iFileLength = strlen(szfilename[i]);
-
-        cout << "Using bench: " << szfilename[i] << '\n';
-
+        int iFileLength = strlen(szfilenameUse);
         auto start = chrono::steady_clock::now();
 
-        iReturnVal = LoadFile(szfilename[i], iFileLength);  //First step is to load the file
-        if (iReturnVal < 0) return -1;
+        cout << "Using bench: " << szfilenameUse << '\n';
+        iReturnVal = LoadFile(szfilenameUse, iFileLength);  //First step is to load the file
+        if (iReturnVal < 0) {
+            printf("\nError: File is not able to be opened");
+            return iReturnVal;
+        }
 
         auto end = chrono::steady_clock::now();
         cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
@@ -398,19 +408,24 @@ int main() {
         if (iReturnVal < 0) return -1;
 
         printf("\nEnd of Program\n");
-        fflush(stdout);
         fflush(stdout); //printf might not work right on linux :p
 
         end = chrono::steady_clock::now();
         cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
         fflush(stdout);
         CleanUp(); //terminal uses memory, dunno how to clear
-
-        printf("\nWould you like to repeat? Type 0 for no: ");
+        
+        if (argc == 1) {
+            printf("\nWould you like to repeat? Type 0 for no: ");
+        }
+        else {
+            printf("\nType anything and Press enter to close the program: ");
+        }
+        
         fflush(stdout);
         cin >> iReturnVal;
         fflush(stdout);
-    }
+    } while (iReturnVal > 0 && argc == 1);
 
     CleanUp();
     return 0;
