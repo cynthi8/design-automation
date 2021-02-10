@@ -20,6 +20,7 @@
 //#include <cstring> //c strings should be replaced with std::string
 
 #define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
+#include <limits>
 
 using namespace std;
 
@@ -232,13 +233,27 @@ bool sortcol(const vector<int>& v1,
 
 // hard end stuff I suppose
 int BestSwap(int iteration) {
-    int iGainTempMax = INT_MIN;
+    //int iGainTempMax = INT_MIN;
     int iBestX = -1, iBestY = -1;
     int itestX = -1, itestY = -1;
     int i = 0;
     //auto firstzero = find(std::execution::par_unseq, test.begin(), test.end(), 0);
     //int index = firstzero - test.begin();
     static int indexi = 0;
+    int iGainTempMax = numeric_limits<int>::min();
+    int iBestX = -1;
+    int iBestY = -1;
+
+    // I think this could possibly be multithreaded
+    // go thru all cells
+    vector<int> values(vD.size());
+    iota(values.begin(), values.end(), 0);
+
+    vector<vector<int>> sortedvD(vD.size(), vector<int>(2));// = { vD, values };
+    for (size_t i = 0; i < sortedvD.size(); i++) {
+        sortedvD[i][0] = vD[i];
+        sortedvD[i][1] = values[i];
+    }
 
     for (int ia = indexi; ia < iCellSize; ia++) {
         if (vLocked[sortedvD[ia][1]]) //if the cell is locked, then skip
