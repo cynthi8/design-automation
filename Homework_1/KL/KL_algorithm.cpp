@@ -15,10 +15,7 @@
 #include <chrono>
 #include <random>
 #include <numeric>
-//#include <climits>
-//#include <cstring> //c strings should be replaced with std::string
-
-#define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
+#include <limits>
 
 using namespace std;
 
@@ -216,7 +213,7 @@ bool sortcol(const vector<int>& v1,
 
 // hard end stuff I suppose
 int BestSwap(int iteration) {
-    int iGainTempMax = INT_MIN;
+    int iGainTempMax = numeric_limits<int>::min();
     int iBestX = -1;
     int iBestY = -1;
 
@@ -226,7 +223,7 @@ int BestSwap(int iteration) {
     iota(values.begin(), values.end(), 0);
 
     vector<vector<int>> sortedvD(vD.size(), vector<int>(2));// = { vD, values };
-    for (int i = 0; i < sortedvD.size(); i++) {
+    for (size_t i = 0; i < sortedvD.size(); i++) {
         sortedvD[i][0] = vD[i];
         sortedvD[i][1] = values[i];
     }
