@@ -14,26 +14,28 @@
 #include <vector>
 #include <chrono>
 #include <random>
-#include <climits>
-#include <cstring> //c strings should be replaced with std::string
-
+#include <numeric>
+//#include <climits>
+//#include <cstring> //c strings should be replaced with std::string
 
 #define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
 
 using namespace std;
 
-int LoadFile(const char* szFilename, int iLength);
+int LoadFile(string szFilename, int iLength);
 int SetupNetlist();
 int count2(vector<int>::iterator start, vector<int>::iterator end, int x);
-int recalcDv();
+int recalcDv(int x, int y, int wholelist);
 int BestSwap(int iteration);
 int KLAlgorithm();
-int UserInput();
 int CleanUp();
+int timePassedMS(chrono::steady_clock::time_point start);
+string UserInput();
 
 vector <int> A;                 //column 1 of textfile
 vector <int> B;                 //colume 2 of textfile
 vector <int> vD;                //difference of external to internal wires for each unit cell
+vector <int> tempCheck;         //psuedo c matrix from class
 
 vector <bool> vGroup;           //what group each unit cell is associated with, A=1, B=0
 vector <bool> vGroupTempSwap;   //what the new temp grouping is
@@ -46,7 +48,7 @@ int iCellSize = 0;              //number of cells
 int iNetSize = 0;               //number of total connections between each cell
 
 // load the values from the file
-int LoadFile(const char* szFilename, int iLength) {
+int LoadFile(string szFilename, int iLength) {
     if (iLength <= 0) return -1;
 
     ifstream myfile;
@@ -56,7 +58,7 @@ int LoadFile(const char* szFilename, int iLength) {
     //const unsigned int N = 128;
     //char Buffer[N];
     //myfile.rdbuf()->pubsetbuf(Buffer, N);
-    myfile.open(szFilename);
+    myfile.open(szFilename.c_str());
 
     //check if the file opened correctly
     if (myfile.is_open()) {
@@ -78,19 +80,15 @@ int LoadFile(const char* szFilename, int iLength) {
             //iNetSize = stoi(szline, nullptr, 0);
         }
 
-        printf("cellsize is: %d\n", iCellSize);
-	    fflush(stdout);
-        printf("netsize is: %d\n", iNetSize);
-        fflush(stdout);
+        cout << "\nCellsize is : " << iCellSize;
+        cout << "\nNetsize is : " << iNetSize;
 
         //resize the column vectors to fit all the numbers in a column
         if (iCellSize > 0 && iNetSize > 0) {
             A.resize(iNetSize);
             B.resize(iNetSize);
         }
-        else {
-            return -1;
-        }
+        else return -1;
 
         //add each number from the file to the corresponding column vector
         //lol for some reason this is taking so much time, but maybe a debug only problem?
@@ -159,7 +157,7 @@ int SetupNetlist() {
     //Manually create the first D list
     //which is how many external connects - internal connections
     vGroupTempSwap = vGroup;
-    recalcDv();
+    recalcDv(0, 0, 1);
     return 1;
 }
 
@@ -177,17 +175,43 @@ int count2(vector<int>::iterator start, vector<int>::iterator end, int x)
 
 //Manually create the first D list
 //which is how many external connects - internal connections
-int recalcDv() {
+int recalcDv(int x, int y, int wholelist) {
+    //vector<int> temp(vD);
     // recalculate the entire Dv list; would love to make this faster but lets go with this for now
-    for (int i = 0; i < iCellSize; i++) {
-        int external = 0;
-        for (unsigned int j = 0; j < vList[i].size(); j++)
-            if (vGroupTempSwap[vList[i][j]] ^ vGroupTempSwap[i])
-                external++;
+    if (wholelist == 1) {
+        for (int i = 0; i < iCellSize; i++) {
+            int external = 0;
+            for (unsigned int j = 0; j < vList[i].size(); j++) {
+                if (vGroupTempSwap[vList[i][j]] ^ vGroupTempSwap[i])
+                    external++;
+            }
+            vD[i] = external * 2 - vList[i].size(); //ex - ((total - ex)=internal)
+        }
+    } else {
+    //if (wholelist == 0){
+        for (unsigned int i = 0; i < vList[x].size(); i++) {
+            int num = vList[x][i];
+            int xa = (vGroupTempSwap[num] == vGroupTempSwap[x]) ? -1 : 1;
+            vD[num] = vD[num] + 2 * xa;
+        }
 
-        vD[i] = external * 2 - vList[i].size(); //ex - ((total - ex)=internal)
+        for (unsigned int i = 0; i < vList[y].size(); i++) {
+            int num = vList[y][i];
+            int yb = (vGroupTempSwap[num] == vGroupTempSwap[y]) ? -1 : 1;
+            vD[num] = vD[num] + 2 * yb;
+        }
+        vD[x] = -vD[x] + count2(vList[x].begin(), vList[x].end(), y);
+        vD[y] = -vD[y] + count2(vList[y].begin(), vList[y].end(), x);
+        //vD = temp;
     }
     return 1;
+}
+
+// Driver function to sort the 2D vector 
+// on basis of a particular column 
+bool sortcol(const vector<int>& v1,
+    const vector<int>& v2) {
+    return v1[0] > v2[0];
 }
 
 // hard end stuff I suppose
@@ -198,24 +222,43 @@ int BestSwap(int iteration) {
 
     // I think this could possibly be multithreaded
     // go thru all cells
-    for (int i = 0; i < iCellSize; i++) {
+    vector<int> values(vD.size());
+    iota(values.begin(), values.end(), 0);
+
+    vector<vector<int>> sortedvD(vD.size(), vector<int>(2));// = { vD, values };
+    for (int i = 0; i < sortedvD.size(); i++) {
+        sortedvD[i][0] = vD[i];
+        sortedvD[i][1] = values[i];
+    }
+
+    sort(sortedvD.begin(), sortedvD.end(), sortcol);
+
+    for (int ia = 0; ia < iCellSize; ia++) {
+        int i = sortedvD[ia][1];
 
         if (vLocked[i]) //if the cell is locked, then skip
             continue;
 
+        fill(tempCheck.begin(), tempCheck.end(), 0);
+        for (unsigned int j = 0; j < vList[i].size(); j++) {
+            tempCheck[vList[i][j]]++;
+        }
+
         // go thru all cells except for the cells already checked from i
-        for (int j = i+1; j < iCellSize; j++) {
+        for (int jb = ia+1; jb < iCellSize; jb++) {
+            int j = sortedvD[jb][1];
 
             //check if the cell isn't locked and is in a different group than the first cell
-            if (!vLocked[j] && vGroupTempSwap[j] ^ vGroupTempSwap[i]){
-                int dupes = 0;
-                int iGainTemp = 0;
+            if (!vLocked[j] && vGroupTempSwap[j] ^ vGroupTempSwap[i]) {
+                //dupes = count2(vList[i].begin(), vList[i].end(), j);
 
-                // go thru all the cells this current cell is connected to and see if j is included anywhere in there
-                // even after modifying count, this still takes like 95% of the cpu time, maybe it could be precomputed somehow
-                dupes = count2(vList[i].begin(), vList[i].end(), j);
+                 //if the gain here is less than the max, then there's no point in checking I think
+                if (vD[i] + vD[j] < iGainTempMax) {
+                    goto Foundbestpair;
+                }
 
-                iGainTemp = vD[i] + vD[j] - 2 * dupes;
+                int iGainTemp = vD[i] + vD[j] - 2 * tempCheck[j];
+
                 if (iGainTemp > iGainTempMax) {
                     iGainTempMax = iGainTemp;
                     iBestX = i;
@@ -225,14 +268,16 @@ int BestSwap(int iteration) {
         }
     }
 
+    Foundbestpair:
     //if the index locations are good, swap the elements, and store it in the queue
     if (iBestX >= 0 && iBestY >= 0) {
         vQueue[iteration] = { iBestX, iBestY };
         vLocked[iBestX] = true;
         vLocked[iBestY] = true;
+        //recalcDv(iBestX, iBestY, 0);
         vGroupTempSwap[iBestX] = !vGroupTempSwap[iBestX];
         vGroupTempSwap[iBestY] = !vGroupTempSwap[iBestY];
-        recalcDv();
+        recalcDv(iBestX, iBestY, 0);
     }
 
     return iGainTempMax;
@@ -245,6 +290,8 @@ int KLAlgorithm(){
     int maxiterations = 0;
     vQueue.resize(iCellSize / 2, vector<int>(2));
     vLocked.resize(iCellSize);
+    tempCheck.resize(iCellSize);
+    vGroupTempSwap = vGroup;
 
     do {
         int g = 0;
@@ -253,29 +300,33 @@ int KLAlgorithm(){
         gmax = 0;
 
         fill(vLocked.begin(), vLocked.end(), false);
-        vGroupTempSwap = vGroup;
+        //vGroupTempSwap = vGroup;
 
         // This function is the one that chooses the best pair and calculates their gain 
         // and keeps track of the max of the sums of the gain
         for (int i = 0; i < iCellSize / 2; i++) {
             g += BestSwap(i);
-
+            //cout << "\n" << i;
             if (g > gmax) { //TODO think the issue is here //I think gmax has to start as 0
                 gmax = g;
                 lastbesti = i;
             }
         }
+        cout << "\nIteration Number : " << maxiterations;
 
         // do the swapping
         for (int i = 0; i <= lastbesti && gmax > 0; i++) {
             int Anum = vQueue[i][0];
             int Bnum = vQueue[i][1];
+            //recalcDv(Anum, Bnum, 0);
             vGroup[Anum] = !vGroup[Anum];
             vGroup[Bnum] = !vGroup[Bnum];
         }
 
+        vGroupTempSwap = vGroup;
+
         // recalculate the entire Dv list; would love to make this faster but lets go with this for now
-        recalcDv();
+        recalcDv(0, 0, 1);
 
         //stop if there is no good i, or there is no positive gain, or max iterations went too high as a failsafe
     } while (lastbesti >= 0 && gmax > 0 && maxiterations < 20);
@@ -287,61 +338,82 @@ int KLAlgorithm(){
             if (vGroup[vList[i][j]] ^ vGroup[i])
                 external++;
     }
-    printf("\nCutset size is: %d", external/2); //divide external wires by 2 since they are counted twice
-    fflush(stdout);
-    printf("\nGroup A is: ");
-    fflush(stdout);
-    for (int i = 0; i < iCellSize; i++) {
-        if (vGroup[i] == 0) {
-            printf("%d ", i+1);
-            fflush(stdout);
-        }
-    }
+
+    cout << "\n\nCutset size is : " << external / 2; //divide external wires by 2 since they are counted twice
     
-    printf("\nGroup B is: ");
-    for (int i = 0; i < iCellSize; i++) {
-        if (vGroup[i] == 1) {
-            printf("%d ", i+1);
-            fflush(stdout);
-        }
-    }
+    cout << "\nGroup A is : ";
+    for (int i = 0; i < iCellSize; i++)
+        if (vGroup[i] == 0)
+            cout << i + 1 << " ";
+
+    cout << "\nGroup B is : ";
+    for (int i = 0; i < iCellSize; i++)
+        if (vGroup[i] == 1)
+            cout << i + 1 << " ";
 
     return 1;
 }
 
 // premade file names, assumes there is a folder with the name dev_net in the same location as the .exe
 // Should this be a vector of strings? Best to stay with C++ data types than revert to arrays of char*
-const char* szfilename[] = {"development_netlists/bench_2.net",
-                            "development_netlists/bench_4.net",
-                            "development_netlists/bench_6.net",
-                            "development_netlists/bench_11.net",
-                            "development_netlists/bench_12.net",
-                            "development_netlists/bench_16.net",
-                            "development_netlists/bench_test.net", 
-                            "development_netlists/bench_test2.net", 
-                            "development_netlists/bench_test3large.net", };
+// It should be a vector of strings, but I was just used to using arrays of chars
+const vector<string> szfilename = {
+"development_netlists/bench_2.net",
+"development_netlists/bench_4.net",
+"development_netlists/bench_6.net",
+"development_netlists/bench_11.net",
+"development_netlists/bench_12.net",
+"development_netlists/bench_16.net",
+};
+
+const vector<string> szfilename2 = {
+"Benchmarks/b_100_500",
+"Benchmarks/b_500_20000",
+"Benchmarks/b_1000_20000",
+"Benchmarks/b_10000_100000",
+"Benchmarks/b_50000_400000",
+"Benchmarks/b_100000_500000",
+"Benchmarks/b_100000_2000000",
+"Benchmarks/b_200000_2000000",
+"Benchmarks/b_250000_1000000",
+"Benchmarks/b_500000_3000000",
+};
+
 
 // ask the user if they want to choose which netlist to use
-int UserInput() {
-    const int ArrayLength = ARRAY_LEN(szfilename);
-    int i = 0;
+// updated to use strings
+string UserInput() {
+    unsigned int i = 0;
     int iReturnVal = 0;
+    vector<string> szusestring;
 
     cout << "\nType 1 to choose from premade benches: ";
+    cout << "\nType 2 to choose from HW Benchmarks: ";
+
+    cout << "\nType here: ";
     cin >> iReturnVal;
 
-    if (iReturnVal == 1) {
-        for (int j = 0; j < ArrayLength; j++) {
-            printf("Type %d to use %s\n", j, szfilename[j]);
-            fflush(stdout);
-        }
-        printf("Type here: ");
-        fflush(stdout);
-        cin >> i;
-        fflush(stdout);
+    switch (iReturnVal) {
+        case 1:
+            szusestring = szfilename;
+            break;
+        case 2:
+            szusestring = szfilename2;
+            break;
+        default:
+            return szfilename2[0];
     }
 
-    return i;
+    for (unsigned int j = 0; j < szusestring.size(); j++) {
+        cout << "\nType " << j << " to use " << szusestring[j];
+    }
+
+    cout << "\nType here: ";
+    cin >> i;
+
+    if (i < 0 || i > szusestring.size()) i = 0;
+
+    return szusestring[i];
 }
 
 // clean up memory
@@ -350,83 +422,87 @@ int CleanUp() {
     vGroup.clear();
     vGroupTempSwap.clear();
     vLocked.clear();
-
     vList.clear();
     vQueue.clear();
 
     vD.shrink_to_fit();
     vGroup.shrink_to_fit();
-
     vGroupTempSwap.shrink_to_fit();
     vLocked.shrink_to_fit();
     vList.shrink_to_fit();
     vQueue.shrink_to_fit();
 
+    A.clear();
+    B.clear();
+    A.shrink_to_fit();
+    B.shrink_to_fit();
+
     return 1;
+}
+
+int timePassedMS(chrono::steady_clock::time_point start) {
+    auto end = chrono::steady_clock::now();
+    return chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
 // entry point for code
 int main(int argc, char* argv[]) {
-    const int ArrayLength = ARRAY_LEN(szfilename);
     int iReturnVal = 1;
-    char* szfilenameUse;
+    int iteration = 0;
+
+    vector<string> vargv(argv, argv + argc);
+    string szfilenameUse;
     //ios::sync_with_stdio(false); //This may speed up reading file functions
 
     do {
         if(argc == 1){
-            int i = UserInput();                                //Get the user input
-            if (i < 0 || i > ArrayLength) i = 1;
-            szfilenameUse = (char*)szfilename[i];
+            szfilenameUse = UserInput();
         }
-        else if (argc == 2) {
-           szfilenameUse = argv[1];
+        else if (iteration++ < argc) {
+           //Automatically go thru all agruments passed into main
+           szfilenameUse = vargv[iteration];
         }
         else {
-            return -1;
+            break;
         }
 
-        int iFileLength = strlen(szfilenameUse);
+        int iFileLength = szfilenameUse.length();
+
+        cout << "\n\nUsing bench: " << szfilenameUse;
+
+        //First step is to load the file
         auto start = chrono::steady_clock::now();
-
-        cout << "Using bench: " << szfilenameUse << '\n';
-        iReturnVal = LoadFile(szfilenameUse, iFileLength);  //First step is to load the file
-        if (iReturnVal < 0) {
+        if (LoadFile(szfilenameUse, iFileLength) < 0) {         
             printf("\nError: File is not able to be opened");
-            return iReturnVal;
+            goto Error;
         }
+        cout << "\n\nLoading : " << timePassedMS(start) << " ms";
 
-        auto end = chrono::steady_clock::now();
-        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
 
-        iReturnVal = SetupNetlist();                        //Then setup the netlist
-        if (iReturnVal < 0) return -1;
+        //Then setup the netlist
+        start = chrono::steady_clock::now();
+        if (SetupNetlist() < 0) goto Error;
+        cout << "\nSetting Up : " << timePassedMS(start) << " ms";
 
-        end = chrono::steady_clock::now();
-        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
 
-        iReturnVal = KLAlgorithm();                         //Then implement the KL algorithm
-        if (iReturnVal < 0) return -1;
+        //Then implement the KL algorithm
+        start = chrono::steady_clock::now();
+        if (KLAlgorithm() < 0) goto Error;
+        cout << "\n\nCalc KL : " << timePassedMS(start) << " ms";
 
-        printf("\nEnd of Program\n");
-        fflush(stdout); //printf might not work right on linux :p
 
-        end = chrono::steady_clock::now();
-        cout << "Elapsed time in milliseconds : " << chrono::duration_cast<chrono::milliseconds>(end - start).count() << " ms" << '\n';
-        fflush(stdout);
-        CleanUp(); //terminal uses memory, dunno how to clear
+        //go ahead and clean up the memory
+        CleanUp(); 
         
         if (argc == 1) {
-            printf("\nWould you like to repeat? Type 0 for no: ");
+            cout << "\nWould you like to repeat? Type 0 for no: ";
+            cin >> iReturnVal;
         }
-        else {
-            printf("\nType anything and Press enter to close the program: ");
-        }
-        
-        fflush(stdout);
-        cin >> iReturnVal;
-        fflush(stdout);
-    } while (iReturnVal > 0 && argc == 1);
 
+        //cout << "\f"; // want to clear terminal maybe
+    } while (iReturnVal > 0 && iteration <= argc);
+
+    Error:
     CleanUp();
     return 0;
 }
