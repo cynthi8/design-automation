@@ -15,6 +15,11 @@
 #include <chrono>
 #include <random>
 #include <numeric>
+#include <execution>
+//#include <climits>
+//#include <cstring> //c strings should be replaced with std::string
+
+#define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
 #include <limits>
 
 using namespace std;
@@ -22,7 +27,7 @@ using namespace std;
 int LoadFile(string szFilename, int iLength);
 int SetupNetlist();
 int count2(vector<int>::iterator start, vector<int>::iterator end, int x);
-int recalcDv(int x, int y, int wholelist);
+int recalcDv(int x, int y, bool wholelist);
 int BestSwap(int iteration);
 int KLAlgorithm();
 int CleanUp();
@@ -37,9 +42,13 @@ vector <int> tempCheck;         //psuedo c matrix from class
 vector <bool> vGroup;           //what group each unit cell is associated with, A=1, B=0
 vector <bool> vGroupTempSwap;   //what the new temp grouping is
 vector <bool> vLocked;          //lock the unit cell from switching if its switched before
+vector <bool> vLockedUnsorted;  //Based on sortedvD, which unsorts it
 
 vector <vector<int>> vList;     //a list of what cells a cell is connected to
 vector <vector<int>> vQueue;    //queue of cells to switch
+
+vector<int> values;
+vector<vector<int>> sortedvD;
 
 int iCellSize = 0;              //number of cells
 int iNetSize = 0;               //number of total connections between each cell
@@ -51,6 +60,8 @@ int LoadFile(string szFilename, int iLength) {
     ifstream myfile;
     string szline;
     stringstream stream;
+
+    auto start = chrono::steady_clock::now();
 
     //const unsigned int N = 128;
     //char Buffer[N];
@@ -115,6 +126,8 @@ int LoadFile(string szFilename, int iLength) {
         return -1;
     }
 
+    cout << "\n\nLoading : " << timePassedMS(start) << " ms";
+
     return iLength;
 }
 
@@ -124,6 +137,8 @@ int SetupNetlist() {
     vGroup.resize(iCellSize);
     vList.resize(iCellSize);
     vD.resize(iCellSize);
+
+    auto start = chrono::steady_clock::now();
 
     //Randomly assign a cell to either group A or B
     for (int i = 0; i < iCellSize; i+=2) {
@@ -154,7 +169,10 @@ int SetupNetlist() {
     //Manually create the first D list
     //which is how many external connects - internal connections
     vGroupTempSwap = vGroup;
-    recalcDv(0, 0, 1);
+    recalcDv(0, 0, true);
+
+    cout << "\nSetting Up : " << timePassedMS(start) << " ms";
+
     return 1;
 }
 
@@ -170,12 +188,11 @@ int count2(vector<int>::iterator start, vector<int>::iterator end, int x)
     return upper_bound(low, end, x) - low;
 }
 
-//Manually create the first D list
+
 //which is how many external connects - internal connections
-int recalcDv(int x, int y, int wholelist) {
-    //vector<int> temp(vD);
-    // recalculate the entire Dv list; would love to make this faster but lets go with this for now
-    if (wholelist == 1) {
+int recalcDv(int x, int y, bool wholelist) {
+
+    if (wholelist) { //Manually create the first D list
         for (int i = 0; i < iCellSize; i++) {
             int external = 0;
             for (unsigned int j = 0; j < vList[i].size(); j++) {
@@ -184,8 +201,9 @@ int recalcDv(int x, int y, int wholelist) {
             }
             vD[i] = external * 2 - vList[i].size(); //ex - ((total - ex)=internal)
         }
-    } else {
-    //if (wholelist == 0){
+    } 
+
+    else {
         for (unsigned int i = 0; i < vList[x].size(); i++) {
             int num = vList[x][i];
             int xa = (vGroupTempSwap[num] == vGroupTempSwap[x]) ? -1 : 1;
@@ -197,44 +215,37 @@ int recalcDv(int x, int y, int wholelist) {
             int yb = (vGroupTempSwap[num] == vGroupTempSwap[y]) ? -1 : 1;
             vD[num] = vD[num] + 2 * yb;
         }
-        vD[x] = -vD[x] + count2(vList[x].begin(), vList[x].end(), y);
+        //these might actually be unnecessary since they become locked anyways
+        vD[x] = -vD[x] + count2(vList[x].begin(), vList[x].end(), y); 
         vD[y] = -vD[y] + count2(vList[y].begin(), vList[y].end(), x);
-        //vD = temp;
     }
+
     return 1;
 }
 
-// Driver function to sort the 2D vector 
-// on basis of a particular column 
+// function to sort a 2D vector with column 0
 bool sortcol(const vector<int>& v1,
     const vector<int>& v2) {
     return v1[0] > v2[0];
 }
 
+
+
 // hard end stuff I suppose
 int BestSwap(int iteration) {
     int iGainTempMax = numeric_limits<int>::min();
-    int iBestX = -1;
-    int iBestY = -1;
+    int iBestX = -1, iBestY = -1;
+    int itestX = -1, itestY = -1;
+    int i = 0;
+    //auto firstzero = find(std::execution::par_unseq, test.begin(), test.end(), 0);
+    //int index = firstzero - test.begin();
+    static int indexi = 0;
 
-    // I think this could possibly be multithreaded
-    // go thru all cells
-    vector<int> values(vD.size());
-    iota(values.begin(), values.end(), 0);
+    for (int ia = indexi; ia < iCellSize; ia++) {
+        if (vLocked[sortedvD[ia][1]]) //if the cell is locked, then skip
+            continue; //This if statement might be able to be removed now
 
-    vector<vector<int>> sortedvD(vD.size(), vector<int>(2));// = { vD, values };
-    for (size_t i = 0; i < sortedvD.size(); i++) {
-        sortedvD[i][0] = vD[i];
-        sortedvD[i][1] = values[i];
-    }
-
-    sort(sortedvD.begin(), sortedvD.end(), sortcol);
-
-    for (int ia = 0; ia < iCellSize; ia++) {
-        int i = sortedvD[ia][1];
-
-        if (vLocked[i]) //if the cell is locked, then skip
-            continue;
+        i = sortedvD[ia][1];
 
         fill(tempCheck.begin(), tempCheck.end(), 0);
         for (unsigned int j = 0; j < vList[i].size(); j++) {
@@ -242,24 +253,21 @@ int BestSwap(int iteration) {
         }
 
         // go thru all cells except for the cells already checked from i
-        for (int jb = ia+1; jb < iCellSize; jb++) {
+        for (int jb = ia + 1; jb < iCellSize; jb++) {
             int j = sortedvD[jb][1];
 
-            //check if the cell isn't locked and is in a different group than the first cell
+            // check if the cell isn't locked and is in a different group than the first cell
             if (!vLocked[j] && vGroupTempSwap[j] ^ vGroupTempSwap[i]) {
-                //dupes = count2(vList[i].begin(), vList[i].end(), j);
-
-                 //if the gain here is less than the max, then there's no point in checking I think
-                if (vD[i] + vD[j] < iGainTempMax) {
+                // if the gain here is less than the max, then there's no point in checking any more
+                if (vD[i] + vD[j] < iGainTempMax)
                     goto Foundbestpair;
-                }
 
                 int iGainTemp = vD[i] + vD[j] - 2 * tempCheck[j];
 
                 if (iGainTemp > iGainTempMax) {
                     iGainTempMax = iGainTemp;
-                    iBestX = i;
-                    iBestY = j;
+                    iBestX = i; iBestY = j;
+                    itestX = ia; itestY = jb;
                 }
             }
         }
@@ -271,10 +279,17 @@ int BestSwap(int iteration) {
         vQueue[iteration] = { iBestX, iBestY };
         vLocked[iBestX] = true;
         vLocked[iBestY] = true;
-        //recalcDv(iBestX, iBestY, 0);
+        vLockedUnsorted[itestX] = true;
+        vLockedUnsorted[itestY] = true;
+
         vGroupTempSwap[iBestX] = !vGroupTempSwap[iBestX];
         vGroupTempSwap[iBestY] = !vGroupTempSwap[iBestY];
-        recalcDv(iBestX, iBestY, 0);
+        recalcDv(iBestX, iBestY, false);
+
+        while (indexi < iCellSize && vLockedUnsorted[indexi]) {
+            indexi++;
+        }
+        if (indexi == iCellSize) indexi = 0;
     }
 
     return iGainTempMax;
@@ -282,51 +297,71 @@ int BestSwap(int iteration) {
 
 // This is the KL implementation of what was shown in class
 int KLAlgorithm(){
-    int gmax = 0;
+    const int maxiterations = 1000;
+    int iterations = 0;
+
+    long long gmax = 0;
     int lastbesti = -1;
-    int maxiterations = 0;
+    
     vQueue.resize(iCellSize / 2, vector<int>(2));
     vLocked.resize(iCellSize);
     tempCheck.resize(iCellSize);
     vGroupTempSwap = vGroup;
 
+    values.resize(iCellSize);
+    iota(values.begin(), values.end(), 0);
+    sortedvD.resize(iCellSize, vector<int>(2));
+    
+    vLockedUnsorted.resize(iCellSize);
+
+    auto start = chrono::steady_clock::now();
+
     do {
-        int g = 0;
-        maxiterations++;
+        long long g = 0;
+        iterations++;
         lastbesti = -1;
         gmax = 0;
 
         fill(vLocked.begin(), vLocked.end(), false);
-        //vGroupTempSwap = vGroup;
+        fill(vLockedUnsorted.begin(), vLockedUnsorted.end(), false);
+
+        for (int i = 0; i < iCellSize; i++) {
+            sortedvD[i] = { vD[i] , values[i] };
+        }
+
+        //how the heck do I sort a 2d vector based on a row instead of a column
+        sort(std::execution::par_unseq, sortedvD.begin(), sortedvD.end(), sortcol);
 
         // This function is the one that chooses the best pair and calculates their gain 
         // and keeps track of the max of the sums of the gain
+        // dividing by 4 instead of 2 gives a speed boost but maybe only for small cellsizes < 100k
         for (int i = 0; i < iCellSize / 2; i++) {
             g += BestSwap(i);
-            //cout << "\n" << i;
-            if (g > gmax) { //TODO think the issue is here //I think gmax has to start as 0
+            if (g > gmax) { 
                 gmax = g;
                 lastbesti = i;
             }
         }
-        cout << "\nIteration Number : " << maxiterations;
+        
+        cout << "\nIteration Number : " << iterations;
+        cout << "\tBest Gain : " << gmax;
 
         // do the swapping
         for (int i = 0; i <= lastbesti && gmax > 0; i++) {
             int Anum = vQueue[i][0];
             int Bnum = vQueue[i][1];
-            //recalcDv(Anum, Bnum, 0);
             vGroup[Anum] = !vGroup[Anum];
             vGroup[Bnum] = !vGroup[Bnum];
         }
 
+        // recalculate the entire Dv list;
         vGroupTempSwap = vGroup;
-
-        // recalculate the entire Dv list; would love to make this faster but lets go with this for now
-        recalcDv(0, 0, 1);
+        recalcDv(0, 0, true);
 
         //stop if there is no good i, or there is no positive gain, or max iterations went too high as a failsafe
-    } while (lastbesti >= 0 && gmax > 0 && maxiterations < 20);
+    } while (lastbesti >= 0 && gmax > 0 && iterations < maxiterations);
+
+    cout << "\nCalc KL : " << timePassedMS(start) << " ms";
 
     // calculate how many external wires are being cut
     int external = 0;
@@ -338,15 +373,20 @@ int KLAlgorithm(){
 
     cout << "\n\nCutset size is : " << external / 2; //divide external wires by 2 since they are counted twice
     
-    cout << "\nGroup A is : ";
-    for (int i = 0; i < iCellSize; i++)
-        if (vGroup[i] == 0)
-            cout << i + 1 << " ";
+    cout << "\nDo you want to see all of A and B\nType 1 Here for yes : "; 
 
-    cout << "\nGroup B is : ";
-    for (int i = 0; i < iCellSize; i++)
-        if (vGroup[i] == 1)
-            cout << i + 1 << " ";
+    int iReturnVal; cin >> iReturnVal;
+    if (iReturnVal == 1) {
+        cout << "\nGroup A is : ";
+        for (int i = 0; i < iCellSize; i++)
+            if (vGroup[i] == 0)
+                cout << i + 1 << " ";
+
+        cout << "\nGroup B is : ";
+        for (int i = 0; i < iCellSize; i++)
+            if (vGroup[i] == 1)
+                cout << i + 1 << " ";
+    }
 
     return 1;
 }
@@ -434,6 +474,16 @@ int CleanUp() {
     A.shrink_to_fit();
     B.shrink_to_fit();
 
+    values.clear();
+    sortedvD.clear();
+    values.shrink_to_fit();
+    sortedvD.shrink_to_fit();
+
+    tempCheck.clear();
+    vLockedUnsorted.clear();
+    tempCheck.shrink_to_fit();
+    vLockedUnsorted.shrink_to_fit();
+
     return 1;
 }
 
@@ -468,25 +518,16 @@ int main(int argc, char* argv[]) {
         cout << "\n\nUsing bench: " << szfilenameUse;
 
         //First step is to load the file
-        auto start = chrono::steady_clock::now();
         if (LoadFile(szfilenameUse, iFileLength) < 0) {         
             printf("\nError: File is not able to be opened");
             goto Error;
         }
-        cout << "\n\nLoading : " << timePassedMS(start) << " ms";
-
 
         //Then setup the netlist
-        start = chrono::steady_clock::now();
         if (SetupNetlist() < 0) goto Error;
-        cout << "\nSetting Up : " << timePassedMS(start) << " ms";
-
 
         //Then implement the KL algorithm
-        start = chrono::steady_clock::now();
         if (KLAlgorithm() < 0) goto Error;
-        cout << "\n\nCalc KL : " << timePassedMS(start) << " ms";
-
 
         //go ahead and clean up the memory
         CleanUp(); 
