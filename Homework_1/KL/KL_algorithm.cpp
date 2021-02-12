@@ -15,8 +15,8 @@
 #include <chrono>
 #include <random>
 #include <numeric>
-//#include <execution>
 #include <limits>
+//#include <execution>
 
 using namespace std;
 
@@ -26,10 +26,11 @@ int SaveDataAnalysis(string szFileNameSave);
 int SetupNetlist();
 int count2(vector<int>::iterator start, vector<int>::iterator end, int x);
 int recalcDv(int x, int y, bool wholelist);
-int BestSwap(int iteration);
+long long BestSwap(int iteration);
 int KLAlgorithm();
 int CleanUp();
 int timePassedMS(chrono::steady_clock::time_point start);
+pair<unsigned int, unsigned int> UserInput();
 
 struct DataAnalysis{
     bool Store;
@@ -44,10 +45,6 @@ struct DataAnalysis{
 };
 vector <DataAnalysis> StoreData;
 
-pair<unsigned int, unsigned int> UserInput();
-
-//vector <int> A;                 //column 1 of textfile
-//vector <int> B;                 //colume 2 of textfile
 vector <pair<int, int>> NetCol; //all columns of textfile netlist
 
 vector <int> vD;                //difference of external to internal wires for each unit cell
@@ -55,7 +52,6 @@ vector <int> tempCheck;         //psuedo c matrix from class
 
 vector <bool> vGroup;           //what group each unit cell is associated with, A=1, B=0
 vector <bool> vGroupTempSwap;   //what the new temp grouping is
-vector <bool> vLocked;          //lock the unit cell from switching if its switched before
 vector <bool> vLockedUnsorted;  //Based on sortedvD, which unsorts it
 
 vector <vector<int>> vList;     //a list of what cells a cell is connected to
@@ -64,10 +60,9 @@ vector <pair<int, int>> vQueue; //queue of cells to switch
 vector <int> OriginalIndex;
 vector <vector<int>> sortedvD;
 
-
 int iCellSize = 0;              //number of cells
 int iNetSize = 0;               //number of total connections between each cell
-int External = 0;               //number of external wires being cut
+unsigned long long External = 0;//number of external wires being cut
 
 // load the values from the file
 int LoadFile(string szFilename) {
@@ -101,8 +96,8 @@ int LoadFile(string szFilename) {
             stream >> iNetSize;
         }
 
-        cout << "\nCellsize is : " << iCellSize;
-        cout << "\nNetsize is : " << iNetSize;
+        cout << "\n\tCellsize is\t: " << iCellSize;
+        cout << "\n\tNetsize is\t: " << iNetSize;
 
         //resize the column vectors to fit all the numbers in a column
         if (iCellSize > 0 && iNetSize > 0)
@@ -136,7 +131,7 @@ int LoadFile(string szFilename) {
         return -1;
     }
 
-    cout << "\n\nLoading Data : " << timePassedMS(start) << " ms";
+    cout << "\n\tLoading Data\t: " << timePassedMS(start) << " ms";
 
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Loading Data", timePassedMS(start) });
@@ -152,19 +147,19 @@ int SaveResults(string szFileNameSave) {
     ofstream myfile;
     myfile.open(szFileNameSave.c_str());
 
-    StoreData.back().CutsetF = External;
+    StoreData.back().CutsetF = (int) External;
 
     if (myfile.is_open()) {
         myfile << External << "\n";
 
-        //cout << "\nGroup A is : ";
+        //Group A
         for (int i = 0; i < iCellSize; i++)
             if (vGroup[i] == 0)
                 myfile << i + 1 << " ";
 
         myfile << "\n";
 
-        //cout << "\nGroup B is : ";
+        //Group B
         for (int i = 0; i < iCellSize; i++)
             if (vGroup[i] == 1)
                 myfile << i + 1 << " ";
@@ -176,12 +171,12 @@ int SaveResults(string szFileNameSave) {
         return -1;
     }
 
-    cout << "\nSaving Results : " << timePassedMS(start) << " ms";
+    cout << "\n\tSaving Results\t: " << timePassedMS(start) << " ms";
 
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Saving Results", timePassedMS(start) });
 
-    cout << "\nCutset size is : " << External;
+    cout << "\n\tCutset size is\t: " << External;
 
     return 1;
 }
@@ -250,8 +245,15 @@ int SetupNetlist() {
     for (int i = 0; i < iCellSize; i+=2) {
         vGroup[i] = 1; // Group A = 1, Group B = 0
     }
-    unsigned int seed = (unsigned int) std::chrono::system_clock::now().time_since_epoch().count();
-    shuffle(vGroup.begin(), vGroup.end(), default_random_engine(seed)); //now shuffle the vector
+
+    long unsigned int seed = (long unsigned int) std::chrono::system_clock::now().time_since_epoch().count();
+    //std::default_random_engine randeng(seed);
+    //shuffle(vGroup.begin(), vGroup.end(), randeng); //now shuffle the vector
+
+    //std::random_device rd;
+    //std::mt19937 gen(rd());
+    mt19937 gen(seed);
+    shuffle(vGroup.begin(), vGroup.end(), gen); //now shuffle the vector
 
     //Add the elements a unit cell is connected to, to the vList 2D vector
     //for example cell 1 is connected to 2, 3, 3, 4
@@ -275,7 +277,7 @@ int SetupNetlist() {
     vGroupTempSwap = vGroup;
     recalcDv(0, 0, true);
 
-    cout << "\nSetting Up : " << timePassedMS(start) << " ms";
+    cout << "\n\tSetting Up Net\t: " << timePassedMS(start) << " ms";
 
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Setting Up Netlist", timePassedMS(start) });
@@ -302,13 +304,21 @@ int recalcDv(int x, int y, bool wholelist) {
         External = 0;
 
         for (int i = 0; i < iCellSize; i++) {
-            int extcells = 0;
+            unsigned long long extcells = 0;
             for (auto j : vList[i])
                 if (vGroupTempSwap[j] ^ vGroupTempSwap[i])
                     extcells++;
 
             External += extcells;
-            vD[i] = extcells * 2 - vList[i].size(); //ex - ((total - ex)=internal)
+
+            /*
+            if (extcells > numeric_limits<int>::max()/2 || External > numeric_limits<int>::max()/2) {
+                int test = 1;
+                cout << "\n\tUh Oh Error Boi\n";
+            }
+            */
+
+            vD[i] = ((int) extcells) * 2 - vList[i].size(); //ex - ((total - ex)=internal)
         }
 
         External /= 2;
@@ -340,9 +350,9 @@ bool sortcol(const vector<int>& v1, const vector<int>& v2) {
 }
 
 // hard end stuff I suppose
-int BestSwap(int iteration) {
+long long BestSwap(int iteration) {
 
-    int iGainTempMax = numeric_limits<int>::min();
+    long long iGainTempMax = numeric_limits<long long>::min();
 
     pair <int, int> iBest = {-1, -1};
     pair <int, int> iBestUn = {-1, -1};
@@ -353,13 +363,11 @@ int BestSwap(int iteration) {
     //vector <int>::iterator it = OriginalIndex.begin();
 
     for (int ia = indexi; ia < iCellSize; ia++) {
-        if (vLocked[sortedvD[ia][1]]) { //if the cell is locked, then skip
+        if (vLockedUnsorted[ia]) { //if the cell is locked, then skip
             continue; 
         }
 
         i = sortedvD[ia][1]; //why does the profiler say this is taking so long
-        //i = *(it+ia);
-        //i = OriginalIndex[ia];
 
         fill(tempCheck.begin(), tempCheck.end(), 0);
         for (auto j : vList[i])
@@ -370,13 +378,13 @@ int BestSwap(int iteration) {
             unsigned int j = sortedvD[jb][1];
 
             // check if the cell isn't locked and is in a different group than the first cell
-            if (!vLocked[j] && vGroupTempSwap[j] ^ vGroupTempSwap[i]) {
+            if (!vLockedUnsorted[jb] && vGroupTempSwap[j] ^ vGroupTempSwap[i]) {
 
                 // if the gain here is less than the max, then there's no point in checking any more
-                if (vD[i] + vD[j] < iGainTempMax)
+                if ((long long) vD[i] + vD[j] < iGainTempMax)
                     goto Foundbestpair;
 
-                int iGainTemp = vD[i] + vD[j] - 2 * tempCheck[j];
+                long long iGainTemp = (long long) vD[i] + vD[j] - 2 * (long long) tempCheck[j];
 
                 if (iGainTemp > iGainTempMax) {
                     iGainTempMax = iGainTemp;
@@ -391,14 +399,13 @@ int BestSwap(int iteration) {
     //if the index locations are good, swap the elements, and store it in the queue
     if (iBest.first >= 0 && iBest.second >= 0) {
         vQueue[iteration] = iBest;
-        vLocked[iBest.first] = true;
-        vLocked[iBest.second] = true;
 
         vLockedUnsorted[iBestUn.first] = true;
         vLockedUnsorted[iBestUn.second] = true;
 
         vGroupTempSwap[iBest.first] = !vGroupTempSwap[iBest.first];
         vGroupTempSwap[iBest.second] = !vGroupTempSwap[iBest.second];
+
         recalcDv(iBest.first, iBest.second, false);
 
         while (indexi < iCellSize && vLockedUnsorted[indexi])
@@ -416,10 +423,11 @@ int KLAlgorithm(){
     int iterations = 0;
 
     long long gmax = 0;
-    int lastbesti = -1;
+    long long g = 0;
+    int ki = -1;
     
     vQueue.resize(iCellSize / 2);
-    vLocked.resize(iCellSize);
+    //vLocked.resize(iCellSize);
     tempCheck.resize(iCellSize);
     vGroupTempSwap = vGroup;
 
@@ -441,16 +449,15 @@ int KLAlgorithm(){
         if (StoreData.back().Store)
             vTempG.resize(0);
 
-        long long g = 0;
         iterations++;
-        lastbesti = -1;
+        ki = -1;
         gmax = 0;
+        g = 0;
 
-        //iota(OriginalIndex.begin(), OriginalIndex.end(), 0);
-        fill(vLocked.begin(), vLocked.end(), false);
         fill(vLockedUnsorted.begin(), vLockedUnsorted.end(), false);
 
-        for (int i = 0; i < iCellSize; i++) { //link these two so when you sort them they are sorted auto
+        //link these two so when you sort them they are sorted auto
+        for (int i = 0; i < iCellSize; i++) { 
             sortedvD[i] = { vD[i] , OriginalIndex[i] };
         }
 
@@ -461,22 +468,20 @@ int KLAlgorithm(){
 
         // This function is the one that chooses the best pair and calculates their gain 
         // and keeps track of the max of the sums of the gain
-        // dividing by 4 instead of 2 gives a speed boost but maybe only for small cellsizes < 100k
         for (int i = 0; i < iCellSize / 2; i++) {
-            int gt = BestSwap(i);
-            g += gt;
+            long long gt = BestSwap(i); g += gt;
 
             if (StoreData.back().Store)
-                vTempG.push_back(gt);
+                vTempG.push_back((int)gt);
 
             if (g > gmax) { 
                 gmax = g;
-                lastbesti = i;
+                ki = i;
             }
         }
-        
+
         // do the swapping
-        for (int i = 0; i <= lastbesti && gmax > 0; i++) {
+        for (int i = 0; i <= ki && gmax > 0; i++) {
             auto [Anum, Bnum] = vQueue[i];
             vGroup[Anum] = !vGroup[Anum];
             vGroup[Bnum] = !vGroup[Bnum];
@@ -487,18 +492,20 @@ int KLAlgorithm(){
         recalcDv(0, 0, true);
 
         if (StoreData.back().Store) {
-            vSubK.push_back(lastbesti);
-            vCutset.push_back(External);
+            vSubK.push_back(ki);
+            vCutset.push_back((int)External);
             vGains.push_back(vTempG);
         }
 
-        cout << "\nIteration Number : " << iterations;
-        cout << "\tMax Gain : " << gmax;
+        if (gmax > 0) {
+            cout << "\n\tIteration Number : " << iterations;
+            cout << "\t\tMax Gain : " << gmax;
+            cout << "     \tNum Swaps : " << ki * 2 + 2;
+            cout << "     \tCur Cutset : " << External;
+        }
 
         //stop if there is no good i, or there is no positive gain, or max iterations went too high as a failsafe
-    } while (lastbesti >= 0 && gmax > 0 && iterations < maxiterations);
-
-
+    } while (ki >= 0 && gmax > 0 && iterations < maxiterations);
 
     if (StoreData.back().Store) {
         StoreData.back().Cutset = vCutset;
@@ -507,7 +514,7 @@ int KLAlgorithm(){
         StoreData.back().TimePassed.push_back({ "Calculating KL", timePassedMS(start) });
     }
 
-    cout << "\nCalc KL : " << timePassedMS(start) << " ms";
+    cout << "\n\tCalculating KL\t: " << timePassedMS(start) << " ms";
 
     return 1;
 }
@@ -601,14 +608,12 @@ int CleanUp() {
     vD.clear();
     vGroup.clear();
     vGroupTempSwap.clear();
-    vLocked.clear();
     vList.clear();
     vQueue.clear();
 
     vD.shrink_to_fit();
     vGroup.shrink_to_fit();
     vGroupTempSwap.shrink_to_fit();
-    vLocked.shrink_to_fit();
     vList.shrink_to_fit();
     vQueue.shrink_to_fit();
 
