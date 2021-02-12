@@ -112,8 +112,8 @@ int LoadFile(string szFilename) {
             stream.str("");
             stream.clear();
             stream << szline;
-            sscanf_s(stream.str().c_str(), "%d %d", &NetCol[j].first, &NetCol[j].second);
-            //stream >> NetCol[j].first >> NetCol[j].second;
+            //sscanf_s(stream.str().c_str(), "%d %d", &NetCol[j].first, &NetCol[j].second);
+            stream >> NetCol[j].first >> NetCol[j].second;
         }
 
         if (j != iNetSize) { //heckin someone lied to me
@@ -176,7 +176,7 @@ int SaveResults(string szFileNameSave) {
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Saving Results", timePassedMS(start) });
 
-    cout << "\n\tCutset size is\t: " << External;
+    cout << "\n\tCutset size is\t: " << External << "\n";
 
     return 1;
 }
@@ -647,7 +647,7 @@ int main(int argc, char* argv[]) {
     int iReturnVal = 1;
     bool flagAll = false;
 
-    unsigned int iteration = 0;
+    //unsigned int iteration = 0;
     unsigned int BenchType = 0;
     unsigned int BenchNum = 0;
 
