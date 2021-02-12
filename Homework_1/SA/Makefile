@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I. -g
+CFLAGS=-I. -g -Wall -Werror
 DEPS = SA_algorithm.hpp
 
 %.o: %.cpp $(DEPS)

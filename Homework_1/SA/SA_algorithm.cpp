@@ -6,53 +6,142 @@
 #include <chrono>
 #include <ctime>
 #include <random>
+#include <cmath>
 
 #include "SA_algorithm.hpp"
 
+// Add an edge to a node, if the edge already exist, increment by 1
+void Node::AddEdge(int to) {
+    auto it = m_edges.begin(); 
+    for(; it != m_edges.end(); it++) {
+        if((*it).to == to){
+            // If the node was already connected, increment the weight
+            (*it).weight++;
+            break;
+        }
+    }
+    if(it == m_edges.end()) {
+        // If the node wasn't already connected, add the node with weight 1
+        WeightedEdge newConnection;
+        newConnection.to = to;
+        newConnection.weight = 1;
+        m_edges.push_back(newConnection);
+    }
+}
+
+// Look up the edge weight between two nodes
+// If there is no edge, return 0
+int Node::getEdgeWeight(int toNode) {
+    int edgeWeight = 0;
+    for(auto it = m_edges.begin(); it != m_edges.end(); it++) {
+        if((*it).to == toNode) {
+            edgeWeight = (*it).weight;
+            break;
+        }
+    }
+    return edgeWeight;
+}
+
+void Solution::Initialize() {
+    int solutionLength = m_bitVector.size();
+    for (int i = 1; i < solutionLength; i++)
+    {
+        // Set the first half to 1
+        if (i < solutionLength/2 + 1) {
+            m_bitVector[i] = 1;
+        }
+        else {
+            m_bitVector[i] = 0;
+        }
+    }
+}
+
+void Solution::InitializeCost(vector<Node> * adjList) {
+    m_cost = 0;
+    for (int i = 1; i < (int) m_bitVector.size(); i++) {
+        // Sum the externality connection of edges in one set (doesn't matter which one)
+        if(m_bitVector[i]) {
+            Connectivity connectivity = CalculateConnectivity(i, adjList);
+            m_cost += connectivity.external;
+        }
+    }
+}
+
+Connectivity Solution::CalculateConnectivity(int from, vector<Node> * adjList) {
+    int externalConnectivity = 0;
+    int internalConnectivity = 0;
+    bool currentSet = m_bitVector[from];
+    for(auto it = (*adjList)[from].m_edges.begin(); it != (*adjList)[from].m_edges.end(); it++) {
+        if(m_bitVector[(*it).to] == currentSet) {
+            // Internal connectivity
+            internalConnectivity += (*it).weight;
+        }
+        else {
+            // External connectivity
+            externalConnectivity += (*it).weight;
+        }
+    }
+    return {externalConnectivity, internalConnectivity};
+}
+
+void Solution::AcceptSwap(int node1, int node2, int deltaCost, int * numAccepted) {
+    m_bitVector[node1] = !m_bitVector[node1];
+    m_bitVector[node2] = !m_bitVector[node2];
+    m_cost += deltaCost;
+    (*numAccepted)++;
+}
+
+void Solution::PrintSolution() {
+    cout << m_cost << endl;
+    for (size_t i = 1; i < m_bitVector.size(); i++) {
+        if(m_bitVector[i] == true) {
+            cout << i << " ";
+        }
+    }
+    cout << endl;
+    for (size_t i = 1; i < m_bitVector.size(); i++) {
+        if(m_bitVector[i] == false) {
+            cout << i << " ";
+        }
+    }
+    cout << endl;
+}
+
+
+// Construct a weighted bidirectional graph from a file name
 Graph::Graph(string fileName) {
     fstream fileStream;
 	fileStream.open(fileName, ios::in);
 
     fileStream >> m_nodes;
     fileStream >> m_edges;
+    if(m_nodes % 2) {
+        throw "Number of nodes is not even.";
+    }
 
     m_adjList.resize(m_nodes + 1); //index 0 is empty
-    m_solution.resize(m_nodes + 1);
+    m_solution.m_bitVector.resize(m_nodes + 1);
 
     int from, to;
     for(int i = 0; i < m_edges; i++){
         fileStream >> from;
         fileStream >> to;
-
         for (int mirror = 0; mirror < 2; mirror++) {
-            // Add the connection to the adjacency list
-            auto it = m_adjList[from].begin(); 
-            for(it; it != m_adjList[from].end(); it++) {
-                if((*it).to == to){
-                    // If the node was already connected, increment the weight
-                    (*it).weight++;
-                    break;
-                }
-            }
-
-            if(it == m_adjList[from].end()) {
-                // If the node wasn't already connected, add the node with weight 1
-                WeightedEdge newConnection;
-                newConnection.to = to;
-                newConnection.weight = 1;
-                m_adjList[from].push_back(newConnection);
-            }
+            m_adjList[from].AddEdge(to);
             swap(from, to); // symetric
         }
     }
     fileStream.close();
 }
 
+// Run simulated anealing on the graph
 void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep) {
-    InitializeSolution();
-    vector<bool> bestSolution = m_solution;
-    int bestCost = m_cost;
-    const float k = 5 / (0.69314718056 * initialTemperature); // Assumed a deltaCost of 10 and tried to get the limit to .5 at initialTemp/2
+    m_solution.Initialize();
+    m_solution.InitializeCost(& m_adjList);
+    Solution bestSolution = m_solution;
+    int bestCost = m_solution.getCost();
+    const float initialBoltzmanLimit = .99;
+    const float k = -1 / (log(initialBoltzmanLimit) * initialTemperature); // sets k s.t. the starting 
 
     // Using <random> just to try it out
     // https://www.youtube.com/watch?v=LDPMpc-ENqY this is a interesting talk about it
@@ -66,84 +155,52 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
 
     float temperature = initialTemperature;
     while(temperature > freezingTemperature) {
+        float boltzmanLimit = exp(-1/(k*temperature));
+        int numAccepted = 0;
         for (int i = 0; i < movesPerStep; i++) {
             int node1 = getRandomNode();
             int node2 = getRandomNode();
-            while(m_solution[node1] == m_solution[node2]) {
+            while(m_solution.m_bitVector[node1] == m_solution.m_bitVector[node2]) {
                 // Loop until selected nodes are part of opposite sets 
                 node2 = getRandomNode();
             }
             int deltaCost = CalculateDeltaCost(node1, node2);
 
             if (deltaCost < 0) {
-                AcceptSwap(node1, node2, deltaCost);
+                m_solution.AcceptSwap(node1, node2, deltaCost, &numAccepted);
             }
             else {
-                if (getRandomNormalized() <  0) { // FIXME currently greedy
-                    AcceptSwap(node1, node2, deltaCost);
+                if (getRandomNormalized() < pow(boltzmanLimit, deltaCost)) {
+                    // Probablistically accept increases in cost 
+                    m_solution.AcceptSwap(node1, node2, deltaCost, &numAccepted);
                 }
             }
 
-            if (m_cost < bestCost) {
+            if (m_solution.getCost() < bestCost) {
                 // Save best solution to date
-                bestCost = m_cost;
                 bestSolution = m_solution;
+                bestCost = m_solution.getCost();
             }
         }
+        float acceptProportion = (float)numAccepted / (float)movesPerStep;
+        m_log.LogStep(temperature, boltzmanLimit, acceptProportion, bestCost);
         temperature *= heatRetention;
     }
 
     // Revert to best found solution
-    m_cost = bestCost;
     m_solution = bestSolution;
 }
 
-void Graph::InitializeSolution() {
-    if(m_nodes % 2) {
-        throw "Number of nodes is not even.";
-    }
-    for (int i = 1; i < m_nodes; i++)
-    {
-        // Set the first half to 1
-        if (i < m_nodes/2 + 1) {
-            m_solution[i] = 1;
-        }
-        else {
-            m_solution[i] = 0;
-        }
-    }
-    InitializeCost();
-}
-
-void Graph::InitializeCost() {
-    m_cost = 0;
-    for (int i = 1; i < m_nodes; i++) {
-        // Sum the weights of edges in one set (doesn't matter which one)
-        if(m_solution[i]) {
-            for(auto it = m_adjList[i].begin(); it != m_adjList[i].end(); it++) {
-                m_cost += (*it).weight;
-            }
-        }
-    }
-}
-
 int Graph::CalculateDeltaCost(int node1, int node2) {
-    int pairwiseConnection = 0;
-    for(auto it = m_adjList[node1].begin(); it != m_adjList[node1].end(); it++) {
-        // Check if node1 and node2 are connected
-        if((*it).to == node2) {
-            pairwiseConnection = (*it).weight;
-        }
-    }
-    int gain = CalculateDisparity(node1) + CalculateDisparity(node2) - 2*pairwiseConnection;
+    int gain = CalculateDisparity(node1) + CalculateDisparity(node2) - 2*m_adjList[node1].getEdgeWeight(node2);
     return -gain; // Cost is inverse of gain
 }
 
 int Graph::CalculateDisparity(int node) {
-    bool currentSet = m_solution[node];
+    bool currentSet = m_solution.m_bitVector[node];
     int disparity = 0;
-    for(auto it = m_adjList[node].begin(); it != m_adjList[node].end(); it++) {
-        if(m_solution[(*it).to] == currentSet) {
+    for(auto it = m_adjList[node].m_edges.begin(); it != m_adjList[node].m_edges.end(); it++) {
+        if(m_solution.m_bitVector[(*it).to] == currentSet) {
             // Internal connectivity
             disparity -= (*it).weight;
         }
@@ -155,8 +212,17 @@ int Graph::CalculateDisparity(int node) {
     return disparity;
 }
 
-void Graph::AcceptSwap(int node1, int node2, int deltaCost) {
-    m_solution[node1] = !m_solution[node1];
-    m_solution[node2] = !m_solution[node2];
-    m_cost += deltaCost;
+void Log::LogStep(float temperature, float boltzmanLimit, float acceptProportion, int bestCost) {
+    m_temperatures.push_back(temperature);
+    m_boltzmanLimits.push_back(boltzmanLimit);
+    m_acceptProportions.push_back(acceptProportion);
+    m_bestCosts.push_back(bestCost);
+    m_points++;
+}
+
+void Log::PrintLog() {
+    for(int i = 0; i < m_points; i++) {
+        cout << "Iteration: " << i << " Temperature: " << m_temperatures[i] << " Boltzman Limit: " <<
+        m_boltzmanLimits[i] << " Proportion Accepted: " << m_acceptProportions[i] << " Best Cost: " << m_bestCosts[i] << endl;
+    }
 }
