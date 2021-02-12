@@ -60,9 +60,10 @@ public:
     int getEdgeWeight(int from, int to) {return m_adjList[from].getEdgeWeight(to);};
     int getCost() {return m_solution.getCost();};
     void PrintSolution() {m_solution.PrintSolution();};
+    void PrintLog() {m_log.PrintLog();};
+private:
     Log m_log;
     Solution m_solution;
-private:
     vector<Node> m_adjList;
     int m_nodes;
     int m_edges;

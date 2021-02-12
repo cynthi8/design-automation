@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I. -g -Wall -Werror
+CFLAGS=-I. -Wall -Werror -fno-omit-frame-pointer -g
 DEPS = SA_algorithm.hpp
 
 %.o: %.cpp $(DEPS)

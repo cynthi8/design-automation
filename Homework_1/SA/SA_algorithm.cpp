@@ -140,7 +140,7 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
     m_solution.InitializeCost(& m_adjList);
     Solution bestSolution = m_solution;
     int bestCost = m_solution.getCost();
-    const float initialBoltzmanLimit = .99;
+    const float initialBoltzmanLimit = .999;
     const float k = -1 / (log(initialBoltzmanLimit) * initialTemperature); // sets k s.t. the starting 
 
     // Using <random> just to try it out
