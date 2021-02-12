@@ -16,15 +16,13 @@
 #include <random>
 #include <numeric>
 #include <execution>
-//#include <climits>
-//#include <cstring> //c strings should be replaced with std::string
-
-#define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
 #include <limits>
 
 using namespace std;
 
-int LoadFile(string szFilename, int iLength);
+int LoadFile(string szFilename);
+int SaveResults(string szFileNameSave);
+int SaveDataAnalysis(string szFileNameSave);
 int SetupNetlist();
 int count2(vector<int>::iterator start, vector<int>::iterator end, int x);
 int recalcDv(int x, int y, bool wholelist);
@@ -32,7 +30,20 @@ int BestSwap(int iteration);
 int KLAlgorithm();
 int CleanUp();
 int timePassedMS(chrono::steady_clock::time_point start);
-string UserInput();
+
+struct DataAnalysis{
+    int NetSize;
+    int CellSize;
+    int CutsetF;
+    string Filename;
+    vector <pair <string, int>> TimePassed;
+    vector <int> Cutset;
+    vector <int> SubK;
+    vector <vector<int>> PairGains;
+};
+vector <DataAnalysis> StoreData;
+
+pair<unsigned int, unsigned int> UserInput();
 
 vector <int> A;                 //column 1 of textfile
 vector <int> B;                 //colume 2 of textfile
@@ -54,8 +65,8 @@ int iCellSize = 0;              //number of cells
 int iNetSize = 0;               //number of total connections between each cell
 
 // load the values from the file
-int LoadFile(string szFilename, int iLength) {
-    if (iLength <= 0) return -1;
+int LoadFile(string szFilename) {
+    if (szFilename.length() <= 0) return -1;
 
     ifstream myfile;
     string szline;
@@ -63,9 +74,6 @@ int LoadFile(string szFilename, int iLength) {
 
     auto start = chrono::steady_clock::now();
 
-    //const unsigned int N = 128;
-    //char Buffer[N];
-    //myfile.rdbuf()->pubsetbuf(Buffer, N);
     myfile.open(szFilename.c_str());
 
     //check if the file opened correctly
@@ -77,7 +85,6 @@ int LoadFile(string szFilename, int iLength) {
             stream.clear();
             stream << szline;
             stream >> iCellSize;
-            //iCellSize = stoi(szline, nullptr, 0);
         }
 
         if (getline(myfile, szline)) {
@@ -85,7 +92,6 @@ int LoadFile(string szFilename, int iLength) {
             stream.clear();
             stream << szline;
             stream >> iNetSize;
-            //iNetSize = stoi(szline, nullptr, 0);
         }
 
         cout << "\nCellsize is : " << iCellSize;
@@ -99,7 +105,6 @@ int LoadFile(string szFilename, int iLength) {
         else return -1;
 
         //add each number from the file to the corresponding column vector
-        //lol for some reason this is taking so much time, but maybe a debug only problem?
         int j;
         for (j = 0; j < iNetSize && getline(myfile, szline, '\n'); j++) {
             int a = 0, b = 0;
@@ -120,15 +125,130 @@ int LoadFile(string szFilename, int iLength) {
             B.shrink_to_fit();
         }
 
+        StoreData.back().CellSize = iCellSize;
+        StoreData.back().NetSize = iNetSize;
+
         myfile.close();
     }
     else {
         return -1;
     }
 
-    cout << "\n\nLoading : " << timePassedMS(start) << " ms";
+    cout << "\n\nLoading Data : " << timePassedMS(start) << " ms";
+    StoreData.back().TimePassed.push_back({ "Loading Data", timePassedMS(start) });
+    return 1;
+}
 
-    return iLength;
+// This is used to save the results
+int SaveResults(string szFileNameSave) {
+    if (szFileNameSave.length() <= 0) return -1;
+
+    auto start = chrono::steady_clock::now();
+    ofstream myfile;
+    myfile.open(szFileNameSave.c_str());
+
+    // calculate how many external wires are being cut
+    int external = 0;
+    for (int i = 0; i < iCellSize; i++) {
+        for (unsigned int j = 0; j < vList[i].size(); j++)
+            if (vGroup[vList[i][j]] ^ vGroup[i])
+                external++;
+    }
+
+    //divide external wires by 2 since they are counted twice
+    external /= 2;
+    StoreData.back().CutsetF = external;
+
+    if (myfile.is_open()) {
+        myfile << external << "\n";
+
+        //cout << "\nGroup A is : ";
+        for (int i = 0; i < iCellSize; i++)
+            if (vGroup[i] == 0)
+                myfile << i + 1 << " ";
+
+        myfile << "\n";
+
+        //cout << "\nGroup B is : ";
+        for (int i = 0; i < iCellSize; i++)
+            if (vGroup[i] == 1)
+                myfile << i + 1 << " ";
+
+        myfile.close();
+    }
+    else {
+        cout << "\nUnable to open" << szFileNameSave;
+        return -1;
+    }
+
+    cout << "\nSaving Results : " << timePassedMS(start) << " ms";
+    StoreData.back().TimePassed.push_back({ "Saving Results", timePassedMS(start) });
+
+    cout << "\nCutset size is : " << external;
+
+    return 1;
+}
+
+// This is used to save the results
+int SaveDataAnalysis(string szFileNameSave) {
+    if (szFileNameSave.length() <= 0) return -1;
+
+    remove(szFileNameSave.c_str());
+
+    ofstream myfile;
+    myfile.open(szFileNameSave.c_str());
+
+    /*
+    struct DataAnalysis{
+        string Filename;
+        vector <pair <string, int>> TimePassed;
+        vector <int> Cutset;
+        vector <int> SubK;
+        vector <vector<int>> PairGains;
+    };
+    */
+    //StoreData
+
+    if (myfile.is_open()) {
+        for (unsigned int i = 0; i < StoreData.size(); i++) {
+            myfile << "\nFileName," << StoreData[i].Filename;
+            myfile << "\nCellSize," << StoreData[i].CellSize;
+            myfile << "\nNetSize," << StoreData[i].NetSize;
+            myfile << "\nFinal Cutset," << StoreData[i].CutsetF;
+
+            for (unsigned int j = 0; j < StoreData[i].TimePassed.size(); j++) {
+                myfile << "\n" << StoreData[i].TimePassed[j].first << "," << StoreData[i].TimePassed[j].second << ",ms";
+            }
+            myfile << "\niteration,Cutset Data,Subqueue Length Data";
+            for (unsigned int j = 0; j < StoreData[i].Cutset.size(); j++) {
+                myfile << "\n" << j << "," << StoreData[i].Cutset[j] << "," << StoreData[i].SubK[j];
+            }
+ 
+            myfile << "\nPairwise Gains";
+            myfile << "\niterations,";
+            for (unsigned int j = 0; j < StoreData[i].PairGains.size(); j++) {
+                myfile << j << ",";
+            }
+ 
+            for (unsigned int j = 0; j < StoreData[i].CellSize / 2; j++) {
+                myfile << "\n";
+                for (unsigned int k = 0; k < StoreData[i].PairGains.size(); k++) {
+                    myfile << "," << StoreData[i].PairGains[k][j];
+                }
+            }
+
+            myfile << "\n\n";
+        }
+   
+        myfile.close();
+    }
+    else {
+        cout << "\nUnable to open" << szFileNameSave;
+        return -1;
+    }
+
+
+    return 1;
 }
 
 // I suppose try and setup a sparse matrix with the netlist
@@ -172,7 +292,7 @@ int SetupNetlist() {
     recalcDv(0, 0, true);
 
     cout << "\nSetting Up : " << timePassedMS(start) << " ms";
-
+    StoreData.back().TimePassed.push_back({ "Setting Up Netlist", timePassedMS(start) });
     return 1;
 }
 
@@ -187,7 +307,6 @@ int count2(vector<int>::iterator start, vector<int>::iterator end, int x)
 
     return upper_bound(low, end, x) - low;
 }
-
 
 //which is how many external connects - internal connections
 int recalcDv(int x, int y, bool wholelist) {
@@ -224,12 +343,9 @@ int recalcDv(int x, int y, bool wholelist) {
 }
 
 // function to sort a 2D vector with column 0
-bool sortcol(const vector<int>& v1,
-    const vector<int>& v2) {
+bool sortcol(const vector<int>& v1, const vector<int>& v2) {
     return v1[0] > v2[0];
 }
-
-
 
 // hard end stuff I suppose
 int BestSwap(int iteration) {
@@ -314,9 +430,15 @@ int KLAlgorithm(){
     
     vLockedUnsorted.resize(iCellSize);
 
+    vector <int> vSubK;
+    vector <int> vCutset;
+    vector <vector<int>> vGains;
+    vector <int> vTempG;
+
     auto start = chrono::steady_clock::now();
 
     do {
+        vTempG.resize(0);
         long long g = 0;
         iterations++;
         lastbesti = -1;
@@ -336,16 +458,16 @@ int KLAlgorithm(){
         // and keeps track of the max of the sums of the gain
         // dividing by 4 instead of 2 gives a speed boost but maybe only for small cellsizes < 100k
         for (int i = 0; i < iCellSize / 2; i++) {
-            g += BestSwap(i);
+            int gt = BestSwap(i);
+            g += gt;
+            vTempG.push_back(gt);
+
             if (g > gmax) { 
                 gmax = g;
                 lastbesti = i;
             }
         }
         
-        cout << "\nIteration Number : " << iterations;
-        cout << "\tBest Gain : " << gmax;
-
         // do the swapping
         for (int i = 0; i <= lastbesti && gmax > 0; i++) {
             int Anum = vQueue[i][0];
@@ -358,102 +480,119 @@ int KLAlgorithm(){
         vGroupTempSwap = vGroup;
         recalcDv(0, 0, true);
 
+        int external = 0;
+        for (int i = 0; i < iCellSize; i++) {
+            for (unsigned int j = 0; j < vList[i].size(); j++)
+                if (vGroup[vList[i][j]] ^ vGroup[i])
+                    external++;
+        }
+
+        //divide external wires by 2 since they are counted twice
+        external /= 2;
+        vSubK.push_back(lastbesti);
+        vCutset.push_back(external);
+        vGains.push_back(vTempG);
+        cout << "\nIteration Number : " << iterations;
+        cout << "\tMax Gain : " << gmax;
+
         //stop if there is no good i, or there is no positive gain, or max iterations went too high as a failsafe
     } while (lastbesti >= 0 && gmax > 0 && iterations < maxiterations);
 
+    StoreData.back().Cutset = vCutset;
+    StoreData.back().SubK = vSubK;
+    StoreData.back().PairGains = vGains;
+
+    StoreData.back().TimePassed.push_back({ "Calculating KL", timePassedMS(start) });
     cout << "\nCalc KL : " << timePassedMS(start) << " ms";
-
-    // calculate how many external wires are being cut
-    int external = 0;
-    for (int i = 0; i < iCellSize; i++) {
-        for (unsigned int j = 0; j < vList[i].size(); j++)
-            if (vGroup[vList[i][j]] ^ vGroup[i])
-                external++;
-    }
-
-    cout << "\n\nCutset size is : " << external / 2; //divide external wires by 2 since they are counted twice
-    
-    cout << "\nDo you want to see all of A and B\nType 1 Here for yes : "; 
-
-    int iReturnVal; cin >> iReturnVal;
-    if (iReturnVal == 1) {
-        cout << "\nGroup A is : ";
-        for (int i = 0; i < iCellSize; i++)
-            if (vGroup[i] == 0)
-                cout << i + 1 << " ";
-
-        cout << "\nGroup B is : ";
-        for (int i = 0; i < iCellSize; i++)
-            if (vGroup[i] == 1)
-                cout << i + 1 << " ";
-    }
 
     return 1;
 }
 
-// premade file names, assumes there is a folder with the name dev_net in the same location as the .exe
-// Should this be a vector of strings? Best to stay with C++ data types than revert to arrays of char*
-// It should be a vector of strings, but I was just used to using arrays of chars
-const vector<string> szfilename = {
-"development_netlists/bench_2.net",
-"development_netlists/bench_4.net",
-"development_netlists/bench_6.net",
-"development_netlists/bench_11.net",
-"development_netlists/bench_12.net",
-"development_netlists/bench_16.net",
+// Premade file names, assumes there is a folder with the name dev_net in the same location as the .exe
+const vector <string> paths = {
+    "development_netlists/",
+    "Benchmarks/" 
+};
+const vector <string> szFileNameUse0 = {
+    "All Dev Benches",
+    "bench_2.net",
+    "bench_4.net",
+    "bench_6.net",
+    "bench_11.net",
+    "bench_12.net",
+    "bench_16.net",
+};
+const vector <string> szFileNameUse1 = {
+    "All Benchmarks",
+    "b_100_500",
+    "b_500_20000",
+    "b_1000_20000",
+    "b_10000_100000",
+    "b_50000_400000",
+    "b_100000_500000",
+    "b_100000_2000000",
+    "b_200000_2000000",
+    "b_250000_1000000",
+    "b_500000_3000000",
+};
+const vector <vector<string>> szAllFileNamesUse = { 
+    szFileNameUse0, 
+    szFileNameUse1 
+};
+const vector <string> szFileNameSave0 = {
+    "",
+    "r_bench_2.net",
+    "r_bench_4.net",
+    "r_bench_6.net",
+    "r_bench_11.net",
+    "r_bench_12.net",
+    "r_bench_16.net",
+};
+const vector <string> szFileNameSave1 = {
+    "",
+    "r_100_500",
+    "r_500_20000",
+    "r_1000_20000",
+    "r_10000_100000",
+    "r_50000_400000",
+    "r_100000_500000",
+    "r_100000_2000000",
+    "r_200000_2000000",
+    "r_250000_1000000",
+    "r_500000_3000000",
+};
+const vector <vector<string>> szAllFileNamesSave = { 
+    szFileNameSave0, 
+    szFileNameSave1 
 };
 
-const vector<string> szfilename2 = {
-"Benchmarks/b_100_500",
-"Benchmarks/b_500_20000",
-"Benchmarks/b_1000_20000",
-"Benchmarks/b_10000_100000",
-"Benchmarks/b_50000_400000",
-"Benchmarks/b_100000_500000",
-"Benchmarks/b_100000_2000000",
-"Benchmarks/b_200000_2000000",
-"Benchmarks/b_250000_1000000",
-"Benchmarks/b_500000_3000000",
-};
+// Ask the user if they want to choose which netlist to use
+pair<unsigned int, unsigned int> UserInput() {
+    unsigned int BenchNum = 0;
+    unsigned int BenchType = 0;
 
-
-// ask the user if they want to choose which netlist to use
-// updated to use strings
-string UserInput() {
-    unsigned int i = 0;
-    int iReturnVal = 0;
-    vector<string> szusestring;
-
-    cout << "\nType 1 to choose from premade benches: ";
-    cout << "\nType 2 to choose from HW Benchmarks: ";
-
+    cout << "\nType 0 to choose from premade benches: ";
+    cout << "\nType 1 to choose from HW Benchmarks: ";
     cout << "\nType here: ";
-    cin >> iReturnVal;
+    cin >> BenchType;
 
-    switch (iReturnVal) {
-        case 1:
-            szusestring = szfilename;
-            break;
-        case 2:
-            szusestring = szfilename2;
-            break;
-        default:
-            return szfilename2[0];
-    }
+    if (BenchType > szAllFileNamesUse.size())
+        BenchType = 1;
 
-    for (unsigned int j = 0; j < szusestring.size(); j++) {
-        cout << "\nType " << j << " to use " << szusestring[j];
+    for (unsigned int j = 0; j < szAllFileNamesUse[BenchType].size(); j++) {
+        cout << "\nType " << j << " to use " << szAllFileNamesUse[BenchType][j];
     }
 
     cout << "\nType here: ";
-    cin >> i;
+    cin >> BenchNum;
 
-    if (i < 0 || i > szusestring.size()) i = 0;
+    if (BenchNum > szAllFileNamesUse[BenchType].size())
+        BenchNum = 1;
 
-    return szusestring[i];
+    return { BenchType, BenchNum };
 }
 
-// clean up memory
+// Clean up memory
 int CleanUp() {
     vD.clear();
     vGroup.clear();
@@ -484,41 +623,65 @@ int CleanUp() {
     tempCheck.shrink_to_fit();
     vLockedUnsorted.shrink_to_fit();
 
+    StoreData.clear();
+    StoreData.shrink_to_fit();
+
     return 1;
 }
 
+// Helper function for time passed
 int timePassedMS(chrono::steady_clock::time_point start) {
     auto end = chrono::steady_clock::now();
     return chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
-// entry point for code
+// Entry point for code
 int main(int argc, char* argv[]) {
+    unsigned int iteration = 0;
     int iReturnVal = 1;
-    int iteration = 0;
+    bool flagAll = false;
+
+    unsigned int BenchType = 0;
+    unsigned int BenchNum = 0;
 
     vector<string> vargv(argv, argv + argc);
-    string szfilenameUse;
-    //ios::sync_with_stdio(false); //This may speed up reading file functions
+    string szfilenameUse = "";
+    string szfilenameSave = "";
+    
 
     do {
-        if(argc == 1){
-            szfilenameUse = UserInput();
+        StoreData.push_back(DataAnalysis());
+        if (flagAll) {
+            if (++BenchNum >= szAllFileNamesUse[BenchType].size()) break;
+            szfilenameUse = paths[BenchType] + szAllFileNamesUse[BenchType][BenchNum];
+            szfilenameSave = paths[BenchType] + szAllFileNamesSave[BenchType][BenchNum];
         }
-        else if (iteration++ < argc) {
-           //Automatically go thru all agruments passed into main
-           szfilenameUse = vargv[iteration];
-        }
-        else {
-            break;
-        }
+        else if (argc == 1) {
+            auto [BT, BN] = UserInput();
+            BenchType = BT;
+            BenchNum = BN;
 
-        int iFileLength = szfilenameUse.length();
+            if (BenchNum == 0) {
+                flagAll = true;
+                BenchNum++;
+            }
+
+            szfilenameUse = paths[BenchType] + szAllFileNamesUse[BenchType][BenchNum];
+            szfilenameSave = paths[BenchType] + szAllFileNamesSave[BenchType][BenchNum];
+        }
+        else if (argc == 3) {
+            szfilenameUse = vargv[1];
+            szfilenameSave = vargv[2];
+            iReturnVal = -1;
+        }
+        else break;
+
+        StoreData.back().Filename = szfilenameUse;
 
         cout << "\n\nUsing bench: " << szfilenameUse;
 
         //First step is to load the file
-        if (LoadFile(szfilenameUse, iFileLength) < 0) {         
+        if (LoadFile(szfilenameUse) < 0) {
             printf("\nError: File is not able to be opened");
             goto Error;
         }
@@ -529,16 +692,30 @@ int main(int argc, char* argv[]) {
         //Then implement the KL algorithm
         if (KLAlgorithm() < 0) goto Error;
 
+        //Save the Results
+        if (SaveResults(szfilenameSave) < 0) goto Error;
+
+        //Save the Results
+        if (SaveDataAnalysis(szfilenameSave + "DataAnalysis.csv") < 0) goto Error;
+
         //go ahead and clean up the memory
         CleanUp(); 
-        
-        if (argc == 1) {
+
+        if (argc == 1 && !flagAll) {
             cout << "\nWould you like to repeat? Type 0 for no: ";
             cin >> iReturnVal;
         }
 
-        //cout << "\f"; // want to clear terminal maybe
-    } while (iReturnVal > 0 && iteration <= argc);
+    } while (iReturnVal > 0 && BenchNum < szAllFileNamesUse[BenchType].size());
+
+    /*
+    if (flagAll) {
+        SaveDataAnalysis(paths[BenchType] + "DataAnal.csv");
+    }
+    */
+
+    cout << "\nPress any key to exit..."; 
+    cin.get();
 
     Error:
     CleanUp();
