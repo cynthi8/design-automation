@@ -19,7 +19,6 @@ struct SA_Parameters {
     float initialTemperature;
     float freezingTemperature;
     float heatRetention;
-    int movesPerStep;
 };
 
 vector<Netlist> devNetlists {
@@ -50,19 +49,6 @@ int MilisecondsPassed(chrono::system_clock::time_point start) {
     return chrono::duration_cast<chrono::milliseconds>(end - start).count();
 }
 
-Performance TestNetlist(Netlist netlist, SA_Parameters parameters) {
-    auto start = chrono::system_clock::now();
-    Graph myGraph(netlist.fileName);
-    myGraph.SimulatedAnealing(
-        parameters.initialTemperature,
-        parameters.freezingTemperature,
-        parameters.heatRetention,
-        parameters.movesPerStep
-    );
-    int msPassed = MilisecondsPassed(start);
-    return {myGraph.getCost(), msPassed};
-};
-
 void PrintPerformance(Netlist netlist, Performance performance) {
     cout << netlist.fileName << 
     ": Optimal Cost = " << netlist.optimalCost <<
@@ -82,52 +68,33 @@ void TestGraph() {
     }
 }
 
-void TestAllDevSA() {
-    for(auto it = devNetlists.begin(); it != devNetlists.end(); it++) {
-        Netlist netlist = (*it);
-        auto start = chrono::system_clock::now();
-        Graph myGraph(netlist.fileName);
-        myGraph.SimulatedAnealing(
-            40000,
-            1,
-            .95,
-            myGraph.getNodes()*10
-        );
-        int msPassed = MilisecondsPassed(start);
-        Performance performance {myGraph.getCost(), msPassed};
-        PrintPerformance(netlist, performance);
-        myGraph.PrintLogToFile(netlist.fileName + ".log");
-        myGraph.PrintSolutionToFile(netlist.fileName + ".solution");
-    }
+void TestNetlist(Netlist netlist) {
+    auto start = chrono::system_clock::now();
+    Graph myGraph(netlist.fileName);
+    myGraph.SimulatedAnealing(
+        20000,
+        .1,
+        .975,
+        myGraph.getNodes()*10
+    );
+    int msPassed = MilisecondsPassed(start);
+    Performance performance {myGraph.getCost(), msPassed};
+    PrintPerformance(netlist, performance);
+    myGraph.PrintLogToFile(netlist.fileName + ".log");
+    myGraph.PrintSolutionToFile(netlist.fileName + ".solution");
 }
 
-void TestAllBenchSA() {
-    for(auto it = benchNetlists.begin(); it != benchNetlists.end(); it++) {
-        Netlist netlist = (*it);
-        auto start = chrono::system_clock::now();
-        Graph myGraph(netlist.fileName);
-        myGraph.SimulatedAnealing(
-            40000,
-            1,
-            .95,
-            myGraph.getNodes()*10
-        );
-        int msPassed = MilisecondsPassed(start);
-        Performance performance {myGraph.getCost(), msPassed};
-        PrintPerformance(netlist, performance);
-        myGraph.PrintLogToFile(netlist.fileName + ".log");
+void TestNetlistVector(vector<Netlist> & netlists) {
+    for(auto it = netlists.begin(); it != netlists.end(); it++) {
+        TestNetlist(*it);
     }
 }
 
 int main() {
     //TestGraph();
-    TestAllDevSA();
-    TestAllBenchSA();
-
-
-    //Netlist netlist = benchNetlists[9];
-    //Performance performance = TestNetlist(netlist, {10000, 1, .999, 1000});
-    //PrintPerformance(netlist, performance);  
+    TestNetlistVector(devNetlists);
+    //TestNetlist(benchNetlists[3]);
+    TestNetlistVector(benchNetlists);
 
     return 0;
 }
