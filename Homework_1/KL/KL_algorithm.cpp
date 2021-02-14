@@ -1,6 +1,6 @@
 // HW1.cpp : KL Function
 // VLSI Design: HW1
-// Date: 2021-02-04
+// Date: 2021-02-12
 // Created by: Nathaniel Hernandez
 // Group: Nathaniel Hernandez; Erin Cold
 
@@ -32,6 +32,8 @@ int CleanUp();
 int timePassedMS(chrono::steady_clock::time_point start);
 pair<unsigned int, unsigned int> UserInput();
 
+// Don't know how large these variables will become. 
+// Don't want them to become too large inside the functions
 struct DataAnalysis{
     bool Store;
     int NetSize;
@@ -57,8 +59,8 @@ vector <bool> vLockedUnsorted;  //Based on sortedvD, which unsorts it
 vector <vector<int>> vList;     //a list of what cells a cell is connected to
 vector <pair<int, int>> vQueue; //queue of cells to switch
 
-vector <int> OriginalIndex;
-vector <vector<int>> sortedvD;
+vector <int> OriginalIndex;     //Just a vector from 0 to iCellSize, might be redundant now
+vector <vector<int>> sortedvD;  //Sorted D values with corresponding original indices
 
 int iCellSize = 0;              //number of cells
 int iNetSize = 0;               //number of total connections between each cell
@@ -112,11 +114,14 @@ int LoadFile(string szFilename) {
             stream.str("");
             stream.clear();
             stream << szline;
+            //following doesn't work on linux lol
             //sscanf_s(stream.str().c_str(), "%d %d", &NetCol[j].first, &NetCol[j].second);
             stream >> NetCol[j].first >> NetCol[j].second;
         }
 
-        if (j != iNetSize) { //heckin someone lied to me
+        // somehow the netsize is wrong 
+        // assumes the cellsize is always right
+        if (j != iNetSize) { 
             iNetSize = j;
             NetCol.resize(iNetSize);
             NetCol.shrink_to_fit();
@@ -140,6 +145,7 @@ int LoadFile(string szFilename) {
 }
 
 // This is used to save the results
+// Similar format as above Loadfile function
 int SaveResults(string szFileNameSave) {
     if (szFileNameSave.length() <= 0) return -1;
 
@@ -150,16 +156,17 @@ int SaveResults(string szFileNameSave) {
     StoreData.back().CutsetF = (int) External;
 
     if (myfile.is_open()) {
+        //Cutsize
         myfile << External << "\n";
 
-        //Group A
+        //First Group
         for (int i = 0; i < iCellSize; i++)
             if (vGroup[i] == 0)
                 myfile << i + 1 << " ";
 
         myfile << "\n";
 
-        //Group B
+        //Second Group
         for (int i = 0; i < iCellSize; i++)
             if (vGroup[i] == 1)
                 myfile << i + 1 << " ";
@@ -167,7 +174,7 @@ int SaveResults(string szFileNameSave) {
         myfile.close();
     }
     else {
-        cout << "\nUnable to open" << szFileNameSave;
+        cout << "\nUnable to open " << szFileNameSave;
         return -1;
     }
 
@@ -176,12 +183,12 @@ int SaveResults(string szFileNameSave) {
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Saving Results", timePassedMS(start) });
 
-    cout << "\n\tCutset size is\t: " << External << "\n";
+    cout << "\n\tCutset size is\t: " << External;
 
     return 1;
 }
 
-// This is used to save the results
+// This is used to save the analysis
 int SaveDataAnalysis(string szFileNameSave) {
     if (szFileNameSave.length() <= 0) return -1;
 
@@ -191,26 +198,34 @@ int SaveDataAnalysis(string szFileNameSave) {
     myfile.open(szFileNameSave.c_str());
 
     if (myfile.is_open()) {
+        // In a loop since I originally intended to save all the data and store it in one csv file
+        // in retrospect probably a bad idea
         for (unsigned int i = 0; i < StoreData.size(); i++) {
+            // Basic Info
             myfile << "\nFileName," << StoreData[i].Filename;
             myfile << "\nCellSize," << StoreData[i].CellSize;
             myfile << "\nNetSize," << StoreData[i].NetSize;
             myfile << "\nFinal Cutset," << StoreData[i].CutsetF;
 
+            // Save the timing info per major func
             for (unsigned int j = 0; j < StoreData[i].TimePassed.size(); j++) {
                 myfile << "\n" << StoreData[i].TimePassed[j].first << "," << StoreData[i].TimePassed[j].second << ",ms";
             }
+
+            // Save the cutset and subqueue data
             myfile << "\niteration,Cutset Data,Subqueue Length Data";
             for (unsigned int j = 0; j < StoreData[i].Cutset.size(); j++) {
                 myfile << "\n" << j << "," << StoreData[i].Cutset[j] << "," << StoreData[i].SubK[j];
             }
  
+            // Save all of the gains from each iteration
             myfile << "\nPairwise Gains";
             myfile << "\niterations,";
             for (unsigned int j = 0; j < StoreData[i].PairGains.size(); j++) {
                 myfile << j << ",";
             }
- 
+            
+            // Saving in the csv format, also had to switch rows and columns because of size limits
             for (int j = 0; j < StoreData[i].CellSize / 2; j++) {
                 myfile << "\n";
                 for (unsigned int k = 0; k < StoreData[i].PairGains.size(); k++) {
@@ -246,6 +261,7 @@ int SetupNetlist() {
         vGroup[i] = 1; // Group A = 1, Group B = 0
     }
 
+    // Tried different random number generators. The seed is the current time
     long unsigned int seed = (long unsigned int) std::chrono::system_clock::now().time_since_epoch().count();
     //std::default_random_engine randeng(seed);
     //shuffle(vGroup.begin(), vGroup.end(), randeng); //now shuffle the vector
@@ -264,10 +280,11 @@ int SetupNetlist() {
         vList[NetCol[i].second - 1].push_back(NetCol[i].first - 1);
     }
 
+    // Netcol has finished its job, go ahead and clear its memory
     NetCol.clear();
     NetCol.shrink_to_fit();
 
-    //Go ahead and sort the list, which may be useful later
+    // Go ahead and sort each vector for each cell, which may be useful later
     for (int i = 0; i < iCellSize; i++) {
         sort(vList[i].begin(), vList[i].end());
     }
@@ -278,6 +295,7 @@ int SetupNetlist() {
     recalcDv(0, 0, true);
 
     cout << "\n\tSetting Up Net\t: " << timePassedMS(start) << " ms";
+    cout << "\n\tSeed\t\t: " << seed;
 
     if (StoreData.back().Store)
         StoreData.back().TimePassed.push_back({ "Setting Up Netlist", timePassedMS(start) });
@@ -286,6 +304,7 @@ int SetupNetlist() {
 }
 
 // This is a modified binary search algorithm for vectors
+// Was used a lot more in the first iteration of this program
 int count2(vector<int>::iterator start, vector<int>::iterator end, int x)
 {
     vector<int>::iterator low;
@@ -300,7 +319,8 @@ int count2(vector<int>::iterator start, vector<int>::iterator end, int x)
 //which is how many external connects - internal connections
 int recalcDv(int x, int y, bool wholelist) {
 
-    if (wholelist) { //Manually create the first D list
+    //Manually create the first D list
+    if (wholelist) { 
         External = 0;
 
         for (int i = 0; i < iCellSize; i++) {
@@ -309,22 +329,27 @@ int recalcDv(int x, int y, bool wholelist) {
                 if (vGroupTempSwap[j] ^ vGroupTempSwap[i])
                     extcells++;
 
+            //go ahead and save the total external wires
             External += extcells;
-
-            /*
-            if (extcells > numeric_limits<int>::max()/2 || External > numeric_limits<int>::max()/2) {
-                int test = 1;
-                cout << "\n\tUh Oh Error Boi\n";
-            }
-            */
 
             vD[i] = ((int) extcells) * 2 - vList[i].size(); //ex - ((total - ex)=internal)
         }
 
-        External /= 2;
+        External /= 2; //divide by 2 since they are counted twice
     } 
-
+    // Update the D list for only the modified values
     else {
+        for (auto num : vList[x]) {
+            int xa = (vGroupTempSwap[num] == vGroupTempSwap[x]) ? -1 : 1;
+            vD[num] = vD[num] + 2 * xa;
+        }
+
+        for (auto num : vList[y]) {
+            int ya = (vGroupTempSwap[num] == vGroupTempSwap[y]) ? -1 : 1;
+            vD[num] = vD[num] + 2 * ya;
+        }
+
+        /*
         for (unsigned int i = 0; i < vList[x].size(); i++) {
             int num = vList[x][i];
             int xa = (vGroupTempSwap[num] == vGroupTempSwap[x]) ? -1 : 1;
@@ -336,6 +361,7 @@ int recalcDv(int x, int y, bool wholelist) {
             int yb = (vGroupTempSwap[num] == vGroupTempSwap[y]) ? -1 : 1;
             vD[num] = vD[num] + 2 * yb;
         }
+        */
         //these might actually be unnecessary since they become locked anyways
         vD[x] = -vD[x] + count2(vList[x].begin(), vList[x].end(), y); 
         vD[y] = -vD[y] + count2(vList[y].begin(), vList[y].end(), x);
@@ -349,7 +375,7 @@ bool sortcol(const vector<int>& v1, const vector<int>& v2) {
     return v1[0] > v2[0];
 }
 
-// hard end stuff I suppose
+// This function is to find the best swap for the current D list
 long long BestSwap(int iteration) {
 
     long long iGainTempMax = numeric_limits<long long>::min();
@@ -362,6 +388,7 @@ long long BestSwap(int iteration) {
 
     //vector <int>::iterator it = OriginalIndex.begin();
 
+    // iterate thru sorted d list
     for (int ia = indexi; ia < iCellSize; ia++) {
         if (vLockedUnsorted[ia]) { //if the cell is locked, then skip
             continue; 
@@ -442,10 +469,12 @@ int KLAlgorithm(){
     vector <vector<int>> vGains;
     vector <int> vTempG;
    
-
     auto start = chrono::steady_clock::now();
 
-    do {
+
+
+    //do loop since we don't know how many iterations will be required
+    do { 
         if (StoreData.back().Store)
             vTempG.resize(0);
 
@@ -456,20 +485,25 @@ int KLAlgorithm(){
 
         fill(vLockedUnsorted.begin(), vLockedUnsorted.end(), false);
 
-        //link these two so when you sort them they are sorted auto
+        //link these two so when you sort the D list, it keeps the original index
         for (int i = 0; i < iCellSize; i++) { 
             sortedvD[i] = { vD[i] , OriginalIndex[i] };
         }
 
-        //how the heck do I sort a 2d vector based on a row instead of a column
+        //how do I sort a 2d vector based on a row instead of a column
         //sort(std::execution::par_unseq, sortedvD.begin(), sortedvD.end(), sortcol);
         sort(sortedvD.begin(), sortedvD.end(), sortcol);
 
 
-        // This function is the one that chooses the best pair and calculates their gain 
+        // This loop is the one that chooses the best pair and calculates their gain 
         // and keeps track of the max of the sums of the gain
         for (int i = 0; i < iCellSize / 2; i++) {
-            long long gt = BestSwap(i); g += gt;
+            long long gt = BestSwap(i); 
+
+            if (gt < numeric_limits<long long>::min() + 1)
+                break;
+
+            g += gt;
 
             if (StoreData.back().Store)
                 vTempG.push_back((int)gt);
@@ -480,14 +514,14 @@ int KLAlgorithm(){
             }
         }
 
-        // do the swapping
+        // Do the swapping up to K from the subqueue
         for (int i = 0; i <= ki && gmax > 0; i++) {
             auto [Anum, Bnum] = vQueue[i];
             vGroup[Anum] = !vGroup[Anum];
             vGroup[Bnum] = !vGroup[Bnum];
         }
 
-        // recalculate the entire Dv list;
+        // recalculate the entire Dv list instead of trying to calc; its easier
         vGroupTempSwap = vGroup;
         recalcDv(0, 0, true);
 
@@ -504,7 +538,7 @@ int KLAlgorithm(){
             cout << "     \tCur Cutset : " << External;
         }
 
-        //stop if there is no good i, or there is no positive gain, or max iterations went too high as a failsafe
+        //stop if there is no good K length, or there is no positive gain, or max iterations went too high as a failsafe
     } while (ki >= 0 && gmax > 0 && iterations < maxiterations);
 
     if (StoreData.back().Store) {
@@ -519,7 +553,8 @@ int KLAlgorithm(){
     return 1;
 }
 
-// Premade file names, assumes there is a folder with the name dev_net in the same location as the .exe
+// Premade file names, assumes there is are folders with the path names in the same location as the .exe
+// Otherwise you can pipe in arguments from the command line manually
 const vector <string> paths = {
     "development_netlists/",
     "Benchmarks/" 
@@ -577,7 +612,7 @@ const vector <vector<string>> szAllFileNamesSave = {
     szFileNameSave1 
 };
 
-// Ask the user if they want to choose which netlist to use
+// Ask the user if they want to choose which netlist to use if no additional arguments were made
 pair<unsigned int, unsigned int> UserInput() {
     unsigned int BenchNum = 0;
     unsigned int BenchType = 0;
@@ -603,7 +638,7 @@ pair<unsigned int, unsigned int> UserInput() {
     return { BenchType, BenchNum };
 }
 
-// Clean up memory
+// Clean up memory between runs
 int CleanUp() {
     vD.clear();
     vGroup.clear();
@@ -657,8 +692,11 @@ int main(int argc, char* argv[]) {
 
     do {
         StoreData.resize(1);
-        StoreData.back().Store = false; //don't overwrite data because we've already saved them, also this bloats the memory
+        // Set to false so you don't overwrite data that we've already saved them, also this bloats the memory
+        // This has to be manually changed in the source code and then compiled
+        StoreData.back().Store = false; 
 
+        // If there were no additional arguments, then ask the user from the premade lists for convience
         if (argc == 1) {
             if (flagAll) {
                 if (++BenchNum >= szAllFileNamesUse[BenchType].size()) 
@@ -676,6 +714,7 @@ int main(int argc, char* argv[]) {
             szfilenameSave = paths[BenchType] + szAllFileNamesSave[BenchType][BenchNum];
         }
         else if (argc == 3) {
+            // If there were additional arguments, use them
             szfilenameUse = vargv[1];  //what file to load
             szfilenameSave = vargv[2]; //what file to save
             iReturnVal = -1; //don't loop
