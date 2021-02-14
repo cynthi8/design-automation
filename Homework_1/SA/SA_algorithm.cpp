@@ -146,26 +146,18 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
     Solution bestSolution = m_solution;
     int bestCost = m_solution.getCost();
 
-    // Using <random> just to try it out
-    // https://www.youtube.com/watch?v=LDPMpc-ENqY this is a interesting talk about it
-    std::default_random_engine generator;
-    generator.seed(std::time(nullptr));
-    std::uniform_int_distribution<int> nodeDistribution(1, m_nodes);
-    std::uniform_real_distribution<float> unitDistribution(0, 1);
-
-    auto getRandomNode = std::bind(nodeDistribution, generator);
-    auto getRandomNormalized = std::bind(unitDistribution, generator);
+    SA_Random sa_random(m_nodes);
 
     float temperature = initialTemperature;
     while(temperature > freezingTemperature) {
         float boltzmanLimit = exp(-1/temperature);
         int numAccepted = 0;
         for (int i = 0; i < movesPerStep; i++) {
-            int node1 = getRandomNode();
-            int node2 = getRandomNode();
+            int node1 = sa_random.randomNode();
+            int node2 = sa_random.randomNode();
             while(m_solution.m_bitVector[node1] == m_solution.m_bitVector[node2]) {
                 // Loop until selected nodes are part of opposite sets 
-                node2 = getRandomNode();
+                node2 = sa_random.randomNode();
             }
             int deltaCost = CalculateDeltaCost(node1, node2);
 
@@ -173,7 +165,7 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
                 m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
             }
             else {
-                if (getRandomNormalized() < pow(boltzmanLimit, deltaCost)) {
+                if (sa_random.randomUnit() < pow(boltzmanLimit, deltaCost)) {
                     // Probablistically accept increases in cost 
                     m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
                 }

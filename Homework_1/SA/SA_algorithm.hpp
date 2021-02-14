@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <random>
+
 
 using namespace std;
 
@@ -75,6 +77,17 @@ private:
     int m_edges;
     int CalculateDeltaCost(int node1, int node2);
     int CalculateDisparity(int node); // Disparity is how stronly a node is pulled to the other set = External - Internal connectivity
+};
+
+class SA_Random {
+public:
+    SA_Random(int nodes) {nodeDistribution = uniform_int_distribution<int>(1, nodes); unitDistribution = uniform_real_distribution<float>(0,1);};
+    int randomNode() {return nodeDistribution(generator);};
+    float randomUnit() {return unitDistribution(generator);};
+private:
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> nodeDistribution;
+    std::uniform_real_distribution<float> unitDistribution;
 };
 
 #endif
