@@ -6,10 +6,7 @@
 #include <iostream>
 #include <random>
 
-
 using namespace std;
-
-class Graph;
 
 struct WeightedEdge
 {
@@ -76,7 +73,7 @@ private:
     int m_nodes;
     int m_edges;
     int CalculateDeltaCost(int node1, int node2);
-    int CalculateDisparity(int node); // Disparity is how stronly a node is pulled to the other set = External - Internal connectivity
+    int CalculateDisparity(int node); // Disparity is how strongly a node is pulled to the other set = External - Internal connectivity
 };
 
 class SA_Random {
@@ -85,7 +82,7 @@ public:
     int randomNode() {return nodeDistribution(generator);};
     float randomUnit() {return unitDistribution(generator);};
 private:
-    std::default_random_engine generator;
+    std::default_random_engine generator; //Not seeded for reproducible results
     std::uniform_int_distribution<int> nodeDistribution;
     std::uniform_real_distribution<float> unitDistribution;
 };

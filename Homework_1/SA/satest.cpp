@@ -39,7 +39,7 @@ vector<Netlist> benchNetlists {
     {"../Benchmarks/b_100000_500000", 2761},
     {"../Benchmarks/b_100000_2000000", 12450},
     {"../Benchmarks/b_200000_2000000", 11764},
-    {"../Benchmarks/b_250000_1000000", 229},
+    {"../Benchmarks/b_250000_1000000", 179},
     {"../Benchmarks/b_500000_3000000", 21220}
 };
 
