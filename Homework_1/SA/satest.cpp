@@ -33,15 +33,15 @@ vector<Netlist> devNetlists {
 
 vector<Netlist> benchNetlists {
     {"../Benchmarks/b_100_500", 17},
-    {"../Benchmarks/b_500_20000", -1},
-    {"../Benchmarks/b_1000_20000", -1},
-    {"../Benchmarks/b_10000_100000", -1},
-    {"../Benchmarks/b_50000_400000", -1},
-    {"../Benchmarks/b_100000_500000", -1},
-    {"../Benchmarks/b_100000_2000000", -1},
-    {"../Benchmarks/b_200000_2000000", -1},
-    {"../Benchmarks/b_250000_1000000", -1},
-    {"../Benchmarks/b_500000_3000000", -1}
+    {"../Benchmarks/b_500_20000", 63},
+    {"../Benchmarks/b_1000_20000", 34},
+    {"../Benchmarks/b_10000_100000", 163},
+    {"../Benchmarks/b_50000_400000", 665},
+    {"../Benchmarks/b_100000_500000", 2761},
+    {"../Benchmarks/b_100000_2000000", 12450},
+    {"../Benchmarks/b_200000_2000000", 11764},
+    {"../Benchmarks/b_250000_1000000", 229},
+    {"../Benchmarks/b_500000_3000000", 21220}
 };
 
 int MilisecondsPassed(chrono::system_clock::time_point start) {
@@ -84,18 +84,50 @@ void TestGraph() {
 
 void TestAllDevSA() {
     for(auto it = devNetlists.begin(); it != devNetlists.end(); it++) {
-        Performance performance = TestNetlist((*it), {1000, 1, .99, 1000});
-        PrintPerformance((*it), performance);        
+        Netlist netlist = (*it);
+        auto start = chrono::system_clock::now();
+        Graph myGraph(netlist.fileName);
+        myGraph.SimulatedAnealing(
+            40000,
+            1,
+            .95,
+            myGraph.getNodes()*10
+        );
+        int msPassed = MilisecondsPassed(start);
+        Performance performance {myGraph.getCost(), msPassed};
+        PrintPerformance(netlist, performance);
+        myGraph.PrintLogToFile(netlist.fileName + ".log");
+        myGraph.PrintSolutionToFile(netlist.fileName + ".solution");
+    }
+}
+
+void TestAllBenchSA() {
+    for(auto it = benchNetlists.begin(); it != benchNetlists.end(); it++) {
+        Netlist netlist = (*it);
+        auto start = chrono::system_clock::now();
+        Graph myGraph(netlist.fileName);
+        myGraph.SimulatedAnealing(
+            40000,
+            1,
+            .95,
+            myGraph.getNodes()*10
+        );
+        int msPassed = MilisecondsPassed(start);
+        Performance performance {myGraph.getCost(), msPassed};
+        PrintPerformance(netlist, performance);
+        myGraph.PrintLogToFile(netlist.fileName + ".log");
     }
 }
 
 int main() {
     //TestGraph();
-    //TestAllDevSA();
+    TestAllDevSA();
+    TestAllBenchSA();
 
-    Netlist netlist = benchNetlists[9];
-    Performance performance = TestNetlist(netlist, {10000, 1, .999, 1000});
-    PrintPerformance(netlist, performance);  
+
+    //Netlist netlist = benchNetlists[9];
+    //Performance performance = TestNetlist(netlist, {10000, 1, .999, 1000});
+    //PrintPerformance(netlist, performance);  
 
     return 0;
 }

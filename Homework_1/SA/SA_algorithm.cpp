@@ -56,7 +56,7 @@ void Solution::Initialize() {
     }
 }
 
-void Solution::InitializeCost(vector<Node> * adjList) {
+void Solution::InitializeCost(vector<Node> & adjList) {
     m_cost = 0;
     for (int i = 1; i < (int) m_bitVector.size(); i++) {
         // Sum the externality connection of edges in one set (doesn't matter which one)
@@ -67,11 +67,11 @@ void Solution::InitializeCost(vector<Node> * adjList) {
     }
 }
 
-Connectivity Solution::CalculateConnectivity(int from, vector<Node> * adjList) {
+Connectivity Solution::CalculateConnectivity(int from, vector<Node> & adjList) {
     int externalConnectivity = 0;
     int internalConnectivity = 0;
     bool currentSet = m_bitVector[from];
-    for(auto it = (*adjList)[from].m_edges.begin(); it != (*adjList)[from].m_edges.end(); it++) {
+    for(auto it = adjList[from].m_edges.begin(); it != adjList[from].m_edges.end(); it++) {
         if(m_bitVector[(*it).to] == currentSet) {
             // Internal connectivity
             internalConnectivity += (*it).weight;
@@ -84,29 +84,34 @@ Connectivity Solution::CalculateConnectivity(int from, vector<Node> * adjList) {
     return {externalConnectivity, internalConnectivity};
 }
 
-void Solution::AcceptSwap(int node1, int node2, int deltaCost, int * numAccepted) {
+void Solution::AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted) {
     m_bitVector[node1] = !m_bitVector[node1];
     m_bitVector[node2] = !m_bitVector[node2];
     m_cost += deltaCost;
-    (*numAccepted)++;
+    numAccepted++;
 }
 
-void Solution::PrintSolution() {
-    cout << m_cost << endl;
+void Solution::Print(std::ostream & outputStream) {
+    outputStream << m_cost << endl;
     for (size_t i = 1; i < m_bitVector.size(); i++) {
         if(m_bitVector[i] == true) {
-            cout << i << " ";
+            outputStream << i << " ";
         }
     }
-    cout << endl;
+    outputStream << endl;
     for (size_t i = 1; i < m_bitVector.size(); i++) {
         if(m_bitVector[i] == false) {
-            cout << i << " ";
+            outputStream << i << " ";
         }
     }
-    cout << endl;
+    outputStream << endl;
 }
 
+void Solution::PrintToFile(string fileName) {
+    fstream outputStream;
+	outputStream.open(fileName, ios::out);
+    Print(outputStream);
+}
 
 // Construct a weighted bidirectional graph from a file name
 Graph::Graph(string fileName) {
@@ -137,11 +142,9 @@ Graph::Graph(string fileName) {
 // Run simulated anealing on the graph
 void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep) {
     m_solution.Initialize();
-    m_solution.InitializeCost(& m_adjList);
+    m_solution.InitializeCost(m_adjList);
     Solution bestSolution = m_solution;
     int bestCost = m_solution.getCost();
-    const float initialBoltzmanLimit = .999;
-    const float k = -1 / (log(initialBoltzmanLimit) * initialTemperature); // sets k s.t. the starting 
 
     // Using <random> just to try it out
     // https://www.youtube.com/watch?v=LDPMpc-ENqY this is a interesting talk about it
@@ -155,7 +158,7 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
 
     float temperature = initialTemperature;
     while(temperature > freezingTemperature) {
-        float boltzmanLimit = exp(-1/(k*temperature));
+        float boltzmanLimit = exp(-1/temperature);
         int numAccepted = 0;
         for (int i = 0; i < movesPerStep; i++) {
             int node1 = getRandomNode();
@@ -167,12 +170,12 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
             int deltaCost = CalculateDeltaCost(node1, node2);
 
             if (deltaCost < 0) {
-                m_solution.AcceptSwap(node1, node2, deltaCost, &numAccepted);
+                m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
             }
             else {
                 if (getRandomNormalized() < pow(boltzmanLimit, deltaCost)) {
                     // Probablistically accept increases in cost 
-                    m_solution.AcceptSwap(node1, node2, deltaCost, &numAccepted);
+                    m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
                 }
             }
 
@@ -220,9 +223,15 @@ void Log::LogStep(float temperature, float boltzmanLimit, float acceptProportion
     m_points++;
 }
 
-void Log::PrintLog() {
+void Log::Print(std::ostream & outputStream) {
+    outputStream << "Iteration\t" << " Temperature\t" << " Boltzman Limit\t" << " Proportion Accepted\t" << " Best Cost\t" << endl;
     for(int i = 0; i < m_points; i++) {
-        cout << "Iteration: " << i << " Temperature: " << m_temperatures[i] << " Boltzman Limit: " <<
-        m_boltzmanLimits[i] << " Proportion Accepted: " << m_acceptProportions[i] << " Best Cost: " << m_bestCosts[i] << endl;
+        outputStream << i << "\t" << m_temperatures[i] << "\t" << m_boltzmanLimits[i] << "\t" << m_acceptProportions[i] << "\t" << m_bestCosts[i] << endl;
     }
+}
+
+void Log::PrintToFile(string fileName) {
+    fstream outputStream;
+	outputStream.open(fileName, ios::out);
+    Print(outputStream);
 }

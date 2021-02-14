@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -31,7 +32,8 @@ class Log {
 public:
     Log() {m_points = 0;};
     void LogStep(float temperature, float boltzmanLimit, float acceptProportion, int bestCost);
-    void PrintLog();
+    void Print(std::ostream & outputStream);
+    void PrintToFile(string fileName);
 private:
     int m_points;
     vector<float> m_temperatures;
@@ -42,11 +44,12 @@ private:
 
 class Solution {
 public:
-    void AcceptSwap(int node1, int node2, int deltaCost, int * numAccepted);
-    void PrintSolution();
+    void AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted);
     void Initialize();
-    void InitializeCost(vector<Node> * adjList);
-    Connectivity CalculateConnectivity(int from, vector<Node> * adjList);
+    void InitializeCost(vector<Node> & adjList);
+    void Print(std::ostream & outputStream = std::cout);
+    void PrintToFile(string fileName);
+    Connectivity CalculateConnectivity(int from, vector<Node> & adjList);
     int getCost() {return m_cost;};
     vector<bool> m_bitVector;
 private:
@@ -59,11 +62,14 @@ public:
     void SimulatedAnealing(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep);
     int getEdgeWeight(int from, int to) {return m_adjList[from].getEdgeWeight(to);};
     int getCost() {return m_solution.getCost();};
-    void PrintSolution() {m_solution.PrintSolution();};
-    void PrintLog() {m_log.PrintLog();};
+    int getNodes() {return m_nodes;};
+    void PrintSolution() {m_solution.Print(std::cout);};
+    void PrintLog() {m_log.Print(std::cout);};
+    void PrintSolutionToFile(string fileName) {m_solution.PrintToFile(fileName);};
+    void PrintLogToFile(string fileName) {m_log.PrintToFile(fileName);};
 private:
-    Log m_log;
     Solution m_solution;
+    Log m_log;
     vector<Node> m_adjList;
     int m_nodes;
     int m_edges;
