@@ -56,10 +56,24 @@ private:
     int m_cost;
 };
 
+class GraphRandom {
+public:
+    GraphRandom();
+    void setNodes(int nodes);
+    int randomNode() {return m_nodeDistribution(m_generator);};
+    float randomUnit() {return m_unitDistribution(m_generator);};
+private:
+    std::default_random_engine m_generator; //Not seeded for reproducible results
+    std::uniform_int_distribution<int> m_nodeDistribution;
+    std::uniform_real_distribution<float> m_unitDistribution;
+};
+
 class Graph {
 public:
     Graph(string fileName);
     void SimulatedAnealing(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep);
+    float CalculateInitialTemperature(float desiredAcceptedProportion);
+    void FindOpposingNodes(int & node1, int & node2);
     int getEdgeWeight(int from, int to) {return m_adjList[from].getEdgeWeight(to);};
     int getCost() {return m_solution.getCost();};
     int getNodes() {return m_nodes;};
@@ -71,21 +85,11 @@ private:
     Solution m_solution;
     Log m_log;
     vector<Node> m_adjList;
+    GraphRandom m_graphRandom;
     int m_nodes;
     int m_edges;
     int CalculateDeltaCost(int node1, int node2);
     int CalculateDisparity(int node); // Disparity is how strongly a node is pulled to the other set = External - Internal connectivity
-};
-
-class SA_Random {
-public:
-    SA_Random(int nodes) {nodeDistribution = uniform_int_distribution<int>(1, nodes); unitDistribution = uniform_real_distribution<float>(0,1);};
-    int randomNode() {return nodeDistribution(generator);};
-    float randomUnit() {return unitDistribution(generator);};
-private:
-    std::default_random_engine generator; //Not seeded for reproducible results
-    std::uniform_int_distribution<int> nodeDistribution;
-    std::uniform_real_distribution<float> unitDistribution;
 };
 
 #endif

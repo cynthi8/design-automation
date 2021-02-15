@@ -119,6 +119,8 @@ Graph::Graph(string fileName) {
 
     fileStream >> m_nodes;
     fileStream >> m_edges;
+
+    m_graphRandom.setNodes(m_nodes);
     if(m_nodes % 2) {
         throw "Number of nodes is not even.";
     }
@@ -145,26 +147,20 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
     Solution bestSolution = m_solution;
     int bestCost = m_solution.getCost();
 
-    SA_Random sa_random(m_nodes);
-
     float temperature = initialTemperature;
     while(temperature > freezingTemperature) {
         float boltzmanLimit = exp(-1/temperature);
         int numAccepted = 0;
         for (int i = 0; i < movesPerStep; i++) {
-            int node1 = sa_random.randomNode();
-            int node2 = sa_random.randomNode();
-            while(m_solution.m_bitVector[node1] == m_solution.m_bitVector[node2]) {
-                // Loop until selected nodes are part of opposite sets 
-                node2 = sa_random.randomNode();
-            }
+            int node1, node2;
+            FindOpposingNodes(node1, node2);
             int deltaCost = CalculateDeltaCost(node1, node2);
 
             if (deltaCost < 0) {
                 m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
             }
             else {
-                if (sa_random.randomUnit() < pow(boltzmanLimit, deltaCost)) {
+                if (m_graphRandom.randomUnit() < pow(boltzmanLimit, deltaCost)) {
                     // Probablistically accept increases in cost 
                     m_solution.AcceptSwap(node1, node2, deltaCost, numAccepted);
                 }
@@ -183,6 +179,26 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
 
     // Revert to best found solution
     m_solution = bestSolution;
+}
+
+float Graph::CalculateInitialTemperature(float desiredAcceptedProportion) {
+    const int c_samples = 1000;
+
+    for(int i = 0; i < c_samples; i++) {
+
+    }
+
+    return 100;
+
+}
+
+void Graph::FindOpposingNodes(int & node1, int & node2) {
+    node1 = m_graphRandom.randomNode();
+    node2 = m_graphRandom.randomNode();
+    while(m_solution.m_bitVector[node1] == m_solution.m_bitVector[node2]) {
+        // Loop until selected nodes are part of opposite sets 
+        node2 = m_graphRandom.randomNode();
+    }
 }
 
 int Graph::CalculateDeltaCost(int node1, int node2) {
@@ -204,6 +220,13 @@ int Graph::CalculateDisparity(int node) {
         }
     }
     return disparity;
+}
+
+GraphRandom::GraphRandom() : m_unitDistribution(0, 1) {}
+
+void GraphRandom::setNodes(int nodes) {
+    std::uniform_int_distribution<int>::param_type nodeDist(1, nodes);
+    m_nodeDistribution.param(nodeDist);
 }
 
 void Log::LogStep(float temperature, float boltzmanLimit, float acceptProportion, int cost, int bestCost) {
