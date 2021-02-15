@@ -183,9 +183,13 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
 
 float Graph::CalculateInitialTemperature(float desiredAcceptedProportion) {
     const int c_samples = 1000;
+    vector<int> costSamples;
 
     for(int i = 0; i < c_samples; i++) {
-
+        int node1, node2;
+        FindOpposingNodes(node1, node2);
+        int deltaCost = CalculateDeltaCost(node1, node2);
+        costSamples.push_back(deltaCost);
     }
 
     return 100;
