@@ -177,7 +177,7 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
             }
         }
         float acceptProportion = (float)numAccepted / (float)movesPerStep;
-        m_log.LogStep(temperature, boltzmanLimit, acceptProportion, bestCost);
+        m_log.LogStep(temperature, boltzmanLimit, acceptProportion, m_solution.getCost(), bestCost);
         temperature *= heatRetention;
     }
 
@@ -206,18 +206,19 @@ int Graph::CalculateDisparity(int node) {
     return disparity;
 }
 
-void Log::LogStep(float temperature, float boltzmanLimit, float acceptProportion, int bestCost) {
+void Log::LogStep(float temperature, float boltzmanLimit, float acceptProportion, int cost, int bestCost) {
     m_temperatures.push_back(temperature);
     m_boltzmanLimits.push_back(boltzmanLimit);
     m_acceptProportions.push_back(acceptProportion);
+    m_costs.push_back(cost);
     m_bestCosts.push_back(bestCost);
     m_points++;
 }
 
 void Log::Print(std::ostream & outputStream) {
-    outputStream << "Iteration\t" << " Temperature\t" << " Boltzman Limit\t" << " Proportion Accepted\t" << " Best Cost\t" << endl;
+    outputStream << "Iteration\t" << " Temperature\t" << " Boltzman Limit\t" << " Proportion Accepted\t" << "Current Cost\t" << " Best Cost\t" << endl;
     for(int i = 0; i < m_points; i++) {
-        outputStream << i << "\t" << m_temperatures[i] << "\t" << m_boltzmanLimits[i] << "\t" << m_acceptProportions[i] << "\t" << m_bestCosts[i] << endl;
+        outputStream << i << "\t" << m_temperatures[i] << "\t" << m_boltzmanLimits[i] << "\t" << m_acceptProportions[i] << "\t" << m_costs[i] << "\t" << m_bestCosts[i] << endl;
     }
 }
 

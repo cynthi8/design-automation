@@ -30,7 +30,7 @@ public:
 class Log {
 public:
     Log() {m_points = 0;};
-    void LogStep(float temperature, float boltzmanLimit, float acceptProportion, int bestCost);
+    void LogStep(float temperature, float boltzmanLimit, float acceptProportion, int cost, int bestCost);
     void Print(std::ostream & outputStream);
     void PrintToFile(string fileName);
 private:
@@ -38,6 +38,7 @@ private:
     vector<float> m_temperatures;
     vector<float> m_boltzmanLimits;
     vector<float> m_acceptProportions;
+    vector<int> m_costs;
     vector<int> m_bestCosts;
 };
 
