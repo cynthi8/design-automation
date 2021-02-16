@@ -65,7 +65,7 @@ public:
     int randomNode() {return m_nodeDistribution(m_generator);};
     float randomUnit() {return m_unitDistribution(m_generator);};
 private:
-    std::default_random_engine m_generator; //Not seeded for reproducible results
+    std::mt19937 m_generator; //Mersenne_Twister and not seeded for reproducibility
     std::uniform_int_distribution<int> m_nodeDistribution;
     std::uniform_real_distribution<float> m_unitDistribution;
 };
