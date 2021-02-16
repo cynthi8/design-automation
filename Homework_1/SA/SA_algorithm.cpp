@@ -6,6 +6,7 @@
 #include <chrono>
 #include <random>
 #include <cmath>
+#include <algorithm>
 
 #include "SA_algorithm.hpp"
 
@@ -83,10 +84,14 @@ Connectivity Solution::CalculateConnectivity(int from, vector<Node> & adjList) {
     return {externalConnectivity, internalConnectivity};
 }
 
-void Solution::AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted) {
+void Solution::AcceptSwap(int node1, int node2, int deltaCost) {
     m_bitVector[node1] = !m_bitVector[node1];
     m_bitVector[node2] = !m_bitVector[node2];
     m_cost += deltaCost;
+}
+
+void Solution::AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted) {
+    AcceptSwap(node1, node2, deltaCost);
     numAccepted++;
 }
 
@@ -138,12 +143,13 @@ Graph::Graph(string fileName) {
         }
     }
     fileStream.close();
+
+    m_solution.Initialize();
+    m_solution.InitializeCost(m_adjList);
 }
 
 // Run simulated anealing on the graph
 void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep) {
-    m_solution.Initialize();
-    m_solution.InitializeCost(m_adjList);
     Solution bestSolution = m_solution;
     int bestCost = m_solution.getCost();
 
@@ -182,17 +188,32 @@ void Graph::SimulatedAnealing(float initialTemperature, float freezingTemperatur
 }
 
 float Graph::CalculateInitialTemperature(float desiredAcceptedProportion) {
-    const int c_samples = 1000;
-    vector<int> costSamples;
+    const int c_samples = max(1000, m_nodes);
+    vector<float> temperatureSamples;
 
     for(int i = 0; i < c_samples; i++) {
+        // Random walk to generate state transitions
         int node1, node2;
         FindOpposingNodes(node1, node2);
         int deltaCost = CalculateDeltaCost(node1, node2);
-        costSamples.push_back(deltaCost);
+        m_solution.AcceptSwap(node1, node2, deltaCost);
+
+        
+        deltaCost = abs(deltaCost); //Only consider the postive cost transition
+        float T = (-deltaCost)/log(desiredAcceptedProportion); //Calculate the T that would accept this cost with the desired probablility
+        temperatureSamples.push_back(T);
     }
 
-    return 100;
+    // Online averaging to avoid overflow
+    float average = 0;
+    int n = 1;
+    for (auto sample : temperatureSamples) {
+        float delta = sample - average;
+        average += delta/n;
+        n++;
+    }
+
+    return average;
 
 }
 

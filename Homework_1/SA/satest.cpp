@@ -71,8 +71,10 @@ void TestGraph() {
 void TestNetlist(Netlist netlist) {
     auto start = chrono::system_clock::now();
     Graph myGraph(netlist.fileName);
+    float initialTemperature = myGraph.CalculateInitialTemperature(.99);
+    cout << "Starting Temperature: "<< initialTemperature << endl;
     myGraph.SimulatedAnealing(
-        20000,
+        initialTemperature,
         .1,
         .975,
         myGraph.getNodes()*10
@@ -95,6 +97,18 @@ int main() {
     TestNetlistVector(devNetlists);
     //TestNetlist(benchNetlists[3]);
     TestNetlistVector(benchNetlists);
+
+/*     auto start = chrono::system_clock::now();
+    Graph myGraph(benchNetlists[9].fileName);
+    int graphTime = MilisecondsPassed(start);
+
+    start = chrono::system_clock::now();
+    float idealTemperature = myGraph.CalculateInitialTemperature(.99);
+    int initalTemperatureTime = MilisecondsPassed(start);
+
+    cout << "Graph() took"<< graphTime << "ms and CalculateInitialTemperature() took " << initalTemperatureTime << "ms." << endl;
+    cout << "Initial Temp is"<< idealTemperature << endl; */
+
 
     return 0;
 }

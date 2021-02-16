@@ -44,8 +44,10 @@ private:
 
 class Solution {
 public:
+    void AcceptSwap(int node1, int node2, int deltaCost);
     void AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted);
     void Initialize();
+    void Shuffle();
     void InitializeCost(vector<Node> & adjList);
     void Print(std::ostream & outputStream = std::cout);
     void PrintToFile(string fileName);
