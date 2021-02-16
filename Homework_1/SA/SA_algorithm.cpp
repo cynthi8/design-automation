@@ -6,7 +6,6 @@
 #include <chrono>
 #include <random>
 #include <cmath>
-#include <algorithm>
 
 #include "SA_algorithm.hpp"
 
@@ -197,7 +196,6 @@ float Graph::CalculateInitialTemperature(float desiredAcceptedProportion) {
         FindOpposingNodes(node1, node2);
         int deltaCost = CalculateDeltaCost(node1, node2);
         m_solution.AcceptSwap(node1, node2, deltaCost);
-
         
         deltaCost = abs(deltaCost); //Only consider the postive cost transition
         float T = (-deltaCost)/log(desiredAcceptedProportion); //Calculate the T that would accept this cost with the desired probablility
@@ -231,17 +229,18 @@ int Graph::CalculateDeltaCost(int node1, int node2) {
     return -gain; // Cost is inverse of gain
 }
 
+// Disparity is how strongly a node is pulled to the other set = External - Internal connectivity
 int Graph::CalculateDisparity(int node) {
     bool currentSet = m_solution.m_bitVector[node];
     int disparity = 0;
-    for(auto it = m_adjList[node].m_edges.begin(); it != m_adjList[node].m_edges.end(); it++) {
-        if(m_solution.m_bitVector[(*it).to] == currentSet) {
+    for(auto edge : m_adjList[node].m_edges) {
+        if(m_solution.m_bitVector[edge.to] == currentSet) {
             // Internal connectivity
-            disparity -= (*it).weight;
+            disparity -= edge.weight;
         }
         else {
             // External connectivity
-            disparity += (*it).weight;
+            disparity += edge.weight;
         }
     }
     return disparity;

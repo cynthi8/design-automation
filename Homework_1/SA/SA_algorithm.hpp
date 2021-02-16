@@ -47,7 +47,6 @@ public:
     void AcceptSwap(int node1, int node2, int deltaCost);
     void AcceptSwap(int node1, int node2, int deltaCost, int & numAccepted);
     void Initialize();
-    void Shuffle();
     void InitializeCost(vector<Node> & adjList);
     void Print(std::ostream & outputStream = std::cout);
     void PrintToFile(string fileName);
@@ -91,7 +90,7 @@ private:
     int m_nodes;
     int m_edges;
     int CalculateDeltaCost(int node1, int node2);
-    int CalculateDisparity(int node); // Disparity is how strongly a node is pulled to the other set = External - Internal connectivity
+    int CalculateDisparity(int node);
 };
 
 #endif

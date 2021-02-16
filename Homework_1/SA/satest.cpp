@@ -15,12 +15,6 @@ struct Performance {
     int miliseconds;
 };
 
-struct SA_Parameters {
-    float initialTemperature;
-    float freezingTemperature;
-    float heatRetention;
-};
-
 vector<Netlist> devNetlists {
     {"../development_netlists/bench_2.net", 1}, 
     {"../development_netlists/bench_4.net", 3}, 
@@ -72,7 +66,6 @@ void TestNetlist(Netlist netlist) {
     auto start = chrono::system_clock::now();
     Graph myGraph(netlist.fileName);
     float initialTemperature = myGraph.CalculateInitialTemperature(.99);
-    cout << "Starting Temperature: "<< initialTemperature << endl;
     myGraph.SimulatedAnealing(
         initialTemperature,
         .1,
@@ -93,22 +86,8 @@ void TestNetlistVector(vector<Netlist> & netlists) {
 }
 
 int main() {
-    //TestGraph();
+    TestGraph();
     TestNetlistVector(devNetlists);
-    //TestNetlist(benchNetlists[3]);
     TestNetlistVector(benchNetlists);
-
-/*     auto start = chrono::system_clock::now();
-    Graph myGraph(benchNetlists[9].fileName);
-    int graphTime = MilisecondsPassed(start);
-
-    start = chrono::system_clock::now();
-    float idealTemperature = myGraph.CalculateInitialTemperature(.99);
-    int initalTemperatureTime = MilisecondsPassed(start);
-
-    cout << "Graph() took"<< graphTime << "ms and CalculateInitialTemperature() took " << initalTemperatureTime << "ms." << endl;
-    cout << "Initial Temp is"<< idealTemperature << endl; */
-
-
     return 0;
 }

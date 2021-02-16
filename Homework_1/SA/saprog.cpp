@@ -23,12 +23,13 @@ int main(int argc, char* argv[]) {
 
     auto start = chrono::system_clock::now();
     Graph myGraph(vargv[1]);
+    float initialTemperature = myGraph.CalculateInitialTemperature(.99);
     myGraph.SimulatedAnealing(
-        20000,
+        initialTemperature,
         .1,
         .975,
         myGraph.getNodes()*10
-    );
+    ); 
     int msPassed = MilisecondsPassed(start);
 
     cout << "Netlist: " << vargv[1] << 
