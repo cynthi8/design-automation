@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 #include "SA_algorithm.hpp"
 
@@ -63,6 +64,7 @@ void TestGraph() {
 }
 
 void TestNetlist(Netlist netlist) {
+    static int id = 1;
     auto start = chrono::system_clock::now();
     Graph myGraph(netlist.fileName);
     float initialTemperature = myGraph.CalculateInitialTemperature(.99);
@@ -72,11 +74,13 @@ void TestNetlist(Netlist netlist) {
         .975,
         myGraph.getNodes()*10
     );
+    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     int msPassed = MilisecondsPassed(start);
     Performance performance {myGraph.getCost(), msPassed};
     PrintPerformance(netlist, performance);
     myGraph.PrintLogToFile(netlist.fileName + ".log");
-    myGraph.PrintSolutionToFile(netlist.fileName + ".solution");
+    myGraph.PrintSolutionToFile("Results/R" + to_string(id));
+    id++;
 }
 
 void TestNetlistVector(vector<Netlist> & netlists) {
@@ -86,8 +90,9 @@ void TestNetlistVector(vector<Netlist> & netlists) {
 }
 
 int main() {
-    TestGraph();
-    TestNetlistVector(devNetlists);
+    //TestGraph();
+    //TestNetlistVector(devNetlists);
     TestNetlistVector(benchNetlists);
+    //TestNetlist(benchNetlists[9]);
     return 0;
 }
