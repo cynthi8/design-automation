@@ -139,7 +139,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Graph.cpp" />
+    <ClCompile Include="Magic.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Placement.cpp" />
+    <ClCompile Include="Routing.cpp" />
+    <ClCompile Include="Solution.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Graph.hpp" />
+    <ClInclude Include="HW2.h" />
+    <ClInclude Include="Magic.h" />
+    <ClInclude Include="Routing.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
