@@ -13,7 +13,12 @@ Graph::Graph(string fileName)
     fs >> m_cellCount;
     fs >> m_netCount;
 
-    m_cells.resize(m_cellCount + 1); //index 0 is empty
+    // Initialize cell list
+    m_cells.reserve(m_cellCount + 1); //index 0 is empty
+    for (int i = 0; i < m_cellCount + 1; i++)
+    {
+        m_cells.push_back(Cell(i));
+    }
 
     int netID;
     int cellA, locA, cellB, locB;

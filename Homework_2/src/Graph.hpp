@@ -38,9 +38,10 @@ public:
 class Cell
 {
 public:
-    Cell() : m_connectivity(0), m_orientation(FlipNone){};
+    Cell(int id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
     void addNet(Net net);
     vector<Net> m_nets;
+    int m_id;
     int m_connectivity;
     Flips m_orientation;
 };
