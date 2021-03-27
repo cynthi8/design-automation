@@ -1,9 +1,9 @@
 //Solution
 
-// Could just define stuff here like loading and saving results
-// Could also create separate header files for these
+// I think we can delete this file
 
-#include "HW2.h"
+#include "HW2.hpp"
+#include "Graph.hpp"
 
 void Solution::Initialize() {
     int solutionLength = m_bitVector.size();
@@ -19,7 +19,7 @@ void Solution::Initialize() {
     }
 }
 
-void Solution::InitializeCost(vector<Node>& adjList) {
+void Solution::InitializeCost(vector<Cell>& adjList) {
     m_cost = 0;
     for (int i = 1; i < (int)m_bitVector.size(); i++) {
         // Sum the externality connection of edges in one set (doesn't matter which one)
@@ -30,7 +30,7 @@ void Solution::InitializeCost(vector<Node>& adjList) {
     }
 }
 
-Connectivity Solution::CalculateConnectivity(int from, vector<Node>& adjList) {
+Connectivity Solution::CalculateConnectivity(int from, vector<Cell>& adjList) {
     int externalConnectivity = 0;
     int internalConnectivity = 0;
     bool currentSet = m_bitVector[from];
@@ -46,6 +46,7 @@ Connectivity Solution::CalculateConnectivity(int from, vector<Node>& adjList) {
     }
     return { externalConnectivity, internalConnectivity };
 }
+
 
 void Solution::AcceptSwap(int node1, int node2, int deltaCost) {
     m_bitVector[node1] = !m_bitVector[node1];

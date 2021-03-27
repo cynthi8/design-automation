@@ -1,12 +1,10 @@
-#include "Magic.h"
-#include "HW2.h""
-
-
+#include "Magic.hpp"
 
 void Magic::PrintToFile(string szFileName){
 	fstream outputStream;
 	outputStream.open(szFileName, ios::out);
 	Print(outputStream);
+    return;
 }
 
 void Magic::Print(std::ostream& outputStream) {
@@ -32,6 +30,7 @@ void Magic::Print(std::ostream& outputStream) {
 
     }
     */
+    return;
 }
 
 /*
