@@ -5,12 +5,13 @@ using namespace std;
 
 #include "HW2.hpp"
 
-class Magic {
+class Magic
+{
 public:
-    void Print(std::ostream& outputStream = std::cout);
+    void Print(std::ostream &outputStream = std::cout);
     void PrintToFile(string szFileName);
-private:
 
+private:
 };
 
 #endif

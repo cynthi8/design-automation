@@ -5,7 +5,8 @@
 using namespace std;
 
 // Construct a netlist graph from a file name
-Graph::Graph(string fileName) {
+Graph::Graph(string fileName)
+{
     fstream fs;
     fs.open(fileName, ios::in);
 
@@ -16,12 +17,15 @@ Graph::Graph(string fileName) {
 
     int netID;
     int cellA, locA, cellB, locB;
-    for (int i = 1; i < m_netCount + 1; i++) {
+    for (int i = 1; i < m_netCount + 1; i++)
+    {
         fs >> netID;
         assert(netID == i);
 
-        fs >> cellA; fs >> locA;
-        fs >> cellB; fs >> locB;
+        fs >> cellA;
+        fs >> locA;
+        fs >> cellB;
+        fs >> locB;
         Terminal terminalA{cellA, locA};
         Terminal terminalB{cellB, locB};
         Net net(netID, terminalA, terminalB);
@@ -32,7 +36,8 @@ Graph::Graph(string fileName) {
     fs.close();
 }
 
-void Cell::addNet(Net net) {
+void Cell::addNet(Net net)
+{
     m_nets.push_back(net);
     m_connectivity++;
 }

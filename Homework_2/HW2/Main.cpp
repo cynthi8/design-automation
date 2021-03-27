@@ -11,12 +11,12 @@ Group: Nathaniel Hernandez; Erin Cold
 #include "Magic.hpp"
 //#include "Test.cpp"
 
-
 using namespace std;
 
 // Entry point for code
-int main(int argc, char* argv[]) {
-	cout << "\nHello World";
+int main(int argc, char *argv[])
+{
+    cout << "\nHello World";
 
     /*
     if(argc != 3)
@@ -37,5 +37,5 @@ int main(int argc, char* argv[]) {
     WriteToMagic(routing, vargv[2]);
     */
 
-	return 0;
+    return 0;
 }

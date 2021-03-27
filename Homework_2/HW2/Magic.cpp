@@ -1,13 +1,15 @@
 #include "Magic.hpp"
 
-void Magic::PrintToFile(string szFileName){
-	fstream outputStream;
-	outputStream.open(szFileName, ios::out);
-	Print(outputStream);
+void Magic::PrintToFile(string szFileName)
+{
+    fstream outputStream;
+    outputStream.open(szFileName, ios::out);
+    Print(outputStream);
     return;
 }
 
-void Magic::Print(std::ostream& outputStream) {
+void Magic::Print(std::ostream &outputStream)
+{
     outputStream << "magic" << endl;
     outputStream << "tech techname" << endl;
 
@@ -16,7 +18,6 @@ void Magic::Print(std::ostream& outputStream) {
     const auto epoch = now.time_since_epoch();
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(epoch);
     outputStream << seconds.count() << endl;
-
 
     outputStream << "layer go heres" << endl;
     // << labels >> for cells
@@ -104,7 +105,7 @@ ignored.
 The timestamp line is optional; if present, it gives the last time this cell was aware that the child
 filename changed. If there is no timestamp line, a timestamp of 0 is assumed. When the subcell is
 read in, this value is compared to the actual value at the beginning of the child cell. If there is a difference,
-the ‘‘timestamp mismatch’’ message is printed, and Magic rechecks design-rules around the child.
+the ï¿½ï¿½timestamp mismatchï¿½ï¿½ message is printed, and Magic rechecks design-rules around the child.
 The transform line gives the geometric transform from coordinates of the child filename into coordinates
 of the cell being read. The six integers a, b, c, d, e, and f are part of the following transformation
 matrix, which is used to postmultiply all coordinates in the child filename whenever their coordinates in
@@ -132,7 +133,7 @@ Labels are rectangular. The lower-left corner of the label (the part attached to
 non-space) is at (xbot, ybot), and the upper-right corner at (xtop, ytop). The width of the rectangle or its
 height may be zero. In fact, most labels in Magic have a lower-left equal to their upper right.
 The text of the label, text, may be any sequence of characters not including a newline. This text is
-located at one of nine possible orientations relative to the center of the label’s rectangle. Position is an
+located at one of nine possible orientations relative to the center of the labelï¿½s rectangle. Position is an
 integer between 0 and 8, each of which corresponds to a different orientation:
 
     0 center
@@ -151,14 +152,14 @@ A .mag file is terminated by the line
 
 Everything following this line is ignored.
 
-Any line beginning with a pound sigh (‘‘#’’) is considered to be a comment and ignored. Beware, however,
+Any line beginning with a pound sigh (ï¿½ï¿½#ï¿½ï¿½) is considered to be a comment and ignored. Beware, however,
 that these comments are discarded by Magic when it reads a cell, so if that cell is written again by
 Magic, the comments will be lost.
 
 
 
 NOTE FOR PROGRAMS THAT GENERATE MAGIC FILES
-Magic’s incremental design rule checker expects that every cell is either completely checked, or contains
+Magicï¿½s incremental design rule checker expects that every cell is either completely checked, or contains
 information to tell the checker which areas of the cell have yet to be examined for design-rule violations.
 To make sure that the design-rule checker verifies all the material that has been generated for a
 cell, programs that generate .mag files should place the following rectangle in each file:

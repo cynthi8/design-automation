@@ -6,13 +6,13 @@
 
 using namespace std;
 
-class Placement {
+class Placement
+{
 public:
-    Placement(Graph graph, int maxWidth);
+    Placement();
+    void Place(Graph graph, int maxWidth);
     int m_rowCount;
     vector<vector<int>> m_grid;
 };
-
-
 
 #endif // !PLACEMENT_HPP

@@ -2,7 +2,7 @@
 #define HW2_HPP
 
 // DO NOT USE in real code, for quick development only
-#include <algorithm> 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <ostream>

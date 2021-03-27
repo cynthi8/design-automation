@@ -3,11 +3,12 @@
 
 using namespace std;
 
-extern int tests(int argc, char* argv[]);
+extern int tests(int argc, char *argv[]);
 
 // Unit Tests
-int tests(int argc, char* argv[]) {
+int tests(int argc, char *argv[])
+{
 	cout << "\nHello World";
-    
+
 	return 0;
 }
