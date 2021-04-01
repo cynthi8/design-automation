@@ -40,8 +40,19 @@ void Placement::Place(Graph graph, int maxWidth)
 
 	for (auto baseCell : cellList)
 	{
-		// Calculate force.
-		int forceX = 0, forceY = 0;
+		// Ignore completely isolated cells
+		if (baseCell.m_connectivity == 0)
+		{
+			continue;
+		}
+
+		// Pick up the base cell
+		int posX = baseCell.
+
+
+		// Calculate equilibrium position.
+		int equilibriumX = 0, equilibriumY = 0;
+		int connections = 0;
 		for (auto net : baseCell.m_nets)
 		{
 			for (auto terminal : net.m_connections)
@@ -50,10 +61,16 @@ void Placement::Place(Graph graph, int maxWidth)
 				{
 					continue;
 				}
-				forceX += (m_locations[terminal.cell].x - m_locations[baseCell.m_id].x);
-				forceY += (m_locations[terminal.cell].y - m_locations[baseCell.m_id].y);
+				equilibriumX += m_locations[terminal.cell].x;
+				equilibriumY += m_locations[terminal.cell].y;
+				connections++;
 			}
 		}
+		equilibriumX /= baseCell.m_connectivity;
+		equilibriumY /= baseCell.m_connectivity;
+
+		// Move cell to equilibrium position
+
 	}
 
 	return;

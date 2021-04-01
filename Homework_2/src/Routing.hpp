@@ -66,11 +66,11 @@ public:
 	int m_colCount;
 };
 
+// Create a graph for VCG
 class VNet
 {
 public:
-	VNet(VCell cellA, VCell cellB) : m_connections({ cellA, cellB }) {};
-	int m_id;
+	VNet(VCell cellA, VCell cellB) : Owner(cellA.m_id), Object(cellB.m_id){};
 	int Owner;
 	int Object;
 };
@@ -78,11 +78,11 @@ public:
 class VCell
 {
 public:
-	VCell(int id) : m_id(id), m_connectivity(0) {};
+	VCell(int id) : m_id(id), m_connectivity(0){};
 
-	void addCellConnection(VNet net)
+	void addCellConnection(VCell cell)
 	{
-		this->m_nets.push_back(net);
+		this->m_nets.push_back(*this, cell);
 		this->m_connectivity++;
 	};
 
