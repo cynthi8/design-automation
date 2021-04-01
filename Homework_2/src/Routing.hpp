@@ -65,3 +65,36 @@ public:
 	int m_rowCount;
 	int m_colCount;
 };
+
+class VNet
+{
+public:
+	VNet(VCell cellA, VCell cellB) : m_connections({ cellA, cellB }) {};
+	int m_id;
+	int Owner;
+	int Object;
+};
+
+class VCell
+{
+public:
+	VCell(int id) : m_id(id), m_connectivity(0) {};
+
+	void addCellConnection(VNet net)
+	{
+		this->m_nets.push_back(net);
+		this->m_connectivity++;
+	};
+
+	vector<VNet> m_nets;
+
+	int m_id;
+	int m_connectivity;
+};
+
+class VGraph
+{
+public:
+	vector<VCell> m_cells;
+	int m_cellCount;
+};
