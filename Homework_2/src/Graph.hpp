@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ Each Net has Terminals
 Each Terminal is {Cell_ID, Location}
 */
 
-enum Flips
+enum Flips : unsigned int
 {
     FlipNone = 0,
     FlipLR = 1,
@@ -23,6 +24,7 @@ enum Flips
 
 struct Terminal
 {
+    Terminal(int cell, int location) : cell(cell), location(location) {};
     int cell;
     int location;
 };
@@ -39,6 +41,16 @@ class Cell
 {
 public:
     Cell(int id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
+    
+    // Flip the terminal number
+    int RelativeTerm(int term_id);
+
+    // Get all the terminals that are being used
+    vector<int> GetActiveTerminals(); 
+
+    // Get the relative terminal positions of each terminal after flipping
+    vector<pair<int, int>> GetRelativeTerminals();
+
     void addNet(Net net);
     vector<Net> m_nets;
     int m_id;

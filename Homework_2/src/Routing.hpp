@@ -2,6 +2,7 @@
 
 #include "Graph.hpp"
 #include "Placement.hpp"
+#include <algorithm> 
 
 // need a row struct that includes the terminals of cells
 // and a vector of tracks
@@ -60,7 +61,8 @@ class Routing
 {
 public:
 	void Route(Graph graph, Placement place);
-	vector<Row> Array;
+
+	vector<Row> Rows;
 
 	int m_rowCount;
 	int m_colCount;
@@ -82,7 +84,8 @@ public:
 
 	void addCellConnection(VCell cell)
 	{
-		this->m_nets.push_back(*this, cell);
+		VNet net(*this, cell);
+		this->m_nets.push_back(net);
 		this->m_connectivity++;
 	};
 
