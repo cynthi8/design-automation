@@ -77,7 +77,7 @@ vector<int> Cell::GetActiveTerminals() {
     {
         for (auto l : k.m_connections)
         {
-            if (l.cell == this->m_id) {
+            if (l.cellId == this->m_id) {
                 Terminals.push_back(l.location);
             }
         }

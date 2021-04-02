@@ -24,8 +24,8 @@ enum Flips : unsigned int
 
 struct Terminal
 {
-    Terminal(int cell, int location) : cell(cell), location(location) {};
-    int cell;
+    Terminal(int cellId, int location) : cellId(cellId), location(location) {};
+    int cellId;
     int location;
 };
 
