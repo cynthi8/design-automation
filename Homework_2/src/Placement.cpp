@@ -128,7 +128,8 @@ void Placement::PickUpCell(int cellId)
 Placement::Placement(Graph netlist, int gridWidth) : m_netlist(netlist),
 													 m_gridWidth(gridWidth),
 													 m_gridHeight(UnsafeRoundUpDivision(netlist.m_cellCount, gridWidth)),
-													 m_grid(m_gridHeight, gridWidth)
+													 m_grid(m_gridHeight, gridWidth),
+													 m_sortedCells(m_netlist.m_cells)
 {
 	// Initialize location list and grid arbitrarily
 	m_locations.resize(m_netlist.m_cellCount);
@@ -149,6 +150,9 @@ Placement::Placement(Graph netlist, int gridWidth) : m_netlist(netlist),
 			row++;
 		}
 	}
+
+	// Sort the cell list by connectivity
+	sort(m_sortedCells.begin(), m_sortedCells.end(), [](Cell cellA, Cell cellB) { return cellA.m_connectivity > cellB.m_connectivity; });
 }
 
 Location Placement::CalculateEquilibriumLocation(Cell cell)
@@ -173,13 +177,9 @@ Location Placement::CalculateEquilibriumLocation(Cell cell)
 	return eqLoc;
 }
 
-void Placement::ForceDirected()
+void Placement::ForceDirectedPlace()
 {
-	// Sort copy of nodes by connectivity
-	vector<Cell> cellList(m_netlist.m_cells);
-	sort(cellList.begin(), cellList.end(), [](Cell cellA, Cell cellB) { return cellA.m_connectivity > cellB.m_connectivity; });
-
-	for (auto baseCell : cellList)
+	for (auto baseCell : m_sortedCells)
 	{
 		// Skip cells already locked
 		int baseCellId = baseCell.m_id;
@@ -250,4 +250,24 @@ void Placement::ForceDirected()
 	}
 
 	return;
+}
+
+void Placement::ForceDirectedFlip()
+{
+	for (auto baseCell : m_sortedCells)
+	{
+		for (auto net : baseCell.m_nets)
+		{
+			for (auto terminal : net.m_connections)
+			{
+				if(terminal.cellId == baseCell.m_id){
+					continue;
+				}
+			}
+		}
+	}
+
+	// If the cell is being pulled
+
+	// Flip it in direction of pull
 }
