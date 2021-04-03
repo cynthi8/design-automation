@@ -1,6 +1,7 @@
 #include "Graph.hpp"
 #include <fstream>
 #include <cassert>
+#include <unordered_map>
 
 using namespace std;
 
@@ -48,36 +49,43 @@ void Cell::addNet(Net net)
 }
 
 // Flip the terminal number
-int Cell::RelativeTerm(int term_id) {
-    switch (this->m_orientation) {
-    case FlipNone:
-        break;
-    case FlipBoth: //pass through
+TerminalLocation Cell::getTerminalLocation(int term_id)
+{
+    // Map terminal ids to topological locations
+    const unordered_map<int, TerminalLocation> FlipNone_Map{{1, TopLeft}, {2, TopRight}, {3, BottomLeft}, {4, BottomRight}};
+    const unordered_map<int, TerminalLocation> FlipLR_Map{{2, TopLeft}, {1, TopRight}, {4, BottomLeft}, {3, BottomRight}};
+    const unordered_map<int, TerminalLocation> FlipTB_Map{{3, TopLeft}, {4, TopRight}, {1, BottomLeft}, {2, BottomRight}};
+    const unordered_map<int, TerminalLocation> FlipBoth_Map{{4, TopLeft}, {3, TopRight}, {2, BottomLeft}, {1, BottomRight}};
+    switch (this->m_orientation)
+    {
     case FlipLR:
-        if (term_id % 2)
-            term_id++;
-        else
-            term_id--;
-        if (this->m_orientation != FlipBoth)
-            break;
+        return FlipLR_Map.at(term_id);
+        break;
+
     case FlipTB:
-        if (term_id <= 2)
-            term_id += 2;
-        else
-            term_id -= 2;
+        return FlipTB_Map.at(term_id);
+        break;
+
+    case FlipBoth:
+        return FlipBoth_Map.at(term_id);
+        break;
+
+    default:
+        return FlipNone_Map.at(term_id);
         break;
     }
-    return term_id;
 }
 
 // Get all the terminals that are being used
-vector<int> Cell::GetActiveTerminals() {
+vector<int> Cell::GetActiveTerminals()
+{
     vector<int> Terminals;
     for (auto k : this->m_nets)
     {
         for (auto l : k.m_connections)
         {
-            if (l.cellId == this->m_id) {
+            if (l.cellId == this->m_id)
+            {
                 Terminals.push_back(l.location);
             }
         }
@@ -85,17 +93,17 @@ vector<int> Cell::GetActiveTerminals() {
     return Terminals;
 }
 
-// Get the relative terminal positions of each terminal after flipping
-// Nathan: I think I need this to return all terminals in their relative pos lol
-vector<pair<int, int>> Cell::GetRelativeTerminals() {
-    vector<pair<int, int>> RelTerms;
-    vector<int> Terms{ 1,2,3,4 };
-    for (auto i : Terms) {
-        int relTerm = (*this).RelativeTerm(i);
-        RelTerms.push_back({ relTerm, i });
+vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
+{
+    vector<pair<TerminalLocation, int>> terminalLocations;
+    vector<int> Terms{1, 2, 3, 4};
+    for (auto i : Terms)
+    {
+        TerminalLocation termLoc = getTerminalLocation(i);
+        terminalLocations.push_back({termLoc, i});
     }
 
-    //sort based on relative location
-    sort(RelTerms.begin(), RelTerms.end());
-    return RelTerms;
+    //sort based on terminal location
+    sort(terminalLocations.begin(), terminalLocations.end());
+    return terminalLocations;
 }
