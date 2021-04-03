@@ -15,25 +15,28 @@ Graph::Graph(string fileName)
     fs >> m_netCount;
 
     // Initialize cell list
-    m_cells.reserve(m_cellCount + 1); //index 0 is empty
-    for (int i = 0; i < m_cellCount + 1; i++)
+    m_cells.reserve(m_cellCount + 1);
+    m_cells.push_back(Cell(0)); //index 0 is empty
+
+    for (int i = 1; i < m_cellCount + 1; i++)
     {
         m_cells.push_back(Cell(i));
+        m_validIds.push_back(i);
     }
 
     int netID;
-    int cellA, locA, cellB, locB;
+    int cellA, termA, cellB, termB;
     for (int i = 1; i < m_netCount + 1; i++)
     {
         fs >> netID;
         assert(netID == i);
 
         fs >> cellA;
-        fs >> locA;
+        fs >> termA;
         fs >> cellB;
-        fs >> locB;
-        Terminal terminalA{cellA, locA};
-        Terminal terminalB{cellB, locB};
+        fs >> termB;
+        Terminal terminalA{cellA, termA};
+        Terminal terminalB{cellB, termB};
         Net net(netID, terminalA, terminalB);
 
         m_cells[cellA].addNet(net);
@@ -46,6 +49,18 @@ void Cell::addNet(Net net)
 {
     m_nets.push_back(net);
     m_connectivity++;
+}
+
+void Cell::FlipLeftToRight()
+{
+    const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipLR}, {FlipLR, FlipNone}, {FlipTB, FlipBoth}, {FlipBoth, FlipTB}};
+    m_orientation = FlipResult.at(m_orientation);
+}
+
+void Cell::FlipTopToBottom()
+{
+    const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipTB}, {FlipLR, FlipBoth}, {FlipTB, FlipNone}, {FlipBoth, FlipLR}};
+    m_orientation = FlipResult.at(m_orientation);
 }
 
 // Flip the terminal number
@@ -86,7 +101,7 @@ vector<int> Cell::GetActiveTerminals()
         {
             if (l.cellId == this->m_id)
             {
-                Terminals.push_back(l.location);
+                Terminals.push_back(l.terminalId);
             }
         }
     }

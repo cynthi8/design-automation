@@ -32,9 +32,9 @@ enum TerminalLocation : unsigned int
 
 struct Terminal
 {
-    Terminal(int cellId, int location) : cellId(cellId), location(location){};
+    Terminal(int cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
     int cellId;
-    int location;
+    int terminalId;
 };
 
 class Net
@@ -59,6 +59,9 @@ public:
     // Get the topological location of all the terminals
     vector<pair<TerminalLocation, int>> getTerminalLocations();
 
+    void FlipLeftToRight();
+    void FlipTopToBottom();
+
     void addNet(Net net);
     vector<Net> m_nets;
     int m_id;
@@ -70,9 +73,11 @@ class Graph
 {
 public:
     Graph(string fileName);
-    vector<Cell> m_cells;
     int m_cellCount;
     int m_netCount;
+
+    vector<Cell> m_cells;
+    vector<int> m_validIds;
 
     //See if the terminal given is actually being used for a net
     /*
@@ -94,23 +99,28 @@ public:
     {
         int CellID = term.cellId;
         int TermID = term.cellId;
-        for (auto i : m_cells[CellID].m_nets) {
-            for (int j = 0; j < i.m_connections.size(); j++) {
+        for (auto i : m_cells[CellID].m_nets)
+        {
+            for (int j = 0; j < i.m_connections.size(); j++)
+            {
                 if (i.m_connections[j].cellId == CellID)
                     return i.m_id;
             }
         }
         return -1;
     }
-    
+
     // Given a terminal, find the other terminal on the same net
-    Terminal GetOtherTerminal(Terminal TermA) {
+    Terminal GetOtherTerminal(Terminal TermA)
+    {
         int CellID = TermA.cellId;
 
         //find the net with this terminal
         //return the other terminal on the same net
-        for (auto i : m_cells[CellID].m_nets) {
-            for (int j = 0; j < i.m_connections.size(); j++) {
+        for (auto i : m_cells[CellID].m_nets)
+        {
+            for (int j = 0; j < i.m_connections.size(); j++)
+            {
                 if (i.m_connections[j].cellId == CellID)
                     if (j == 0)
                         return i.m_connections[1];
@@ -122,6 +132,8 @@ public:
         return Terminal(0, 0); //This should really not happen
     }
 
+    vector<Cell> m_cells;
+    vector<int> m_validIds;
 };
 
 #endif // !GRAPH_HPP
