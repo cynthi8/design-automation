@@ -3,6 +3,10 @@
 #include "Graph.hpp"
 #include "Placement.hpp"
 #include <algorithm> 
+#include <vector>
+#include <utility>
+
+using namespace std;
 
 // need a row struct that includes the terminals of cells
 // and a vector of tracks
@@ -17,27 +21,39 @@ Channel is vector of Tracks
 Track is vector of Nets
 And then there also the top and bottom TerminalRows
 */
+
+// Each track will have a vector of locations that are being used by a net
 class Track
 {
 public:
-	Track(int id, int left, int right) : m_nets(id), m_locs.push_back({left, right}){};
-	//Net (int id, Terminal terminalA, Terminal terminalB) : m_id(id), m_connections({ terminalA, terminalB }) {};
 	vector<Net> m_nets;
 	vector<pair<int, int>> m_locs;
 
-	bool TrackOverlap(pair<int, int> PairAB)
+	bool TrackOverlap(int Left, int Right)
 	{
-		for (auto i : m_locs)
+		for (auto i : this->m_locs)
 		{
 			//iterate over pairs and see if a or b of the pair is inbetween any other pair
-			if ((PairAB.first <= i.second || PairAB.first >= i.first) ||
-				(PairAB.second <= i.second || PairAB.first >= i.second))
+			if ((Left <= i.second || Left >= i.first) ||
+				(Right <= i.second || Right >= i.second))
 				return true;
 			return false;
 		}
 	}
+
+	bool AddNet(Net net, int left, int right)
+	{
+		if (!TrackOverlap(left, right))
+		{
+			this->m_nets.push_back(net);
+			this->m_locs.push_back({ left, right });
+			return true;
+		}
+		return false;
+	}
 };
 
+// Channel has some number of tracks that will be used for routing wires
 class Channel
 {
 	vector<Track> m_tracks;
@@ -45,59 +61,73 @@ class Channel
 	{
 		m_tracks.push_back(track);
 		num_tracks++;
+		return;
 	}
 	int num_tracks;
+};
+
+// This is essentially a cell in each row for Routing
+class RowCell
+{
+public:
+	RowCell(Terminal term = Terminal(0,0), int NetID = -1) 
+		: Term(term), NetID(NetID), AboveCell(-1,-1), Above(false) {}
+	Terminal Term;
+	Terminal AboveCell;
+	int NetID;
+	bool Above;
 };
 
 class Row
 {
 public:
-	vector<Terminal> m_Top;
-	vector<Terminal> m_Bot;
-	Channel m_channel;
+	vector<RowCell> RowCells;
+	vector<int> Order;
+
+	// Add a terminal and associated Net ID to the Row Cell vector
+	void AddTerm(Terminal Term, int NetID)
+	{
+		RowCell cell(Term, NetID);
+		RowCells.push_back(cell);
+		return;
+	}
+
+	// if a net has been ordered, return that value
+	int GetUsedNetID(int NetID, int j) {
+		for (int k = 0; k < j; k++)
+			if (RowCells[k].NetID == NetID)
+				return Order[k];
+		return -1;
+	}
 };
 
+// Top class, to be called by main
 class Routing
 {
 public:
 	void Route(Graph graph, Placement place);
 
-	vector<Row> Rows;
+	vector<Row> TopRow;
+	vector<Row> BotRow;
+	Channel Channel;
+
+	// Set the number of rows, should be +1 than the number given
+	void SetRowSize(int rows) {
+		this->m_rowCount = rows + 1;
+		this->TopRow.resize(this->m_rowCount);
+		this->BotRow.resize(this->m_rowCount);
+	}
+
+	// Pad the end of the rows with zeros so they all have the same number of zeros
+	void PadRows() {
+		for (int i = 0; i < m_colCount; i++) {
+			for (int j = 0; j < TopRow[i].RowCells.size() - m_colCount; j++)
+				TopRow[i].AddTerm(Terminal(0, 0), -1);
+			for (int j = 0; j < BotRow[i].RowCells.size() - m_colCount; j++)
+				BotRow[i].AddTerm(Terminal(0, 0), -1);
+		}
+	}
 
 	int m_rowCount;
 	int m_colCount;
-};
-
-// Create a graph for VCG
-class VNet
-{
-public:
-	VNet(VCell cellA, VCell cellB) : Owner(cellA.m_id), Object(cellB.m_id){};
-	int Owner;
-	int Object;
-};
-
-class VCell
-{
-public:
-	VCell(int id) : m_id(id), m_connectivity(0){};
-
-	void addCellConnection(VCell cell)
-	{
-		VNet net(*this, cell);
-		this->m_nets.push_back(net);
-		this->m_connectivity++;
-	};
-
-	vector<VNet> m_nets;
-
-	int m_id;
-	int m_connectivity;
-};
-
-class VGraph
-{
-public:
-	vector<VCell> m_cells;
-	int m_cellCount;
 };

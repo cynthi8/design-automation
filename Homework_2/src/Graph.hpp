@@ -24,6 +24,7 @@ enum Flips : unsigned int
 
 struct Terminal
 {
+    //Terminal(Terminal term) : cellId(term.cellId), location(term.location) {};
     Terminal(int cellId, int location) : cellId(cellId), location(location) {};
     int cellId;
     int location;
@@ -65,6 +66,55 @@ public:
     vector<Cell> m_cells;
     int m_cellCount;
     int m_netCount;
+
+    //See if the terminal given is actually being used for a net
+    /*
+    bool IsTerminalInUse(Terminal TermA) {
+        int CellID = TermA.cellId;
+        int TermID = TermA.cellId;
+
+        vector<int> terms = m_cells[CellID].GetActiveTerminals();
+        for (auto i : terms)
+            if (TermID == i)
+                return true;
+
+        return false;
+    }
+    */
+
+    // Given a terminal, find the Net ID that contains it
+    int GetNetID(Terminal term)
+    {
+        int CellID = term.cellId;
+        int TermID = term.cellId;
+        for (auto i : m_cells[CellID].m_nets) {
+            for (int j = 0; j < i.m_connections.size(); j++) {
+                if (i.m_connections[j].cellId == CellID)
+                    return i.m_id;
+            }
+        }
+        return -1;
+    }
+    
+    // Given a terminal, find the other terminal on the same net
+    Terminal GetOtherTerminal(Terminal TermA) {
+        int CellID = TermA.cellId;
+
+        //find the net with this terminal
+        //return the other terminal on the same net
+        for (auto i : m_cells[CellID].m_nets) {
+            for (int j = 0; j < i.m_connections.size(); j++) {
+                if (i.m_connections[j].cellId == CellID)
+                    if (j == 0)
+                        return i.m_connections[1];
+                    else
+                        return i.m_connections[0];
+            }
+        }
+
+        return Terminal(0, 0); //This should really not happen
+    }
+
 };
 
 #endif // !GRAPH_HPP

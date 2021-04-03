@@ -10,66 +10,146 @@ void Routing::Route(Graph graph, Placement place)
 	int i;
 	int j;
 	int cell_id;
-	int maxSize = 0;
+	int maxCols = 0;
 
-	Row rowTop;
-	Row rowBottom;
+	Row RowTopTemp;
+	Row RowBottomTemp;
 	vector<pair<int, int>> Terminals;
-	this->Rows.resize(place.m_grid.m_rows);
+	SetRowSize(place.m_grid.m_rows);
 
 	// go through the entire 2D grid that's been placed
-	for (i = 0; i < place.m_grid.m_rows; i++)
-	{
-		for (j = 0; i < place.m_grid[i].size(); j++)
-		{
-			cell_id = place.m_grid[i][j].cell;
+	for (i = 0; i < place.m_gridHeight; i++) {
+		for (j = 0; i < place.m_gridWidth; j++) {
 
+			//Get the cell id
+			cell_id = place.m_grid[Location::Location(i, j)].cellId;
 			Cell cell = graph.m_cells[cell_id];
 
 			//find all the terminals on this cell
-			//auto Terminals = cell.GetActiveTerminals();
 			auto Terminals = cell.GetRelativeTerminals();
 
-			for (auto k : Terminals) //add terminals to row in order
-			{
+			//add terminals to row in order
+			for (auto k : Terminals) {
 				Terminal term(k.second, cell_id);
-				switch (k.first)
-				{
-				case 1:
-				case 2:
-					rowTop.m_Top.push_back(term);
-					break;
-				case 3:
-				case 4:
-					rowBottom.m_Bot.push_back(term);
-					break;
+				int NetID = graph.GetNetID(term);
+				if (k.first == 1 || k.first == 2) {
+					RowTopTemp.AddTerm(term, NetID);
+				}
+				else if (k.first == 3 || k.first == 4) {
+					RowBottomTemp.AddTerm(term, NetID);
 				}
 			}
 		}
 
-		this->Rows[i] = rowBottom;
-		this->Rows[i + 1] = rowTop;
+		// add the temp rows to the array
+		// the top most row should be empty
+		// the bottom most row should be empty
+		this->BotRow[i] = RowBottomTemp;
+		this->TopRow[i + 1] = RowTopTemp;
 
-		if (Rows[i].m_Top.size() > maxSize)
-			maxSize = Rows[i].m_Top.size();
-		if (Rows[i].m_Bot.size() > maxSize)
-			maxSize = Rows[i].m_Top.size();
+		if (TopRow[i].RowCells.size() > maxCols)
+			maxCols = TopRow[i].RowCells.size();
+		if (BotRow[i].RowCells.size() > maxCols)
+			maxCols = BotRow[i].RowCells.size();
 	}
 
-	// Pad the end of the rows with zeros
-	Terminal empty(0, 0);
-	for (i = 0; i < this->Rows.size(); i++)
-	{
-		for (j = 0; j < this->Rows[i].m_Top.size() - maxSize; j++)
-			this->Rows[i].m_Top.push_back(empty);
-		for (j = 0; j < this->Rows[i].m_Bot.size() - maxSize; j++)
-			this->Rows[i].m_Bot.push_back(empty);
+	this->m_colCount = maxCols;
+
+	PadRows(); //pad the rows with zeros
+	
+	// Now I need to go and make the VCG and HCG graph
+	// This doesn't actually make a graph but I think maybe I should've
+	// This is too hard, never again using objects
+	for (i = 0; i < m_rowCount; i++) {
+		int order = 0;
+		vector<int> NetsUsed;
+
+		for (j = 0; j < m_colCount; j++) {
+			Terminal TopTerm = TopRow[i].RowCells[j].Term;
+			Terminal BotTerm = BotRow[i].RowCells[j].Term;
+
+			int NetIDTop = TopRow[i].RowCells[j].NetID;
+			int NetIDBot = BotRow[i].RowCells[j].NetID;
+
+			int TOrder = -1;
+			int BOrder = -1;
+
+			//Need to order the terminals
+			//and see if any terminals are on top of another
+			bool TopNetIsUsed = NetsUsed.end() != find(NetsUsed.begin(), NetsUsed.end(), NetIDTop);
+			bool BotNetIsUsed = NetsUsed.end() != find(NetsUsed.begin(), NetsUsed.end(), NetIDBot);
+
+			//increase the order
+			if ((NetIDTop != -1 || NetIDTop != -1) &&
+				(!TopNetIsUsed || !BotNetIsUsed))
+				order++;
+
+			//add this net to the bucket of used nets
+			if (!TopNetIsUsed)
+				NetsUsed.push_back(NetIDTop);
+			if (!BotNetIsUsed)
+				NetsUsed.push_back(NetIDBot);
+
+			//Then the top cell is above the bottom cell, add it to the list
+			if (NetIDTop != -1 && NetIDBot != -1) {
+				TopRow[i].RowCells[j].AboveCell = BotTerm;
+				TopRow[i].RowCells[j].Above = true;
+			}
+			if (NetIDTop != -1) {
+				if(!TopNetIsUsed)
+					TOrder = order;
+				else
+					TOrder = TopRow[i].GetUsedNetID(NetIDTop, j);
+			}
+			if (NetIDBot != -1) {
+				if (!BotNetIsUsed)
+					BOrder = order;
+				else
+					BOrder = BotRow[i].GetUsedNetID(NetIDTop, j);
+			}
+
+			//each terminal now has some order number for the H Graph
+			TopRow[i].Order[j] = TOrder;
+			BotRow[i].Order[j] = BOrder;
+		} 
 	}
 
-	// Now I need to go and make the VCG graph
-	VGraph vgraph;
+	// TODO: Route wires
+	// Go through all the rows
+	// 
+	// I need to find the smallest order value where it's 
+	// corresponding terminal isn't above another terminal being used
+	for (i = 0; i < m_rowCount; i++) {
+		int order = 1;
+		int firstorder = 0;
+		bool UsingTop = false;
 
-	// Then just actually route the thing
+		//find the first occurance of order
+		auto Topl = find(TopRow[i].Order.begin(), TopRow[i].Order.end(), order);
+		auto Botl = find(BotRow[i].Order.begin(), BotRow[i].Order.end(), order);
+
+		if (Topl != TopRow[i].Order.end()) {
+			firstorder = Topl - TopRow[i].Order.begin();
+			UsingTop = true;
+		}
+
+		if (Botl != TopRow[i].Order.end()) {
+			if (Botl - BotRow[i].Order.begin() < firstorder) {
+				firstorder = Botl - BotRow[i].Order.begin();
+				UsingTop = false;
+			}
+		}
+
+		//go thru cols from firstorder to col count
+		for (j = firstorder; j < m_colCount; j++) {
+
+			for (int k = j; k < m_colCount; k++) {
+				if (1)
+					continue;
+
+			}
+		}
+	}
 
 	return;
 }
