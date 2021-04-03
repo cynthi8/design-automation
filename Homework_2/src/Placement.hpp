@@ -57,10 +57,15 @@ public:
 
     Placement(Graph netlist, int gridWidth);
     void UpdateCellLocation(Location newLocation, int cellId);
-    void ForceDirected();
+    void ForceDirectedPlace();
+    void ForceDirectedFlip();
+    void Export(string fileName);
     Location CalculateEquilibriumLocation(Cell cell);
     void InvalidateLocation(int cellId);
     void PickUpCell(int cellId);
+
+private:
+    vector<Cell> m_sortedCells;
 };
 
 #endif // !PLACEMENT_HPP
