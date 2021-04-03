@@ -22,10 +22,17 @@ enum Flips : unsigned int
     FlipBoth = 3
 };
 
+enum TerminalLocation : unsigned int
+{
+    TopLeft = 0,
+    TopRight = 1,
+    BottomLeft = 2,
+    BottomRight = 3
+};
+
 struct Terminal
 {
-    //Terminal(Terminal term) : cellId(term.cellId), location(term.location) {};
-    Terminal(int cellId, int location) : cellId(cellId), location(location) {};
+    Terminal(int cellId, int location) : cellId(cellId), location(location){};
     int cellId;
     int location;
 };
@@ -42,15 +49,15 @@ class Cell
 {
 public:
     Cell(int id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
-    
-    // Flip the terminal number
-    int RelativeTerm(int term_id);
+
+    // Get the topological location of a terminal by its ID
+    TerminalLocation getTerminalLocation(int term_id);
 
     // Get all the terminals that are being used
-    vector<int> GetActiveTerminals(); 
+    vector<int> GetActiveTerminals();
 
-    // Get the relative terminal positions of each terminal after flipping
-    vector<pair<int, int>> GetRelativeTerminals();
+    // Get the topological location of all the terminals
+    vector<pair<TerminalLocation, int>> getTerminalLocations();
 
     void addNet(Net net);
     vector<Net> m_nets;

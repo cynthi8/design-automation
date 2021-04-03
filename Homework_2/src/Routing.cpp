@@ -26,16 +26,16 @@ void Routing::Route(Graph graph, Placement place)
 			Cell cell = graph.m_cells[cell_id];
 
 			//find all the terminals on this cell
-			auto Terminals = cell.GetRelativeTerminals();
+			auto Terminals = cell.getTerminalLocations();
 
 			//add terminals to row in order
 			for (auto k : Terminals) {
 				Terminal term(k.second, cell_id);
 				int NetID = graph.GetNetID(term);
-				if (k.first == 1 || k.first == 2) {
+				if (k.first == TopLeft || k.first == TopRight) {
 					RowTopTemp.AddTerm(term, NetID);
 				}
-				else if (k.first == 3 || k.first == 4) {
+				else if (k.first == BottomLeft || k.first == BottomRight) {
 					RowBottomTemp.AddTerm(term, NetID);
 				}
 			}

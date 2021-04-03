@@ -4,11 +4,12 @@ VLSI Design: HW2
 Date: 2021-03-12
 Group: Nathaniel Hernandez; Erin Cold
 */
-#include "HW2.hpp"
+#include <iostream>
 #include "Graph.hpp"
-#include "Routing.hpp"
 #include "Placement.hpp"
-#include "Magic.hpp"
+
+//#include "Routing.hpp"
+//#include "Magic.hpp"
 //#include "Test.cpp"
 
 using namespace std;
@@ -16,7 +17,7 @@ using namespace std;
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    cout << "\nHello World";
+    cout << "Hello World\n";
 
     /*
     if(argc != 3)
@@ -27,7 +28,13 @@ int main(int argc, char *argv[])
     */
     vector<string> vargv(argv, argv + argc);
 
-    Graph graph("../Benchmarks/b_50_50"); //but for windows
+    Graph graph("Benchmarks/b_50_50");
+
+    Placement placement(graph, 10);
+    placement.ForceDirectedPlace();
+    placement.ForceDirectedFlip();
+    //Grid grid = placement.Export();
+
 
     //int test = tests(argc, argv);
     /*
