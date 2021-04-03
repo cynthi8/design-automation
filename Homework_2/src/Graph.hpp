@@ -98,42 +98,46 @@ public:
     int GetNetID(Terminal term)
     {
         int CellID = term.cellId;
-        int TermID = term.cellId;
-        for (auto i : m_cells[CellID].m_nets)
+        int TermID = term.terminalId;
+
+        for (auto net : m_cells[CellID].m_nets)
         {
-            for (int j = 0; j < i.m_connections.size(); j++)
+            for (auto terminal : net.m_connections)
             {
-                if (i.m_connections[j].cellId == CellID)
-                    return i.m_id;
+                if (terminal.cellId == CellID && terminal.terminalId == TermID)
+                {
+                    return net.m_id;
+                }
             }
         }
-        return -1;
+        throw;
     }
 
     // Given a terminal, find the other terminal on the same net
     Terminal GetOtherTerminal(Terminal TermA)
     {
-        int CellID = TermA.cellId;
-
-        //find the net with this terminal
-        //return the other terminal on the same net
-        for (auto i : m_cells[CellID].m_nets)
+        int cellID = TermA.cellId;
+        int correctNetId = GetNetID(TermA);
+        for (auto net : m_cells[cellID].m_nets)
         {
-            for (int j = 0; j < i.m_connections.size(); j++)
+            if (net.m_id != correctNetId)
             {
-                if (i.m_connections[j].cellId == CellID)
-                    if (j == 0)
-                        return i.m_connections[1];
-                    else
-                        return i.m_connections[0];
+                continue;
+            }
+
+            Terminal firstTerminal = net.m_connections[0];
+            if (firstTerminal.cellId == TermA.cellId && firstTerminal.terminalId == TermA.terminalId)
+            {
+                return net.m_connections[1];
+            }
+            else
+            {
+                return net.m_connections[0];
             }
         }
 
-        return Terminal(0, 0); //This should really not happen
+        throw; //This should really not happen
     }
-
-    vector<Cell> m_cells;
-    vector<int> m_validIds;
 };
 
 #endif // !GRAPH_HPP
