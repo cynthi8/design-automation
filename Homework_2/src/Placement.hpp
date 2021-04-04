@@ -3,6 +3,7 @@
 
 #include "Graph.hpp"
 #include <vector>
+#include <unordered_map>
 
 #define INVALID_ROW -1
 #define INVALID_COLUMN -1
@@ -71,16 +72,16 @@ public:
     Grid m_grid;
     Graph m_netlist;
 
-    vector<Location> m_locations;
+    unordered_map<string, Location> m_locations;
 
     void ForceDirectedPlace();
     void ForceDirectedFlip();
     void Export(string fileName);
 
-    void UpdateCellLocation(Location newLocation, int cellId);
+    void UpdateCellLocation(Location newLocation, string cellId);
     Location CalculateEquilibriumLocation(const Cell &cell);
-    void PickUpCell(int cellId);
-    void InvalidateLocation(int cellId);
+    void PickUpCell(string cellId);
+    void InvalidateLocation(string cellId);
 
     int CalculateFineCost(const Cell &cell);
     int CalculateFineDistance(Terminal term0, Terminal term1);

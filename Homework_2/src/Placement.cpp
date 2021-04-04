@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <algorithm>
+#include <cmath>
 
 #define FEED_THROUGH_ID 0
 #define COL_PREFERENCE 10
@@ -124,38 +125,38 @@ Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 													 m_netlist(netlist)
 {
 	// Initialize location list and grid arbitrarily
-	m_locations.resize(m_netlist.m_validIds.size());
-
-	for (size_t i = 0; i < m_netlist.m_validIds.size(); i++)
+	int i = 0;
+	for (auto &mapEntry : m_netlist.m_cells)
 	{
-		int id = m_netlist.m_validIds[i];
+		string cellId = mapEntry.first;
 		int row = i / m_gridWidth;
 		int col = i % m_gridWidth;
 
 		Location newLocation = {row, col};
-		Cell *const newCellPtr = &m_netlist.m_cells[id];
+		Cell *const newCellPtr = &m_netlist.m_cells[cellId];
 
 		m_grid.PlaceCell(newLocation, newCellPtr);
-		UpdateCellLocation(newLocation, id);
+		UpdateCellLocation(newLocation, cellId);
 		m_sortedCells.push_back(newCellPtr);
+		i++;
 	}
 
 	// Sort the cell list by connectivity
 	sort(m_sortedCells.begin(), m_sortedCells.end(), [](Cell *cellA, Cell *cellB) { return (*cellA).m_connectivity > (*cellB).m_connectivity; });
 }
 
-void Placement::UpdateCellLocation(Location newLocation, int cellId)
+void Placement::UpdateCellLocation(Location newLocation, string cellId)
 {
 	m_locations[cellId] = newLocation;
 }
 
-void Placement::InvalidateLocation(int cellId)
+void Placement::InvalidateLocation(string cellId)
 {
 	m_locations[cellId].row = INVALID_ROW;
 	m_locations[cellId].column = INVALID_COLUMN;
 }
 
-void Placement::PickUpCell(int cellId)
+void Placement::PickUpCell(string cellId)
 {
 	Location location = m_locations[cellId];
 	if (location.isValid())
@@ -193,7 +194,7 @@ void Placement::ForceDirectedPlace()
 	for (auto baseCellPtr : m_sortedCells)
 	{
 		// Skip cells already locked
-		int baseCellId = baseCellPtr->m_id;
+		string baseCellId = baseCellPtr->m_id;
 		Location curLoc = m_locations[baseCellId];
 		if (curLoc.isValid() && m_grid[curLoc].locked)
 		{
@@ -207,7 +208,7 @@ void Placement::ForceDirectedPlace()
 		do
 		{
 			rippleMove = false;
-			int baseCellId = baseCellPtr->m_id;
+			string baseCellId = baseCellPtr->m_id;
 
 			// Skip lonely cells
 			if (baseCellPtr->m_connectivity == 0)
@@ -249,14 +250,15 @@ void Placement::ForceDirectedPlace()
 
 	// Place cells with invalid locations
 	Location curLoc(0, 0);
-	for (auto id : m_netlist.m_validIds)
+	for (auto &mapEntry : m_netlist.m_cells)
 	{
-		if (m_locations[id].isValid() == false)
+		string cellId = mapEntry.first;
+		if (m_locations[cellId].isValid() == false)
 		{
-			Cell *cellPtr = &m_netlist.m_cells[id];
+			Cell *cellPtr = &m_netlist.m_cells[cellId];
 			Location newLoc = m_grid.FindNextUnoccupiedLocation(curLoc);
 			m_grid.PlaceAndLockCell(newLoc, cellPtr);
-			UpdateCellLocation(newLoc, id);
+			UpdateCellLocation(newLoc, cellId);
 			curLoc = newLoc;
 		}
 	}

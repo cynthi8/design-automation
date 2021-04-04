@@ -1,7 +1,6 @@
 #include "Graph.hpp"
 #include <fstream>
 #include <cassert>
-#include <unordered_map>
 
 using namespace std;
 
@@ -15,17 +14,11 @@ Graph::Graph(string fileName)
     fs >> m_netCount;
 
     // Initialize cell list
-    m_cells.reserve(m_cellCount + 1);
-    m_cells.push_back(Cell(0)); //index 0 is empty
-
-    for (int i = 1; i < m_cellCount + 1; i++)
-    {
-        m_cells.push_back(Cell(i));
-        m_validIds.push_back(i);
-    }
+    m_cells.reserve(m_cellCount);
 
     int netID;
-    int cellA, termA, cellB, termB;
+    string cellA, cellB;
+    int termA, termB;
     for (int i = 1; i < m_netCount + 1; i++)
     {
         fs >> netID;
