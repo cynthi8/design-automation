@@ -124,7 +124,7 @@ Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 													 m_netlist(netlist)
 {
 	// Initialize location list and grid arbitrarily
-	m_locations.resize(m_netlist.m_cellCount + 1);
+	m_locations.resize(m_netlist.m_validIds.size());
 
 	for (size_t i = 0; i < m_netlist.m_validIds.size(); i++)
 	{
