@@ -15,13 +15,18 @@ Graph::Graph(string fileName)
 
     // Initialize cell list
     m_cells.reserve(m_cellCount);
+    for (int i = 1; i < m_cellCount + 1; i++)
+    {
+        string cellId = to_string(i);
+        m_cells[cellId] = Cell(cellId);
+    }
 
     for (int i = 1; i < m_netCount + 1; i++)
     {
         int netID;
         string cellAId, cellBId;
         int termA, termB;
-        
+
         // Parse line
         fs >> netID;
         assert(netID == i);
@@ -34,16 +39,6 @@ Graph::Graph(string fileName)
         Terminal terminalA{cellAId, termA};
         Terminal terminalB{cellBId, termB};
         Net net(netID, terminalA, terminalB);
-
-        // Add Cells to the map if they don't exist yet
-        if (m_cells.find(cellAId) == m_cells.end())
-        {
-            m_cells[cellAId] = Cell(cellAId);
-        }
-        if (m_cells.find(cellBId) == m_cells.end())
-        {
-            m_cells[cellBId] = Cell(cellBId);
-        }
 
         // Add Nets to Cells
         m_cells[cellAId].addNet(net);
