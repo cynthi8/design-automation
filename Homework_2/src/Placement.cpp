@@ -126,24 +126,17 @@ Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 	// Initialize location list and grid arbitrarily
 	m_locations.resize(m_netlist.m_cellCount + 1);
 
-	int row = 0, col = 0;
-
-	for (int id : m_netlist.m_validIds)
+	for (size_t i = 0; i < m_netlist.m_validIds.size(); i++)
 	{
+		int id = m_netlist.m_validIds[i];
+		int row = i / m_gridWidth;
+		int col = i % m_gridWidth;
+
 		Location newLocation = {row, col};
 		Cell *const newCellPtr = &m_netlist.m_cells[id];
 
 		m_grid.PlaceCell(newLocation, newCellPtr);
 		UpdateCellLocation(newLocation, id);
-		if (col < gridWidth)
-		{
-			col++;
-		}
-		else
-		{
-			col = 0;
-			row++;
-		}
 		m_sortedCells.push_back(newCellPtr);
 	}
 
