@@ -23,7 +23,9 @@ int main(int argc, char *argv[])
     Placement placement(graph, 10);
     placement.ForceDirectedPlace();
     placement.ForceDirectedFlip();
+
     //placement.InsertFeedThroughs();
 
+    cout << "Goodbye World\n";
     return 0;
 }

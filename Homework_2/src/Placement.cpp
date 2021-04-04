@@ -53,15 +53,15 @@ void Grid::UnlockAll()
 	}
 }
 
-void Grid::PlaceCell(Location location, Cell *const cellPtr)
+void Grid::PlaceCell(Location location, string cellId)
 {
-	(*this)[location].setCell(cellPtr);
+	(*this)[location].setCellId(cellId);
 	(*this)[location].occupied = true;
 }
 
-void Grid::PlaceAndLockCell(Location location, Cell *const cellPtr)
+void Grid::PlaceAndLockCell(Location location, string cellId)
 {
-	PlaceCell(location, cellPtr);
+	PlaceCell(location, cellId);
 	(*this)[location].locked = true;
 }
 
@@ -129,20 +129,22 @@ Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 	for (auto &mapEntry : m_netlist.m_cells)
 	{
 		string cellId = mapEntry.first;
+		int cellConnectivity = mapEntry.second.m_connectivity;
 		int row = i / m_gridWidth;
 		int col = i % m_gridWidth;
 
 		Location newLocation = {row, col};
-		Cell *const newCellPtr = &m_netlist.m_cells[cellId];
 
-		m_grid.PlaceCell(newLocation, newCellPtr);
+		m_grid.PlaceCell(newLocation, cellId);
 		UpdateCellLocation(newLocation, cellId);
-		m_sortedCells.push_back(newCellPtr);
+		m_sortedCells.push_back({cellId, cellConnectivity});
 		i++;
 	}
 
 	// Sort the cell list by connectivity
-	sort(m_sortedCells.begin(), m_sortedCells.end(), [](Cell *cellA, Cell *cellB) { return (*cellA).m_connectivity > (*cellB).m_connectivity; });
+	sort(m_sortedCells.begin(), m_sortedCells.end(), [](pair<string, int> entryA, pair<string, int> entryB) {
+		return entryA.second > entryB.second;
+	});
 }
 
 void Placement::UpdateCellLocation(Location newLocation, string cellId)
@@ -167,8 +169,9 @@ void Placement::PickUpCell(string cellId)
 	InvalidateLocation(cellId);
 }
 
-Location Placement::CalculateEquilibriumLocation(const Cell &cell)
+Location Placement::CalculateEquilibriumLocation(string cellId)
 {
+	Cell &cell = m_netlist.m_cells[cellId];
 	int eqRow = 0, eqCol = 0;
 	for (auto net : cell.m_nets)
 	{
@@ -191,10 +194,10 @@ Location Placement::CalculateEquilibriumLocation(const Cell &cell)
 
 void Placement::ForceDirectedPlace()
 {
-	for (auto baseCellPtr : m_sortedCells)
+	for (auto cellConnectivityPair : m_sortedCells)
 	{
 		// Skip cells already locked
-		string baseCellId = baseCellPtr->m_id;
+		string baseCellId = cellConnectivityPair.first;
 		Location curLoc = m_locations[baseCellId];
 		if (curLoc.isValid() && m_grid[curLoc].locked)
 		{
@@ -208,21 +211,20 @@ void Placement::ForceDirectedPlace()
 		do
 		{
 			rippleMove = false;
-			string baseCellId = baseCellPtr->m_id;
 
 			// Skip lonely cells
-			if (baseCellPtr->m_connectivity == 0)
+			if (m_netlist.m_cells[baseCellId].m_connectivity == 0)
 			{
 				continue;
 			}
 
-			Location newLoc = CalculateEquilibriumLocation((*baseCellPtr));
+			Location newLoc = CalculateEquilibriumLocation(baseCellId);
 
 			// Move cell to equilibrium position
 			if (m_grid[newLoc].occupied == false)
 			{
 				// Easy case where the new location is vacant
-				m_grid.PlaceAndLockCell(newLoc, baseCellPtr);
+				m_grid.PlaceAndLockCell(newLoc, baseCellId);
 				UpdateCellLocation(newLoc, baseCellId);
 			}
 			else
@@ -234,30 +236,36 @@ void Placement::ForceDirectedPlace()
 				}
 
 				// Kick the current occupant if needed
+				string kickedCellId;
 				if (m_grid[newLoc].occupied == true)
 				{
-					Cell *kickedCellPtr = m_grid[newLoc].getCell();
-					PickUpCell(kickedCellPtr->m_id);
-					baseCellPtr = kickedCellPtr;
+					kickedCellId = m_grid[newLoc].getCellId();
+					PickUpCell(kickedCellId);
 					rippleMove = true;
 				}
 
-				m_grid.PlaceAndLockCell(newLoc, baseCellPtr);
+				// Place our base cell
+				m_grid.PlaceAndLockCell(newLoc, baseCellId);
 				UpdateCellLocation(newLoc, baseCellId);
+
+				// Set up baseCellId for next loop if we are rippling
+				if (rippleMove)
+				{
+					baseCellId = kickedCellId;
+				}
 			}
 		} while (rippleMove == true);
 	}
 
-	// Place cells with invalid locations
+	// Place cells with invalid locations (scan for open spots)
 	Location curLoc(0, 0);
 	for (auto &mapEntry : m_netlist.m_cells)
 	{
 		string cellId = mapEntry.first;
 		if (m_locations[cellId].isValid() == false)
 		{
-			Cell *cellPtr = &m_netlist.m_cells[cellId];
 			Location newLoc = m_grid.FindNextUnoccupiedLocation(curLoc);
-			m_grid.PlaceAndLockCell(newLoc, cellPtr);
+			m_grid.PlaceAndLockCell(newLoc, cellId);
 			UpdateCellLocation(newLoc, cellId);
 			curLoc = newLoc;
 		}
@@ -267,29 +275,32 @@ void Placement::ForceDirectedPlace()
 
 void Placement::ForceDirectedFlip()
 {
-	for (auto baseCellPtr : m_sortedCells)
+	for (auto cellConnectivityPair : m_sortedCells)
 	{
 		int currentCost, potentialCost;
-		currentCost = CalculateFineCost((*baseCellPtr));
+		string baseCellId = cellConnectivityPair.first;
+		Cell &baseCell = m_netlist.m_cells[baseCellId];
 
-		baseCellPtr->FlipLeftToRight();
-		potentialCost = CalculateFineCost((*baseCellPtr));
+		currentCost = CalculateFineCost(baseCellId);
+
+		baseCell.FlipLeftToRight();
+		potentialCost = CalculateFineCost(baseCellId);
 		if (potentialCost >= currentCost)
 		{
 			//unflip
-			baseCellPtr->FlipLeftToRight();
+			baseCell.FlipLeftToRight();
 		}
 		else
 		{
 			currentCost = potentialCost;
 		}
 
-		baseCellPtr->FlipTopToBottom();
-		potentialCost = CalculateFineCost((*baseCellPtr));
+		baseCell.FlipTopToBottom();
+		potentialCost = CalculateFineCost(baseCellId);
 		if (potentialCost >= currentCost)
 		{
 			//unflip
-			baseCellPtr->FlipTopToBottom();
+			baseCell.FlipTopToBottom();
 		}
 		else
 		{
@@ -298,8 +309,9 @@ void Placement::ForceDirectedFlip()
 	}
 }
 
-int Placement::CalculateFineCost(const Cell &cell)
+int Placement::CalculateFineCost(string cellId)
 {
+	Cell &cell = m_netlist.m_cells[cellId];
 	int cost = 0;
 	for (auto net : cell.m_nets)
 	{
@@ -322,8 +334,8 @@ FineLocation Placement::CalculateFineLocation(Terminal term)
 {
 	const unordered_map<TerminalLocation, FineLocation> TerminalOffset{{TopLeft, {1, 5}}, {TopRight, {4, 5}}, {BottomLeft, {1, 0}}, {BottomRight, {4, 0}}};
 
-	Cell cell = m_netlist.m_cells[term.cellId];
-	Location location = m_locations[term.cellId];
+	Cell &cell = m_netlist.m_cells[term.cellId];
+	Location &location = m_locations[term.cellId];
 	const TerminalLocation termLocation = cell.getTerminalLocation(term.terminalId);
 
 	int x = location.column * CELL_WIDTH;
