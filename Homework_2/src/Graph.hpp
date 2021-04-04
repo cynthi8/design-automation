@@ -2,6 +2,7 @@
 #define GRAPH_HPP
 
 #include <vector>
+#include <unordered_map>
 #include <string>
 #include <algorithm>
 
@@ -32,8 +33,8 @@ enum TerminalLocation : unsigned int
 
 struct Terminal
 {
-    Terminal(int cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
-    int cellId;
+    Terminal(string cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
+    string cellId;
     int terminalId;
 };
 
@@ -48,7 +49,8 @@ public:
 class Cell
 {
 public:
-    Cell(int id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
+    Cell() : m_id("null"), m_connectivity(0), m_orientation(FlipNone){};
+    Cell(string id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
 
     // Get the topological location of a terminal by its ID
     TerminalLocation getTerminalLocation(int term_id);
@@ -64,7 +66,7 @@ public:
 
     void addNet(Net net);
     vector<Net> m_nets;
-    int m_id;
+    string m_id;
     int m_connectivity;
     Flips m_orientation;
 };
@@ -76,8 +78,7 @@ public:
     int m_cellCount;
     int m_netCount;
 
-    vector<Cell> m_cells;
-    vector<int> m_validIds;
+    unordered_map<string, Cell> m_cells;
 
     //See if the terminal given is actually being used for a net
     /*
@@ -97,7 +98,7 @@ public:
     // Given a terminal, find the Net ID that contains it
     int GetNetID(Terminal term)
     {
-        int CellID = term.cellId;
+        string CellID = term.cellId;
         int TermID = term.terminalId;
 
         for (auto net : m_cells[CellID].m_nets)
@@ -116,7 +117,7 @@ public:
     // Given a terminal, find the other terminal on the same net
     Terminal GetOtherTerminal(Terminal TermA)
     {
-        int cellID = TermA.cellId;
+        string cellID = TermA.cellId;
         int correctNetId = GetNetID(TermA);
         for (auto net : m_cells[cellID].m_nets)
         {

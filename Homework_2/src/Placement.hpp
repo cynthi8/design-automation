@@ -3,6 +3,7 @@
 
 #include "Graph.hpp"
 #include <vector>
+#include <unordered_map>
 
 #define INVALID_ROW -1
 #define INVALID_COLUMN -1
@@ -32,14 +33,14 @@ struct FineLocation
 class GridCell
 {
 public:
-    GridCell() : occupied(false), locked(false), m_cell(nullptr){};
+    GridCell() : occupied(false), locked(false), m_cellId("null"){};
     bool occupied;
     bool locked;
-    void setCell(Cell *const cell) { m_cell = cell; };
-    Cell *getCell() { return m_cell; };
+    void setCellId(string cellId) { m_cellId = cellId; };
+    string getCellId() { return m_cellId; };
 
 private:
-    Cell *m_cell;
+    string m_cellId;
 };
 
 class Grid
@@ -49,11 +50,11 @@ public:
     ~Grid();
     const int m_rows;
     const int m_cols;
-    GridCell operator[](const Location &location) const { return m_grid[location.row][location.column]; }
-    GridCell &operator[](const Location &location) { return m_grid[location.row][location.column]; }
+    GridCell &operator[](const Location &location) { return m_grid[location.row][location.column]; };
+    const GridCell &operator[](const Location &location) const { return m_grid[location.row][location.column]; }
     void UnlockAll();
-    void PlaceCell(Location location, Cell *const cellPtr);
-    void PlaceAndLockCell(Location location, Cell *const cellPtr);
+    void PlaceCell(Location location, string cellId);
+    void PlaceAndLockCell(Location location, string cellId);
     Location FindClosestUnlockedLocation(Location location);
     Location FindNextUnoccupiedLocation(Location location);
 
@@ -71,23 +72,23 @@ public:
     Grid m_grid;
     Graph m_netlist;
 
-    vector<Location> m_locations;
+    unordered_map<string, Location> m_locations;
 
     void ForceDirectedPlace();
     void ForceDirectedFlip();
     void Export(string fileName);
 
-    void UpdateCellLocation(Location newLocation, int cellId);
-    Location CalculateEquilibriumLocation(const Cell &cell);
-    void PickUpCell(int cellId);
-    void InvalidateLocation(int cellId);
+    void UpdateCellLocation(Location newLocation, string cellId);
+    Location CalculateEquilibriumLocation(string cellId);
+    void PickUpCell(string cellId);
+    void InvalidateLocation(string cellId);
 
-    int CalculateFineCost(const Cell &cell);
+    int CalculateFineCost(string cellId);
     int CalculateFineDistance(Terminal term0, Terminal term1);
     FineLocation CalculateFineLocation(Terminal term);
 
 private:
-    vector<Cell *> m_sortedCells;
+    vector<pair<string, int>> m_sortedCells;
 };
 
 #endif // !PLACEMENT_HPP

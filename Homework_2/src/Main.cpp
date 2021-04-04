@@ -21,12 +21,11 @@ int main(int argc, char *argv[])
 
     Graph graph("Benchmarks/b_50_50");
     Placement placement(graph, 10);
-    /*
-    Placement placement(graph, 10);
     placement.ForceDirectedPlace();
     placement.ForceDirectedFlip();
-    //Grid grid = placement.Export();
-    */
 
+    //placement.InsertFeedThroughs();
+
+    cout << "Goodbye World\n";
     return 0;
 }

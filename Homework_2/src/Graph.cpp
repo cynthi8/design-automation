@@ -1,7 +1,6 @@
 #include "Graph.hpp"
 #include <fstream>
 #include <cassert>
-#include <unordered_map>
 
 using namespace std;
 
@@ -15,32 +14,40 @@ Graph::Graph(string fileName)
     fs >> m_netCount;
 
     // Initialize cell list
-    m_cells.reserve(m_cellCount + 1);
-    m_cells.push_back(Cell(0)); //index 0 is empty
+    m_cells.reserve(m_cellCount);
 
-    for (int i = 1; i < m_cellCount + 1; i++)
-    {
-        m_cells.push_back(Cell(i));
-        m_validIds.push_back(i);
-    }
-
-    int netID;
-    int cellA, termA, cellB, termB;
     for (int i = 1; i < m_netCount + 1; i++)
     {
+        int netID;
+        string cellAId, cellBId;
+        int termA, termB;
+        
+        // Parse line
         fs >> netID;
         assert(netID == i);
-
-        fs >> cellA;
+        fs >> cellAId;
         fs >> termA;
-        fs >> cellB;
+        fs >> cellBId;
         fs >> termB;
-        Terminal terminalA{cellA, termA};
-        Terminal terminalB{cellB, termB};
+
+        // Create Terminals and Nets
+        Terminal terminalA{cellAId, termA};
+        Terminal terminalB{cellBId, termB};
         Net net(netID, terminalA, terminalB);
 
-        m_cells[cellA].addNet(net);
-        m_cells[cellB].addNet(net);
+        // Add Cells to the map if they don't exist yet
+        if (m_cells.find(cellAId) == m_cells.end())
+        {
+            m_cells[cellAId] = Cell(cellAId);
+        }
+        if (m_cells.find(cellBId) == m_cells.end())
+        {
+            m_cells[cellBId] = Cell(cellBId);
+        }
+
+        // Add Nets to Cells
+        m_cells[cellAId].addNet(net);
+        m_cells[cellBId].addNet(net);
     }
     fs.close();
 }
