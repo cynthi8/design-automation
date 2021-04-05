@@ -53,7 +53,7 @@ public:
     Cell(string id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
 
     // Get the topological location of a terminal by its ID
-    TerminalLocation getTerminalLocation(int term_id);
+    const TerminalLocation getTerminalLocation(int term_id) const;
 
     // Get all the terminals that are being used
     vector<int> GetActiveTerminals();
@@ -65,6 +65,7 @@ public:
     void FlipTopToBottom();
 
     void addNet(Net net);
+    
     vector<Net> m_nets;
     string m_id;
     int m_connectivity;

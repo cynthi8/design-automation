@@ -65,8 +65,8 @@ void Cell::FlipTopToBottom()
     m_orientation = FlipResult.at(m_orientation);
 }
 
-// Flip the terminal number
-TerminalLocation Cell::getTerminalLocation(int term_id)
+// Get the topological location of a terminal
+const TerminalLocation Cell::getTerminalLocation(int term_id) const
 {
     // Map terminal ids to topological locations
     const unordered_map<int, TerminalLocation> FlipNone_Map{{1, TopLeft}, {2, TopRight}, {3, BottomLeft}, {4, BottomRight}};
