@@ -1,6 +1,7 @@
 #include "Graph.hpp"
 #include <fstream>
 #include <cassert>
+#include <algorithm>
 
 using namespace std;
 
@@ -14,11 +15,10 @@ Graph::Graph(string fileName)
     fs >> m_netCount;
 
     // Initialize cell list
-    m_cells.reserve(m_cellCount);
     for (int i = 1; i < m_cellCount + 1; i++)
     {
         string cellId = to_string(i);
-        m_cells[cellId] = Cell(cellId);
+        addCell(Cell(cellId));
     }
 
     for (int i = 1; i < m_netCount + 1; i++)
@@ -47,10 +47,16 @@ Graph::Graph(string fileName)
     fs.close();
 }
 
-void Cell::addNet(Net net)
+void Cell::addNet(Net netToAdd)
 {
-    m_nets.push_back(net);
+    m_nets.push_back(netToAdd);
     m_connectivity++;
+}
+
+void Cell::removeNet(Net netToRemove)
+{
+    m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end());
+    m_connectivity--;
 }
 
 void Cell::FlipLeftToRight()

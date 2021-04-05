@@ -28,25 +28,27 @@ void Test_FixPlacement(Placement &placement)
     }
 }
 
-void Test_InsertFeedThrough(string fileName, const int gridWidth)
+void Test_InsertFeedthrough(string fileName, const int gridWidth)
 {
     cout << "Testing " << fileName << endl;
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
     Test_FixPlacement(placement);
-
+    placement.InsertFeedthroughs();
     placement.Print();
     cout << endl;
 }
 
-void Test_InsertFeedThroughs()
+void Test_InsertFeedthroughs()
 {
     // These should have Feedthrough cells inserted. No automated testing yet.
-    Test_InsertFeedThrough("Benchmarks/b_feedthrough_d1_even", 2);
-    Test_InsertFeedThrough("Benchmarks/b_feedthrough_d2_even", 2);
-    Test_InsertFeedThrough("Benchmarks/b_feedthrough_d2_odd", 2);
-    Test_InsertFeedThrough("Benchmarks/b_feedthrough_d3_even", 2);
-    Test_InsertFeedThrough("Benchmarks/b_feedthrough_d3_odd", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_0", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_1_left", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_1_right", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_2_left", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_2_right", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_3_right", 2);
+    Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
 // Entry point for code
@@ -54,16 +56,14 @@ int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    /*
+    Test_InsertFeedthroughs();
+
     Graph graph("Benchmarks/b_50_50");
     Placement placement(graph, 10);
     placement.ForceDirectedPlace();
     placement.ForceDirectedFlip();
-    //placement.InsertFeedThroughs();
+    placement.InsertFeedthroughs();
     placement.Print();
-    */
-
-    Test_InsertFeedThroughs();
 
     cout << "Goodbye World\n";
     return 0;

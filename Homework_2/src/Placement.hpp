@@ -15,6 +15,10 @@ class Location
 public:
     Location() : row(INVALID_ROW), column(INVALID_COLUMN){};
     Location(int row, int column) : row(row), column(column){};
+    Location operator+(const Location &a)
+    {
+        return {row + a.row, column + a.column};
+    }
     int row;
     int column;
     bool isValid() { return row != INVALID_ROW && column != INVALID_COLUMN; };
@@ -34,12 +38,12 @@ class GridCell
 {
 public:
     GridCell() : occupied(false), locked(false), m_cellId("null"){};
+    GridCell(string cellId) : occupied(false), locked(false), m_cellId(cellId){};
     bool occupied;
     bool locked;
     void setCellId(string cellId) { m_cellId = cellId; };
     string getCellId() { return m_cellId; };
 
-private:
     string m_cellId;
 };
 
@@ -48,8 +52,7 @@ class Grid
 public:
     Grid(int rows, int cols);
     ~Grid();
-    const int m_rows;
-    const int m_cols;
+
     GridCell &operator[](const Location &location) { return m_grid[location.row][location.column]; };
     const GridCell &operator[](const Location &location) const { return m_grid[location.row][location.column]; }
     void UnlockAll();
@@ -58,6 +61,8 @@ public:
     Location FindClosestUnlockedLocation(Location location);
     Location FindNextUnoccupiedLocation(Location location);
 
+    const int m_rows;
+    const int m_cols;
     vector<vector<GridCell>> m_grid;
 };
 
@@ -75,17 +80,19 @@ public:
 
     void ForceDirectedPlace();
     void ForceDirectedFlip();
-    void InsertFeedThroughs();
+    void InsertFeedthroughs();
     void Print();
 
     void UpdateCellLocation(Location newLocation, string cellId);
-    Location CalculateEquilibriumLocation(string cellId);
     void PickUpCell(string cellId);
     void InvalidateLocation(string cellId);
+    void InsertCell(Location location, string cellId);
 
+    Location CalculateEquilibriumLocation(string cellId);
     int CalculateFineCost(string cellId);
     int CalculateFineDistance(Terminal term0, Terminal term1);
     FineLocation CalculateFineLocation(Terminal term);
+    int CalculateChannelRow(Terminal term);
 
 private:
     vector<pair<string, int>> m_sortedCells;

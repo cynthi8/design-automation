@@ -8,7 +8,8 @@
 #include <cmath>
 #include <iostream>
 
-#define FEED_THROUGH_ID 0
+#define FEED_THROUGH_TOP_TERMINAL 1
+#define FEED_THROUGH_BOTTOM_TERMINAL 3
 #define COL_PREFERENCE 10
 #define CELL_WIDTH 6
 #define CELL_HEIGHT 6
@@ -170,6 +171,25 @@ void Placement::PickUpCell(string cellId)
 	InvalidateLocation(cellId);
 }
 
+void Placement::InsertCell(Location location, string cellId)
+{
+	// Create the new GridCell and insert it
+	GridCell newGridCell(cellId);
+	vector<GridCell> &gridRow = m_grid.m_grid[location.row];
+	auto it = gridRow.insert(gridRow.begin() + location.column, cellId);
+
+	// Update the location of the new cell
+	UpdateCellLocation(location, cellId);
+
+	// Update the locations of all the displaced cells (they are shifted a column to the right)
+	for (; it != gridRow.end(); it++)
+	{
+		string displacedCellId = (*it).getCellId();
+		Location newLocation = m_locations[displacedCellId] + Location(0, 1);
+		UpdateCellLocation(newLocation, displacedCellId);
+	}
+}
+
 Location Placement::CalculateEquilibriumLocation(string cellId)
 {
 	Cell &cell = m_netlist.m_cells[cellId];
@@ -310,15 +330,82 @@ void Placement::ForceDirectedFlip()
 	}
 }
 
-void Placement::InsertFeedThroughs()
+void Placement::InsertFeedthroughs()
 {
+	int feedthroughNum = 1;
+	for (auto cellEntry : m_netlist.m_cells)
+	{
+		for (auto net : cellEntry.second.m_nets)
+		{
+			Terminal term0 = net.m_connections[0];
+			Terminal term1 = net.m_connections[1];
+
+			string cellId0 = term0.cellId;
+			string cellId1 = term1.cellId;
+
+			Cell &cell0 = m_netlist.m_cells[cellId0];
+			Cell &cell1 = m_netlist.m_cells[cellId1];
+
+			int channelRow0 = CalculateChannelRow(term0);
+			int channelRow1 = CalculateChannelRow(term1);
+
+			// Early termination if no feedthroughs are needed
+			if (channelRow0 == channelRow1)
+			{
+				continue;
+			}
+
+			// term0 is set to the lower of the two
+			if (channelRow0 > channelRow1)
+			{
+				swap(channelRow0, channelRow1);
+				swap(term0, term1);
+			}
+
+			// Remove the net currently connecting the two cells
+			cell0.removeNet(net);
+			cell1.removeNet(net);
+
+			// Create Feedthroughs all the way up (like a ladder)
+			Cell &lowerCell = cell0;
+			Terminal lowerTerminal = term0;
+			int cellColumn = m_locations[cellId0].column;
+			for (int cellRow = channelRow0; cellRow < channelRow1; cellRow++)
+			{
+				// Create the feedthrough cell and get a reference to it in the netlist
+				string feedthroughId = "F" + to_string(feedthroughNum);
+				feedthroughNum++;
+				m_netlist.addCell(Cell(feedthroughId));
+				Cell &feedthroughCell = m_netlist.m_cells[feedthroughId];
+				InsertCell({cellRow, cellColumn}, feedthroughId);
+
+				// Build the top rung
+				Terminal upperTerminal = Terminal(feedthroughId, FEED_THROUGH_BOTTOM_TERMINAL);
+
+				// Link the two rungs
+				Net feedthroughNet = Net(net.m_id, lowerTerminal, upperTerminal);
+				lowerCell.addNet(feedthroughNet);
+				feedthroughCell.addNet(feedthroughNet);
+
+				// Set the lower rung for next loop
+				lowerCell = feedthroughCell;
+				lowerTerminal = Terminal(feedthroughId, FEED_THROUGH_TOP_TERMINAL);
+			}
+
+			// Final rung links to already existing term1
+			Net feedthroughNet = Net(net.m_id, lowerTerminal, term1);
+			lowerCell.addNet(feedthroughNet);
+			cell1.addNet(feedthroughNet);
+		}
+	}
 }
 
 void Placement::Print()
 {
-	for (auto row : m_grid.m_grid)
+	// Reverse iterator because the bottom row is row 0
+	for (auto rowIt = m_grid.m_grid.rbegin(); rowIt != m_grid.m_grid.rend(); rowIt++)
 	{
-		for (auto gridCell : row)
+		for (auto gridCell : (*rowIt))
 		{
 			string cellId = gridCell.getCellId();
 			Flips cellOrientation = m_netlist.m_cells[cellId].m_orientation;
@@ -362,4 +449,25 @@ FineLocation Placement::CalculateFineLocation(Terminal term)
 
 	FineLocation baseFineLocation{x, y};
 	return baseFineLocation + TerminalOffset.at(termLocation);
+}
+
+int Placement::CalculateChannelRow(Terminal term)
+{
+	string cellId = term.cellId;
+	int terminalId = term.terminalId;
+	const Cell &cell = m_netlist.m_cells[cellId];
+
+	// Get Cell Row
+	int cellRow = m_locations[cellId].row;
+
+	int channelRow = cellRow;
+
+	// Top half belongs to the channel above
+	TerminalLocation terminalLocation = cell.getTerminalLocation(terminalId);
+	if (terminalLocation == TopLeft || terminalLocation == TopRight)
+	{
+		channelRow++;
+	}
+
+	return channelRow;
 }

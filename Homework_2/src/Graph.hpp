@@ -2,6 +2,7 @@
 #define GRAPH_HPP
 
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <string>
 #include <algorithm>
@@ -43,6 +44,7 @@ class Net
 public:
     Net(int id, Terminal terminalA, Terminal terminalB) : m_id(id), m_connections({terminalA, terminalB}){};
     int m_id;
+    bool operator==(const Net &rhs) const { return m_id == rhs.m_id; };
     vector<Terminal> m_connections;
 };
 
@@ -64,8 +66,9 @@ public:
     void FlipLeftToRight();
     void FlipTopToBottom();
 
-    void addNet(Net net);
-    
+    void addNet(Net netToAdd);
+    void removeNet(Net netToRemove);
+
     vector<Net> m_nets;
     string m_id;
     int m_connectivity;
@@ -79,7 +82,9 @@ public:
     int m_cellCount;
     int m_netCount;
 
-    unordered_map<string, Cell> m_cells;
+    map<string, Cell> m_cells;
+
+    void addCell(Cell cell) { m_cells.emplace(cell.m_id, cell); };
 
     //See if the terminal given is actually being used for a net
     /*
