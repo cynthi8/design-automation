@@ -58,7 +58,6 @@ public:
     Location FindClosestUnlockedLocation(Location location);
     Location FindNextUnoccupiedLocation(Location location);
 
-private:
     vector<vector<GridCell>> m_grid;
 };
 
@@ -76,7 +75,8 @@ public:
 
     void ForceDirectedPlace();
     void ForceDirectedFlip();
-    void Export(string fileName);
+    void InsertFeedThroughs();
+    void Print();
 
     void UpdateCellLocation(Location newLocation, string cellId);
     Location CalculateEquilibriumLocation(string cellId);

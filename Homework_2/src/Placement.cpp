@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 #define FEED_THROUGH_ID 0
 #define COL_PREFERENCE 10
@@ -306,6 +307,24 @@ void Placement::ForceDirectedFlip()
 		{
 			currentCost = potentialCost;
 		}
+	}
+}
+
+void Placement::InsertFeedThroughs()
+{
+}
+
+void Placement::Print()
+{
+	for (auto row : m_grid.m_grid)
+	{
+		for (auto gridCell : row)
+		{
+			string cellId = gridCell.getCellId();
+			Flips cellOrientation = m_netlist.m_cells[cellId].m_orientation;
+			cout << cellId << " " << cellOrientation << " ";
+		}
+		cout << endl;
 	}
 }
 
