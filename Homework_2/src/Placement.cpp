@@ -173,10 +173,18 @@ void Placement::PickUpCell(string cellId)
 
 void Placement::InsertCell(Location location, string cellId)
 {
-	// Create the new GridCell and insert it
+	// Create the new GridCell
 	GridCell newGridCell(cellId);
+
+	// If needed, add some buffer to the row
 	vector<GridCell> &gridRow = m_grid.m_grid[location.row];
-	auto it = gridRow.insert(gridRow.begin() + location.column, cellId);
+	while (gridRow.size() < (size_t)location.column)
+	{
+		gridRow.push_back(GridCell());
+	}
+
+	// Insert the newly created GridCell
+	auto it = gridRow.insert(gridRow.begin() + location.column, newGridCell);
 
 	// Update the location of the new cell
 	UpdateCellLocation(location, cellId);
