@@ -4,12 +4,17 @@
 #include "Graph.hpp"
 #include "Routing.hpp"
 
+#include <tuple>
+#include <vector>
+#include <cstdlib>
+#include <algorithm>
+
 void Routing::Route(Graph graph, Placement place)
 {
 	//This function needs to populate the rows such that we can do channel routing
 	int i;
 	int j;
-	int cell_id;
+	string cell_id;
 	int maxCols = 0;
 
 	Row RowTopTemp;
@@ -22,22 +27,21 @@ void Routing::Route(Graph graph, Placement place)
 		for (j = 0; i < place.m_gridWidth; j++) {
 
 			//Get the cell id
-			cell_id = place.m_grid[Location::Location(i, j)].cellId;
+			cell_id = place.m_grid[Location::Location(i, j)].m_cellId;
 			Cell cell = graph.m_cells[cell_id];
 
 			//find all the terminals on this cell
 			auto Terminals = cell.getTerminalLocations();
 
-			//add terminals to row in order
-			for (auto k : Terminals) {
-				Terminal term(k.second, cell_id);
+			//add terminals and nets to row in order
+			for (auto terms : Terminals) {
+				Terminal term(cell_id, terms.first);
 				int NetID = graph.GetNetID(term);
-				if (k.first == TopLeft || k.first == TopRight) {
-					RowTopTemp.AddTerm(term, NetID);
-				}
-				else if (k.first == BottomLeft || k.first == BottomRight) {
-					RowBottomTemp.AddTerm(term, NetID);
-				}
+
+				if (term.IsTerminalTop())
+					RowTopTemp.AddRowVal(term, NetID);
+				else
+					RowBottomTemp.AddRowVal(term, NetID);
 			}
 		}
 
@@ -56,100 +60,99 @@ void Routing::Route(Graph graph, Placement place)
 	this->m_colCount = maxCols;
 
 	PadRows(); //pad the rows with zeros
-	
-	// Now I need to go and make the VCG and HCG graph
-	// This doesn't actually make a graph but I think maybe I should've
-	// This is too hard, never again using objects
+
 	for (i = 0; i < m_rowCount; i++) {
-		int order = 0;
-		vector<int> NetsUsed;
+		vector<tuple<int, int, int>> NetsAndXVals;
+		vector<vector<int>> S = BuildS(i, NetsAndXVals);
 
-		for (j = 0; j < m_colCount; j++) {
-			Terminal TopTerm = TopRow[i].RowCells[j].Term;
-			Terminal BotTerm = BotRow[i].RowCells[j].Term;
-
-			int NetIDTop = TopRow[i].RowCells[j].NetID;
-			int NetIDBot = BotRow[i].RowCells[j].NetID;
-
-			int TOrder = -1;
-			int BOrder = -1;
-
-			//Need to order the terminals
-			//and see if any terminals are on top of another
-			bool TopNetIsUsed = NetsUsed.end() != find(NetsUsed.begin(), NetsUsed.end(), NetIDTop);
-			bool BotNetIsUsed = NetsUsed.end() != find(NetsUsed.begin(), NetsUsed.end(), NetIDBot);
-
-			//increase the order
-			if ((NetIDTop != -1 || NetIDTop != -1) &&
-				(!TopNetIsUsed || !BotNetIsUsed))
-				order++;
-
-			//add this net to the bucket of used nets
-			if (!TopNetIsUsed)
-				NetsUsed.push_back(NetIDTop);
-			if (!BotNetIsUsed)
-				NetsUsed.push_back(NetIDBot);
-
-			//Then the top cell is above the bottom cell, add it to the list
-			if (NetIDTop != -1 && NetIDBot != -1) {
-				TopRow[i].RowCells[j].AboveCell = BotTerm;
-				TopRow[i].RowCells[j].Above = true;
-			}
-			if (NetIDTop != -1) {
-				if(!TopNetIsUsed)
-					TOrder = order;
-				else
-					TOrder = TopRow[i].GetUsedNetID(NetIDTop, j);
-			}
-			if (NetIDBot != -1) {
-				if (!BotNetIsUsed)
-					BOrder = order;
-				else
-					BOrder = BotRow[i].GetUsedNetID(NetIDTop, j);
-			}
-
-			//each terminal now has some order number for the H Graph
-			TopRow[i].Order[j] = TOrder;
-			BotRow[i].Order[j] = BOrder;
-		} 
-	}
-
-	// TODO: Route wires
-	// Go through all the rows
-	// 
-	// I need to find the smallest order value where it's 
-	// corresponding terminal isn't above another terminal being used
-	for (i = 0; i < m_rowCount; i++) {
-		int order = 1;
-		int firstorder = 0;
-		bool UsingTop = false;
-
-		//find the first occurance of order
-		auto Topl = find(TopRow[i].Order.begin(), TopRow[i].Order.end(), order);
-		auto Botl = find(BotRow[i].Order.begin(), BotRow[i].Order.end(), order);
-
-		if (Topl != TopRow[i].Order.end()) {
-			firstorder = Topl - TopRow[i].Order.begin();
-			UsingTop = true;
-		}
-
-		if (Botl != TopRow[i].Order.end()) {
-			if (Botl - BotRow[i].Order.begin() < firstorder) {
-				firstorder = Botl - BotRow[i].Order.begin();
-				UsingTop = false;
-			}
-		}
-
-		//go thru cols from firstorder to col count
-		for (j = firstorder; j < m_colCount; j++) {
-
-			for (int k = j; k < m_colCount; k++) {
-				if (1)
-					continue;
-
-			}
-		}
+		//TODO build V and then route
+		vector<vector<int>> V;
 	}
 
 	return;
+}
+
+
+vector<vector<int>> Routing::BuildS(int i, vector<tuple<int, int, int>>& NetsAndXVals)
+{
+	vector<vector<int>> S(m_colCount);
+
+	vector<int>& rowT = TopRow[i].RowNets;
+	vector<int>& rowB = BotRow[i].RowNets;
+
+	//find the range of every net
+	for (int j = 0; j < m_colCount; j++) {
+		int netID = rowT[j];
+		if (netID > 0) {
+			auto iter = find_if(NetsAndXVals.begin(), NetsAndXVals.end(),
+				[=](auto item) {return get<0>(item) == netID; });
+
+			//if the net doesn't exist in the list, add it
+			if (iter == NetsAndXVals.end()) {
+				NetsAndXVals.push_back(ColumnsCrossed(i, j, netID, true));
+			}
+		}
+
+		netID = rowB[j];
+		if (netID > 0) {
+			auto iter = find_if(NetsAndXVals.begin(), NetsAndXVals.end(),
+				[=](auto item) {return get<0>(item) == netID; });
+
+			//if the net doesn't exist in the list, add it
+			if (iter == NetsAndXVals.end()) {
+				NetsAndXVals.push_back(ColumnsCrossed(i, j, netID, false));
+			}
+		}
+	}
+
+	//if the range of the net overlaps a column, add it to the HGraph
+	for (int j = 0; j < m_colCount; j++) {
+		for (int k = 0; k < NetsAndXVals.size(); k++) {
+			if (get<1>(NetsAndXVals[k]) >= j && get<2>(NetsAndXVals[k]) <= j)
+				S[j].push_back(get<0>(NetsAndXVals[k]));
+		}
+	}
+
+	//Might want to remove redundant columns as from textbook pg 331
+	return S;
+}
+
+tuple<int, int, int> Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
+{
+	//Get the X columns for each net
+	vector<int>& rowT = TopRow[i].RowNets;
+	vector<int>& rowB = BotRow[i].RowNets;
+
+	//in case the other terminal for the net is actually in the same column
+	int TopAdj = 0, BotAdj = 0;
+	if (isTop) TopAdj++;
+	else BotAdj++;
+
+	vector<int>::iterator iter1 = rowT.begin() + j + TopAdj;
+	vector<int>::iterator iter2 = rowB.begin() + j + BotAdj;
+
+	int x2 = -1;
+
+	iter1 = find(iter1, rowT.end(), netID);
+	iter2 = find(iter2, rowB.end(), netID);
+
+	//net is only in top
+	if (iter1 != rowT.end()) {
+		x2 = find(iter1, rowT.end(), netID) - rowB.begin();
+	}
+	//net is only in bottom
+	else if (iter2 != rowB.end()) {
+		x2 = find(iter2, rowB.end(), netID) - rowB.begin();
+	}
+
+
+	return { netID, j, x2};
+}
+
+template <typename T>
+void swapNum(T& n1, T& n2)
+{
+	T temp = n1;
+	n1 = n2;
+	n2 = temp;
 }
