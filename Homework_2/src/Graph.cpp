@@ -48,8 +48,6 @@ Graph::Graph(string fileName)
     fs.close();
 }
 
-
-
 // Get the topological location of a terminal
 const TerminalLocation Cell::getTerminalLocation(int term_id) const
 {
@@ -108,4 +106,13 @@ vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
     //sort based on terminal location
     sort(terminalLocations.begin(), terminalLocations.end());
     return terminalLocations;
+}
+
+bool Cell::isFeedthrough()
+{
+    if (m_id[0] == 'F')
+    {
+        return true;
+    }
+    return false;
 }

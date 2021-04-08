@@ -40,7 +40,7 @@ void Test_FeedthroughRouting()
 }
 
 void Test_InsertFeedthrough(string fileName, const int gridWidth)
-{gi
+{
     cout << "Testing " << fileName << endl;
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
