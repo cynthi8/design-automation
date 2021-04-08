@@ -96,7 +96,13 @@ vector<int> Cell::GetActiveTerminals()
 vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
 {
     vector<pair<TerminalLocation, int>> terminalLocations;
-    vector<int> Terms{1, 2, 3, 4};
+    vector<int> Terms;
+
+    if(isFeedthrough())
+        Terms = { 1, 3 };
+    else
+        Terms = { 1, 2, 3, 4 };
+
     for (auto i : Terms)
     {
         TerminalLocation termLoc = getTerminalLocation(i);

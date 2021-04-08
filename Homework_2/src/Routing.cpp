@@ -8,6 +8,7 @@
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
+#include <set>
 
 void Routing::Route(Graph graph, Placement place)
 {
@@ -73,20 +74,23 @@ void Routing::Route(Graph graph, Placement place)
 		BuildV(i, V);
 
 		// Fix Doglegs by changing range
-		FixDogLegs(V, NetsAndXRanges);
+		FixDogLegs(i, V, NetsAndXRanges);
 
 		// Build the S / H Graph
-		vector<vector<pair<int, int>>> S(m_colCount);
+		vector<set<pair<int, int>>> S(m_colCount);
 		BuildS(i, S, NetsAndXRanges);
 
 		//TODO route
-		RouteNets(S, V, NetsAndXRanges);
+		RouteNets(i, S, V, NetsAndXRanges);
 	}
 
 	return;
 }
 
-void RouteNets(vector<vector<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) {
+void Routing::RouteNets(int i, vector<set<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) 
+{
+
+	
 
 	return;
 }
@@ -96,7 +100,10 @@ void RouteNets(vector<vector<pair<int, int>>>& S, vector<vector<int>>& V, vector
 // 1-2-3-4-1 -> 1-2-3-4a(x1,x2a or something), 4b(x2b,x3)-1
 // 1-2-1 -> 1-2b(x1,x2a), 2b(x2b, x3)-1
 // 1(range), 2(two ranges)
-void FixDogLegs(vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) {
+void Routing::FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) 
+{
+	vector<int>& rowT = TopRow[i].RowNets;
+	vector<int>& rowB = BotRow[i].RowNets;
 
 	//Go though all values in the V graph
 	for (auto i = 0; i < V.size(); i++) {
@@ -104,12 +111,35 @@ void FixDogLegs(vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) {
 		//if the first and last element are the same, then we have a dogleg
 		if (V[i][0] == V[i].back()) {
 			//split the second to last net's x range into two
-			pair<int, int> range;
+			int netIDProb = V[i].back() - 1;
+			int netIDEnd = V[i].back();
+
+			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
+				[netIDProb](NetAndRanges const& item) {return item.net == netIDProb; });
+			int idx = iter - NetsAndXRanges.begin();
+			pair<int, int> ORange = NetsAndXRanges[idx].ranges[0];
+
+			//Need to find an empty place to split it
+			int j;
+			for (j = ORange.first; j <= ORange.second; j++) {
+				if (rowT[j] <= 0 || rowB[j] <= 0)
+					break;
+			}
+			pair<int, int> NewRange1 = { ORange.first, j };
+			pair<int, int> NewRange2 = { j, ORange.second };
+			NetsAndXRanges[idx].ranges[0] = NewRange1;
+			NetsAndXRanges[idx].ranges.push_back(NewRange2);
+
+			//remove the last two elements causing the dogleg problem
+			V[i].pop_back();
+			V[i].pop_back();
+			V.push_back({ netIDProb , netIDEnd });
 		}
 	}
 
 	return;
 }
+
 
 void Routing::BuildV(int i, vector<vector<int>>& V)
 {
@@ -147,7 +177,7 @@ void Routing::BuildV(int i, vector<vector<int>>& V)
 	return;
 }
 
-//void Routing::BuildRange(int i, vector<pair<int, vector<pair<int, int>>>>& NetsAndXVals)
+
 void Routing::BuildRange(int i, vector<NetAndRanges>& NetsAndXRanges)
 {
 	vector<int>& rowT = TopRow[i].RowNets;
@@ -179,44 +209,7 @@ void Routing::BuildRange(int i, vector<NetAndRanges>& NetsAndXRanges)
 	}
 }
 
-//vector<vector<int>> Routing::BuildS(int i, vector<tuple<int, int, int>>& NetsAndXVals)
-void Routing::BuildS(int i, vector<vector<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals)
-{
-	//vector<vector<pair<int, int>>> S(m_colCount);
 
-	//if the range of the net overlaps a column, add it to the HGraph
-	for (int j = 0; j < m_colCount; j++){				//all cols
-		for (auto& k : NetsAndXVals) {					//all nets and x ranges
-			int iter = 0;
-			for (auto& l : k.ranges) {					//all ranges for each net
-				if (l.first >= j && l.second <= j) {	//check if net's x ranges overlap this col
-					S[j].push_back({ k.net,iter });		//push net
-				}
-				iter++;
-			}
-		}
-	}
-
-	//check each vector to see if its contained in another vector
-	for (int j = 0; j < S.size(); j++){
-		for (auto& k : S[j]) {
-			for (auto& l : S) {
-				//element not found, therefore not contained
-				if (std::find(l.begin(), l.end(), k) == l.end()) {
-					break;
-				}
-				//element was found
-				else {
-
-				}
-			}
-		}
-	}
-
-	return;
-}
-
-//tuple<int, int, int> Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 {
 	//Get the X columns for each net
@@ -248,6 +241,41 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 
 	return NetAndRanges(netID, { { j, x2 } });
 }
+
+
+void Routing::BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals)
+{
+	//if the range of the net overlaps a column, add it to the HGraph
+	for (int j = 0; j < m_colCount; j++){				//all cols
+		for (auto& k : NetsAndXVals) {					//all nets and x ranges
+			int iter = 0;
+			for (auto& l : k.ranges) {					//all ranges for each net
+				if (l.first >= j && l.second <= j) {	//check if net's x ranges overlap this col
+					S[j].insert({ k.net,iter });		//push net
+				}
+				iter++;
+			}
+		}
+	}
+
+	vector<int> DeleteS;
+	//check each vector to see if its contained in another vector
+	for (int j = 0; j < S.size(); j++){
+		for (int k = 0; k < S.size(); k++) {
+			for (int l = 0; l < S.size(); l++) {
+				if (includes(S[k].begin(), S[k].end(), S[l].begin(), S[l].end())) {
+					DeleteS.push_back(k);
+				}
+			}
+		}
+	}
+
+	for (int j = DeleteS.size()-1; j >= 0; j--)
+		remove(S.begin(), S.end(), DeleteS[j]);
+
+	return;
+}
+
 
 template <typename T>
 void swapNum(T& n1, T& n2)

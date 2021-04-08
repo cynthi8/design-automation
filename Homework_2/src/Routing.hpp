@@ -137,8 +137,10 @@ public:
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
-	void BuildS(int i, vector<vector<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals);
+	void BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals);
 	void BuildV(int i, vector<vector<int>>& V);
+	void FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
+	void RouteNets(int i, vector<set<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {
