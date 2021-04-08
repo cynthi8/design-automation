@@ -24,8 +24,9 @@ enum Flips : unsigned int
     FlipBoth = 3
 };
 
-enum TerminalLocation : unsigned int
+enum TerminalLocation : int
 {
+    Invalid = -1,
     TopLeft = 0,
     TopRight = 1,
     BottomLeft = 2,
@@ -37,6 +38,11 @@ struct Terminal
     Terminal(string cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
     string cellId;
     int terminalId;
+    bool IsTerminalTop() {
+        if (terminalId == TopLeft || terminalId == TopRight)
+            return true;
+        return false;
+    }
 };
 
 class Net
@@ -63,11 +69,25 @@ public:
     // Get the topological location of all the terminals
     vector<pair<TerminalLocation, int>> getTerminalLocations();
 
-    void FlipLeftToRight();
-    void FlipTopToBottom();
+    void FlipLeftToRight() {
+        const unordered_map<Flips, Flips> FlipResult{ {FlipNone, FlipLR}, {FlipLR, FlipNone}, {FlipTB, FlipBoth}, {FlipBoth, FlipTB} };
+        m_orientation = FlipResult.at(m_orientation);
+    }
 
-    void addNet(Net netToAdd);
-    void removeNet(Net netToRemove);
+    void FlipTopToBottom() {
+        const unordered_map<Flips, Flips> FlipResult{ {FlipNone, FlipTB}, {FlipLR, FlipBoth}, {FlipTB, FlipNone}, {FlipBoth, FlipLR} };
+        m_orientation = FlipResult.at(m_orientation);
+    }
+
+    void addNet(Net netToAdd) {
+        m_nets.push_back(netToAdd);
+        m_connectivity++;
+    }
+    void removeNet(Net netToRemove) {
+        m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end());
+        m_connectivity--;
+    }
+
 
     vector<Net> m_nets;
     string m_id;
@@ -83,8 +103,18 @@ public:
     int m_netCount;
 
     map<string, Cell> m_cells;
+    //vector<Net> m_nets;
 
     void addCell(Cell cell) { m_cells.emplace(cell.m_id, cell); };
+
+    /*
+    void addNet(Net netToAdd) { 
+        m_nets.push_back(netToAdd); 
+    }
+    void removeNet(Net netToRemove) { 
+        m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end()); 
+    }
+    */
 
     //See if the terminal given is actually being used for a net
     /*
@@ -117,7 +147,9 @@ public:
                 }
             }
         }
-        throw;
+
+        return -1;
+        //throw;
     }
 
     // Given a terminal, find the other terminal on the same net

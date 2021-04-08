@@ -43,33 +43,12 @@ Graph::Graph(string fileName)
         // Add Nets to Cells
         m_cells[cellAId].addNet(net);
         m_cells[cellBId].addNet(net);
+        //addNet(net);
     }
     fs.close();
 }
 
-void Cell::addNet(Net netToAdd)
-{
-    m_nets.push_back(netToAdd);
-    m_connectivity++;
-}
 
-void Cell::removeNet(Net netToRemove)
-{
-    m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end());
-    m_connectivity--;
-}
-
-void Cell::FlipLeftToRight()
-{
-    const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipLR}, {FlipLR, FlipNone}, {FlipTB, FlipBoth}, {FlipBoth, FlipTB}};
-    m_orientation = FlipResult.at(m_orientation);
-}
-
-void Cell::FlipTopToBottom()
-{
-    const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipTB}, {FlipLR, FlipBoth}, {FlipTB, FlipNone}, {FlipBoth, FlipLR}};
-    m_orientation = FlipResult.at(m_orientation);
-}
 
 // Get the topological location of a terminal
 const TerminalLocation Cell::getTerminalLocation(int term_id) const

@@ -71,7 +71,8 @@ class RowCell
 {
 public:
 	RowCell(Terminal term = Terminal(0,0), int NetID = -1) 
-		: Term(term), NetID(NetID), AboveCell(-1,-1), Above(false) {}
+	: Term(term), NetID(NetID), AboveCell("",-1), Above(false) {}
+
 	Terminal Term;
 	Terminal AboveCell;
 	int NetID;
@@ -82,13 +83,15 @@ class Row
 {
 public:
 	vector<RowCell> RowCells;
+	vector<int> RowNets;
 	vector<int> Order;
 
 	// Add a terminal and associated Net ID to the Row Cell vector
-	void AddTerm(Terminal Term, int NetID)
+	void AddRowVal(Terminal Term, int NetID)
 	{
 		RowCell cell(Term, NetID);
 		RowCells.push_back(cell);
+		RowNets.push_back(NetID);
 		return;
 	}
 
@@ -99,6 +102,17 @@ public:
 				return Order[k];
 		return -1;
 	}
+
+	//Pad Row to colCount
+	void PadRow(int colCount) {
+		int sizeToGrow = colCount - RowCells.size();
+		if (sizeToGrow <= 0) return;
+
+		RowCell rowCell(Terminal("", Invalid), -1);
+		RowCells.insert(RowCells.end(), sizeToGrow, rowCell);
+		RowNets.insert(RowNets.end(), sizeToGrow, -1);
+	}
+
 };
 
 // Top class, to be called by main
@@ -110,6 +124,11 @@ public:
 	vector<Row> TopRow;
 	vector<Row> BotRow;
 	Channel Channel;
+	//vector<vector<pair<int, int>>> test;
+
+	vector<vector<int>> BuildS(int i, vector<tuple<int, int, int>>& NetsAndXVals);
+	tuple<int, int, int> ColumnsCrossed(int i, int j, int netID, bool isTop);
+	
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {
@@ -118,13 +137,12 @@ public:
 		this->BotRow.resize(this->m_rowCount);
 	}
 
-	// Pad the end of the rows with zeros so they all have the same number of zeros
+	// Pad the end of the rows with zeros so they all 
+	// have the same number of zeros
 	void PadRows() {
 		for (int i = 0; i < m_colCount; i++) {
-			for (int j = 0; j < TopRow[i].RowCells.size() - m_colCount; j++)
-				TopRow[i].AddTerm(Terminal(0, 0), -1);
-			for (int j = 0; j < BotRow[i].RowCells.size() - m_colCount; j++)
-				BotRow[i].AddTerm(Terminal(0, 0), -1);
+			TopRow[i].PadRow(m_colCount);
+			BotRow[i].PadRow(m_colCount);
 		}
 	}
 
