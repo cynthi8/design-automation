@@ -348,12 +348,6 @@ void Placement::InsertFeedthroughs()
 			Terminal term0 = net.m_connections[0];
 			Terminal term1 = net.m_connections[1];
 
-			string cellId0 = term0.cellId;
-			string cellId1 = term1.cellId;
-
-			Cell &cell0 = m_netlist.m_cells[cellId0];
-			Cell &cell1 = m_netlist.m_cells[cellId1];
-
 			int channelRow0 = CalculateChannelRow(term0);
 			int channelRow1 = CalculateChannelRow(term1);
 
@@ -369,6 +363,11 @@ void Placement::InsertFeedthroughs()
 				swap(channelRow0, channelRow1);
 				swap(term0, term1);
 			}
+
+			string cellId0 = term0.cellId;
+			string cellId1 = term1.cellId;
+			Cell &cell0 = m_netlist.m_cells[cellId0];
+			Cell &cell1 = m_netlist.m_cells[cellId1];
 
 			// Remove the net currently connecting the two cells
 			cell0.removeNet(net);

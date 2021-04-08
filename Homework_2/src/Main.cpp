@@ -5,6 +5,7 @@ Date: 2021-03-12
 Group: Nathaniel Hernandez; Erin Cold
 */
 #include <iostream>
+#include <cassert>
 #include "Graph.hpp"
 #include "Placement.hpp"
 
@@ -28,8 +29,18 @@ void Test_FixPlacement(Placement &placement)
     }
 }
 
-void Test_InsertFeedthrough(string fileName, const int gridWidth)
+void Test_FeedthroughRouting()
 {
+    Graph graph("Benchmarks/b_feedthrough_1_left");
+    Placement placement(graph, 2);
+    Test_FixPlacement(placement);
+    placement.InsertFeedthroughs();
+    Cell &cell = placement.m_netlist.m_cells["1"];
+    Trace(cell, cell.m_nets)
+}
+
+void Test_InsertFeedthrough(string fileName, const int gridWidth)
+{gi
     cout << "Testing " << fileName << endl;
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
@@ -55,6 +66,8 @@ void Test_InsertFeedthroughs()
 int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
+
+    Test_FeedthroughRouting();
 
     Test_InsertFeedthroughs();
 
