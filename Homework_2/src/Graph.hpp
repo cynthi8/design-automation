@@ -88,6 +88,7 @@ public:
         m_connectivity--;
     }
 
+    bool isFeedthrough();
 
     vector<Net> m_nets;
     string m_id;
