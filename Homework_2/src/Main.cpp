@@ -63,27 +63,34 @@ void Test_InsertFeedthroughs()
     Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
+void Test_ForceDirectedPlacement()
+{
+    Graph graph("Benchmarks/b_tiny");
+    Placement placement(graph, 2);
+    Test_FixPlacement(placement);
+    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedPlace(10);
+    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedFlip(10);
+    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.InsertFeedthroughs();
+    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+    cout << endl;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    Test_FeedthroughRouting();
-
-    Test_InsertFeedthroughs();
-
-    Graph graph("Benchmarks/b_50_50");
-    Placement placement(graph, 10);
-    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
-    placement.ForceDirectedPlace(10);
-    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
-    placement.ForceDirectedFlip(10);
-    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
-    placement.InsertFeedthroughs();
-    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-
-    placement.Print();
-    placement.m_netlist.printTrace(placement.m_netlist.m_cells["1"].getTerminal(3));
+    Test_ForceDirectedPlacement();
 
     cout << "Goodbye World\n";
     return 0;
