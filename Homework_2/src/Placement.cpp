@@ -114,7 +114,8 @@ Location Grid::FindNextUnoccupiedLocation(Location location)
 Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 													 m_gridHeight(UnsafeRoundUpDivision(netlist.m_cellCount, gridWidth)),
 													 m_grid(m_gridHeight, gridWidth),
-													 m_netlist(netlist)
+													 m_netlist(netlist),
+													 m_feedthroughCount(0)
 {
 	// Initialize location list and grid arbitrarily
 	int i = 0;
@@ -202,7 +203,7 @@ int Placement::CalculatePlacementCost()
 	{
 		cost += CalculateCellCost(cellEntry.first);
 	}
-	return cost;
+	return cost / 2; // Each net was counted twice
 }
 
 Location Placement::CalculateEquilibriumLocation(string cellId)
@@ -358,7 +359,7 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 			}
 		}
 		float acceptProportion = (float)numAccepted / (float)movesPerStep;
-		cout << acceptProportion;
+		cout << acceptProportion << endl;
 		temperature *= heatRetention;
 	}
 }
@@ -462,6 +463,7 @@ void Placement::InsertFeedthroughs()
 				// Create the feedthrough cell and get a reference to it in the netlist
 				string feedthroughId = "F" + to_string(feedthroughNum);
 				feedthroughNum++;
+				m_feedthroughCount++;
 				m_netlist.addCell(Cell(feedthroughId));
 				InsertCell({cellRow, cellColumn}, feedthroughId);
 
@@ -517,14 +519,14 @@ int Placement::CalculateCellCost(string cellId)
 
 int Placement::CalculateTerminalDistance(Terminal term0, Terminal term1)
 {
-	FineLocation fineLocation0 = CalculateFineLocation(term0);
-	FineLocation fineLocation1 = CalculateFineLocation(term1);
-	return abs(fineLocation1.x - fineLocation0.x) + abs(fineLocation1.y - fineLocation0.y);
+	Coordinates Coordinates0 = CalculateCoordinates(term0);
+	Coordinates Coordinates1 = CalculateCoordinates(term1);
+	return abs(Coordinates1.x - Coordinates0.x) + abs(Coordinates1.y - Coordinates0.y);
 }
 
-FineLocation Placement::CalculateFineLocation(Terminal term)
+Coordinates Placement::CalculateCoordinates(Terminal term)
 {
-	const unordered_map<TerminalLocation, FineLocation> TerminalOffset{{TopLeft, {1, 5}}, {TopRight, {4, 5}}, {BottomLeft, {1, 0}}, {BottomRight, {4, 0}}};
+	const unordered_map<TerminalLocation, Coordinates> TerminalOffset{{TopLeft, {1, 5}}, {TopRight, {4, 5}}, {BottomLeft, {1, 0}}, {BottomRight, {4, 0}}};
 
 	Cell &cell = m_netlist.m_cells[term.cellId];
 	Location &location = m_locations[term.cellId];
@@ -533,8 +535,8 @@ FineLocation Placement::CalculateFineLocation(Terminal term)
 	int x = location.column * CELL_WIDTH;
 	int y = location.row * CELL_HEIGHT;
 
-	FineLocation baseFineLocation{x, y};
-	return baseFineLocation + TerminalOffset.at(termLocation);
+	Coordinates baseCoordinates{x, y};
+	return baseCoordinates + TerminalOffset.at(termLocation);
 }
 
 int Placement::CalculateChannelRow(Terminal term)

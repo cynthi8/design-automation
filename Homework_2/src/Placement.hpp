@@ -24,9 +24,9 @@ public:
     bool isValid() { return row != INVALID_ROW && column != INVALID_COLUMN; };
 };
 
-struct FineLocation
+struct Coordinates
 {
-    FineLocation operator+(const FineLocation &a)
+    Coordinates operator+(const Coordinates &a)
     {
         return {x + a.x, y + a.y};
     }
@@ -74,6 +74,7 @@ public:
     const int m_gridHeight;
     Grid m_grid;
     Graph m_netlist;
+    int m_feedthroughCount;
 
     unordered_map<string, Location> m_locations;
 
@@ -94,7 +95,7 @@ public:
     Location CalculateEquilibriumLocation(string cellId);
     int CalculateCellCost(string cellId);
     int CalculateTerminalDistance(Terminal term0, Terminal term1);
-    FineLocation CalculateFineLocation(Terminal term);
+    Coordinates CalculateCoordinates(Terminal term);
     int CalculateChannelRow(Terminal term);
 
 private:

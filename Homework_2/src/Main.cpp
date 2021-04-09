@@ -10,7 +10,6 @@ Group: Nathaniel Hernandez; Erin Cold
 #include "Placement.hpp"
 #include "Routing.hpp"
 
-
 //#include "Routing.hpp"
 //#include "Magic.hpp"
 //#include "Test.cpp"
@@ -91,23 +90,19 @@ void Test_ForceDirectedPlacement()
 
 void Test_SimulatedAnealingPlacement()
 {
-    Graph graph("Benchmarks/b_50_50");
-    Placement placement(graph, 10);
+    Graph graph("Benchmarks/b_2000_2000");
+    Placement placement(graph, 60);
     Test_FixPlacement(placement);
     cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
 
-    placement.SimulatedAnealingPlace(40000, 1, .99, 100);
+    placement.SimulatedAnealingPlace(1000, 1, .95, 5000);
     cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
 
     placement.ForceDirectedFlip(10);
     cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
 
     placement.InsertFeedthroughs();
     cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
     cout << endl;
 }
 
@@ -116,10 +111,11 @@ int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    try {
+    try
+    {
         Test_ForceDirectedPlacement();
     }
-    catch (invalid_argument& e)
+    catch (invalid_argument &e)
     {
         cerr << e.what() << endl;
         return 1;
