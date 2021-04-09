@@ -8,6 +8,8 @@ Group: Nathaniel Hernandez; Erin Cold
 #include <cassert>
 #include "Graph.hpp"
 #include "Placement.hpp"
+#include "Routing.hpp"
+
 
 //#include "Routing.hpp"
 //#include "Magic.hpp"
@@ -83,6 +85,8 @@ void Test_ForceDirectedPlacement()
     cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
     placement.Print();
     cout << endl;
+
+    Routing route(graph, placement);
 }
 
 // Entry point for code
@@ -90,7 +94,14 @@ int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    Test_ForceDirectedPlacement();
+    try {
+        Test_ForceDirectedPlacement();
+    }
+    catch (invalid_argument& e)
+    {
+        cerr << e.what() << endl;
+        return 1;
+    }
 
     cout << "Goodbye World\n";
     return 0;

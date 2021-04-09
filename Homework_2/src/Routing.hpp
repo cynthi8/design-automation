@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <set>
+#include <iostream>
 
 using namespace std;
 
@@ -104,7 +105,7 @@ public:
 
 	//Pad Row to colCount
 	void PadRow(int colCount) {
-		int sizeToGrow = colCount - RowCells.size();
+		int sizeToGrow = colCount - (int)RowCells.size();
 		if (sizeToGrow <= 0) return;
 
 		RowCell rowCell(Terminal("", Invalid), -1);
@@ -127,8 +128,8 @@ public:
 class SSet
 {
 public:
-	SSet(int colID, set<pair<int, int>> sets)
-		: colID(colID), nets( sets ) {}
+	//SSet(int colID, pair<int, int> sets)
+	//	: colID(colID), nets.insert(sets) {}
 
 	int colID;					//need to keep track of the column this originated from
 	set<pair<int, int>> nets;	//all of the nets that cross this column
@@ -137,6 +138,7 @@ public:
 		this->colID = colID;
 		nets.insert(sets);
 	}
+
 };
 //S[j].addSet(j, { k.net, iter });	//push net
 // 
@@ -144,11 +146,11 @@ public:
 class Routing
 {
 public:
-	void Route(Graph graph, Placement place);
+	Routing(Graph graph, Placement place);
 
 	vector<Row> TopRow;
 	vector<Row> BotRow;
-	Channel Channel;
+	vector<Channel> Channel;
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
@@ -156,6 +158,8 @@ public:
 	void BuildV(int i, vector<vector<int>>& V);
 	void FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
 	void RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
+
+	void Print();
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {
@@ -167,7 +171,7 @@ public:
 	// Pad the end of the rows with zeros so they all 
 	// have the same number of zeros
 	void PadRows() {
-		for (int i = 0; i < m_colCount; i++) {
+		for (int i = 0; i < m_rowCount; i++) {
 			TopRow[i].PadRow(m_colCount);
 			BotRow[i].PadRow(m_colCount);
 		}

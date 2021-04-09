@@ -5,7 +5,8 @@
 #include "Routing.hpp"
 
 
-void Routing::Route(Graph graph, Placement place)
+
+Routing::Routing(Graph graph, Placement place)
 {
 	//This function needs to populate the rows such that we can do channel routing
 	int i;
@@ -13,14 +14,15 @@ void Routing::Route(Graph graph, Placement place)
 	string cell_id;
 	int maxCols = 0;
 
-	Row RowTopTemp;
-	Row RowBottomTemp;
+
 	vector<pair<int, int>> Terminals;
 	SetRowSize(place.m_grid.m_rows);
 
 	// go through the entire 2D grid that's been placed
 	for (i = 0; i < place.m_gridHeight; i++) {
-		for (j = 0; i < place.m_gridWidth; j++) {
+		Row RowTopTemp;
+		Row RowBottomTemp;
+		for (j = 0; j < place.m_gridWidth; j++) {
 
 			//Get the cell id
 			cell_id = place.m_grid[Location::Location(i, j)].m_cellId;
@@ -48,9 +50,9 @@ void Routing::Route(Graph graph, Placement place)
 		this->TopRow[i + 1] = RowTopTemp;
 
 		if (TopRow[i].RowCells.size() > maxCols)
-			maxCols = TopRow[i].RowCells.size();
+			maxCols = (int)TopRow[i].RowCells.size();
 		if (BotRow[i].RowCells.size() > maxCols)
-			maxCols = BotRow[i].RowCells.size();
+			maxCols = (int)BotRow[i].RowCells.size();
 	}
 
 	this->m_colCount = maxCols;
@@ -58,6 +60,7 @@ void Routing::Route(Graph graph, Placement place)
 	PadRows(); //pad the rows with zeros
 
 	//for each row, build it up
+	Channel.resize(m_rowCount);
 	for (i = 0; i < m_rowCount; i++) {
 		
 		// Build the range first in case we have to change it for the V graph
@@ -124,7 +127,7 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 					break;
 				}
 				else if(iter == V[k].end() - 1){
-					removefromV = iter - V[k].begin();
+					removefromV = (int)(iter - V[k].begin());
 					Vidx = k;
 				}
 				//else its not in it
@@ -148,10 +151,10 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > Channel.m_tracks.size())
-				Channel.m_tracks.resize(maxtrack + 1);
+			if (maxtrack > Channel[i].m_tracks.size())
+				Channel[i].m_tracks.resize(maxtrack + 1);
 
-			Channel.m_tracks[maxtrack].AddNet(netID, range);
+			Channel[i].m_tracks[maxtrack].AddNet(netID, range);
 			if(Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
@@ -197,12 +200,12 @@ void Routing::FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& Ne
 		//if the first and last element are the same, then we have a dogleg
 		if (V[i][0] == V[i].back()) {
 			//split the second to last net's x range into two
-			int netIDProb = V[i].back() - 1;
-			int netIDEnd = V[i].back();
+			int netIDProb = *(V[i].rbegin() + 1);
+			int netIDEnd = *(V[i].rbegin());
 
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
 				[netIDProb](NetAndRanges const& item) {return item.net == netIDProb; });
-			int idx = iter - NetsAndXRanges.begin();
+			int idx = (int)(iter - NetsAndXRanges.begin());
 			pair<int, int> ORange = NetsAndXRanges[idx].ranges[0];
 
 			//Need to find an empty place to split it
@@ -253,11 +256,11 @@ void Routing::BuildV(int i, vector<vector<int>>& V)
 					}
 				}
 			}
+			V.push_back({ netIDT, netIDB });
 		}
 
-		V.push_back({ netIDT, netIDB });
-
 	EndOuterForLoop:
+		continue;
 	}
 
 	return;
@@ -318,12 +321,15 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 
 	//net is only in top
 	if (iter1 != rowT.end()) {
-		x2 = find(iter1, rowT.end(), netID) - rowB.begin();
+		x2 = (int)(find(iter1, rowT.end(), netID) - rowB.begin());
 	}
 	//net is only in bottom
 	else if (iter2 != rowB.end()) {
-		x2 = find(iter2, rowB.end(), netID) - rowB.begin();
+		x2 = (int)(find(iter2, rowB.end(), netID) - rowB.begin());
 	}
+
+	if(x2 == -1)
+		throw invalid_argument("Placement is borked; Missing Nets in Row.");
 
 	return NetAndRanges(netID, { { j, x2 } });
 }
@@ -365,7 +371,7 @@ void Routing::BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals)
 	}
 
 	//if a set is contained within another, delete it
-	for (int j = DeleteS.size()-1; j >= 0; j--)
+	for (int j = (int)(DeleteS.size()-1); j >= 0; j--)
 		S.erase(S.begin() + DeleteS[j]);
 		//remove(S.begin(), S.end(), DeleteS[j]);
 
@@ -379,4 +385,23 @@ void swapNum(T& n1, T& n2)
 	T temp = n1;
 	n1 = n2;
 	n2 = temp;
+}
+
+
+void Routing::Print()
+{
+	for (auto i : Channel)
+	{
+		for (auto j : i.m_tracks)
+		{
+			for (auto k = 0; k < j.m_nets.size(); k++) {
+				int netID = j.m_nets[k];
+				pair<int, int> locs = j.m_locs[k];
+
+				cout << netID << ": " << locs.first << ", " << locs.second << " ";
+			}
+		}
+		cout << endl;
+	}
+	return;
 }

@@ -12,8 +12,12 @@ using namespace std;
 // Construct a netlist graph from a file name
 Graph::Graph(string fileName)
 {
-    fstream fs;
-    fs.open(fileName, ios::in);
+    ifstream fs;
+    //string test = "test.txt";
+    fs.open(fileName.c_str(), ios::in);
+
+    if (!fs.is_open())
+        throw invalid_argument("Error: File could not be opened.");
 
     fs >> m_cellCount;
     fs >> m_netCount;
