@@ -1,0 +1,22 @@
+magic
+tech scmos
+timestamp 1618002388
+<< error_p >>
+rect 4 13 5 15
+rect 7 13 8 15
+rect 5 12 10 13
+rect 4 8 5 10
+rect 7 8 8 10
+rect 5 7 10 8
+<< metal1 >>
+rect 4 12 5 13
+rect 7 12 8 13
+rect 4 7 5 8
+rect 7 7 8 8
+<< labels >>
+rlabel space 3 7 9 13 0 Cell
+rlabel metal1 4 12 5 13 0 1
+rlabel metal1 7 12 8 13 0 2
+rlabel metal1 4 7 5 8 0 3
+rlabel metal1 7 7 8 8 0 4
+<< end >>

@@ -1,0 +1,16 @@
+magic
+tech scmos
+timestamp 1618002575
+<< error_p >>
+rect 1 6 2 8
+rect 2 5 4 6
+rect 1 1 2 3
+rect 2 0 4 1
+<< metal1 >>
+rect 1 5 2 6
+rect 1 0 2 1
+<< labels >>
+rlabel space 0 0 3 6 0 FCell
+rlabel metal1 1 0 2 1 0 1
+rlabel metal1 1 5 2 6 0 2
+<< end >>
