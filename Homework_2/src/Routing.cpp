@@ -16,13 +16,14 @@ Routing::Routing(Graph graph, Placement place)
 
 
 	vector<pair<int, int>> Terminals;
-	SetRowSize(place.m_grid.m_rows);
+	int placeHeight = (int)place.m_grid.m_grid.size();
+	SetRowSize(placeHeight);
 
 	// go through the entire 2D grid that's been placed
-	for (i = 0; i < place.m_gridHeight; i++) {
+	for (i = 0; i < placeHeight; i++) {
 		Row RowTopTemp;
 		Row RowBottomTemp;
-		for (j = 0; j < place.m_gridWidth; j++) {
+		for (j = 0; j < place.m_grid.m_grid[i].size(); j++) {
 
 			//Get the cell id
 			cell_id = place.m_grid[Location::Location(i, j)].m_cellId;
@@ -46,13 +47,13 @@ Routing::Routing(Graph graph, Placement place)
 		// add the temp rows to the array
 		// the top most row should be empty
 		// the bottom most row should be empty
-		this->BotRow[i] = RowBottomTemp;
-		this->TopRow[i + 1] = RowTopTemp;
+		this->m_BotRow[i] = RowBottomTemp;
+		this->m_TopRow[i + 1] = RowTopTemp;
 
-		if (TopRow[i].RowCells.size() > maxCols)
-			maxCols = (int)TopRow[i].RowCells.size();
-		if (BotRow[i].RowCells.size() > maxCols)
-			maxCols = (int)BotRow[i].RowCells.size();
+		if (m_TopRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_TopRow[i].RowCells.size();
+		if (m_BotRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_BotRow[i].RowCells.size();
 	}
 
 	this->m_colCount = maxCols;
@@ -60,7 +61,7 @@ Routing::Routing(Graph graph, Placement place)
 	PadRows(); //pad the rows with zeros
 
 	//for each row, build it up
-	Channel.resize(m_rowCount);
+	m_Channel.resize(m_rowCount);
 	for (i = 0; i < m_rowCount; i++) {
 		
 		// Build the range first in case we have to change it for the V graph
@@ -87,8 +88,8 @@ Routing::Routing(Graph graph, Placement place)
 
 void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges)
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int>& rowT = m_TopRow[i].RowNets;
+	vector<int>& rowB = m_BotRow[i].RowNets;
 
 	Track track;
 	
@@ -151,10 +152,10 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > Channel[i].m_tracks.size())
-				Channel[i].m_tracks.resize(maxtrack + 1);
+			if (maxtrack > m_Channel[i].m_tracks.size())
+				m_Channel[i].m_tracks.resize(maxtrack + 1);
 
-			Channel[i].m_tracks[maxtrack].AddNet(netID, range);
+			m_Channel[i].m_tracks[maxtrack].AddNet(netID, range);
 			if(Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
@@ -191,8 +192,8 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 // 1(range), 2(two ranges)
 void Routing::FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) 
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int>& rowT = m_TopRow[i].RowNets;
+	vector<int>& rowB = m_BotRow[i].RowNets;
 
 	//Go though all values in the V graph
 	for (auto i = 0; i < V.size(); i++) {
@@ -233,8 +234,8 @@ void Routing::FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& Ne
 void Routing::BuildV(int i, vector<vector<int>>& V)
 {
 	//vector<vector<int>> V;
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int>& rowT = m_TopRow[i].RowNets;
+	vector<int>& rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
 	for (int j = 0; j < m_colCount; j++) {
@@ -269,8 +270,8 @@ void Routing::BuildV(int i, vector<vector<int>>& V)
 
 void Routing::BuildRange(int i, vector<NetAndRanges>& NetsAndXRanges)
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int>& rowT = m_TopRow[i].RowNets;
+	vector<int>& rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
 	for (int j = 0; j < m_colCount; j++) {
@@ -302,8 +303,8 @@ void Routing::BuildRange(int i, vector<NetAndRanges>& NetsAndXRanges)
 NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 {
 	//Get the X columns for each net
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int>& rowT = m_TopRow[i].RowNets;
+	vector<int>& rowB = m_BotRow[i].RowNets;
 
 	//in case the other terminal for the net is actually in the same column
 	int TopAdj = 0, BotAdj = 0;
@@ -390,7 +391,7 @@ void swapNum(T& n1, T& n2)
 
 void Routing::Print()
 {
-	for (auto i : Channel)
+	for (auto i : m_Channel)
 	{
 		for (auto j : i.m_tracks)
 		{

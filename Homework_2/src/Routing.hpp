@@ -45,6 +45,7 @@ public:
 				return true;
 			return false;
 		}
+		return false;
 	}
 
 	bool AddNet(int net, pair<int,int> locs)
@@ -148,9 +149,9 @@ class Routing
 public:
 	Routing(Graph graph, Placement place);
 
-	vector<Row> TopRow;
-	vector<Row> BotRow;
-	vector<Channel> Channel;
+	vector<Row> m_TopRow;
+	vector<Row> m_BotRow;
+	vector<Channel> m_Channel;
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
@@ -164,16 +165,16 @@ public:
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {
 		this->m_rowCount = rows + 1;
-		this->TopRow.resize(this->m_rowCount);
-		this->BotRow.resize(this->m_rowCount);
+		this->m_TopRow.resize(this->m_rowCount);
+		this->m_BotRow.resize(this->m_rowCount);
 	}
 
 	// Pad the end of the rows with zeros so they all 
 	// have the same number of zeros
 	void PadRows() {
 		for (int i = 0; i < m_rowCount; i++) {
-			TopRow[i].PadRow(m_colCount);
-			BotRow[i].PadRow(m_colCount);
+			m_TopRow[i].PadRow(m_colCount);
+			m_BotRow[i].PadRow(m_colCount);
 		}
 	}
 
