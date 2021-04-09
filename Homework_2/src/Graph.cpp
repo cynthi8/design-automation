@@ -61,7 +61,7 @@ void Graph::printTrace(Terminal beginningTerminal)
     // Start with a terminal
     Terminal currentTerminal = beginningTerminal;
     cout << "Current Cell: " << currentTerminal.cellId << " Current Terminal: " << currentTerminal.terminalId << endl;
-    Terminal otherTerminal = GetOtherTerminal(currentTerminal);
+    Terminal otherTerminal = getOtherTerminal(currentTerminal);
     cout << "is connected to Cell: " << otherTerminal.cellId << " Terminal: " << otherTerminal.terminalId << endl;
 
     // If the terminal connects to a feedthrough cell, follow the chain
@@ -131,10 +131,10 @@ vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
     vector<pair<TerminalLocation, int>> terminalLocations;
     vector<int> Terms;
 
-    if(isFeedthrough())
-        Terms = { 1, 3 };
+    if (isFeedthrough())
+        Terms = {1, 3};
     else
-        Terms = { 1, 2, 3, 4 };
+        Terms = {1, 2, 3, 4};
 
     for (auto i : Terms)
     {
@@ -169,4 +169,25 @@ Terminal Cell::getTerminal(int terminalId)
         }
     }
     throw("terminalId is not connected on cell");
+}
+
+Terminal Graph::getOtherTerminal(Terminal termA)
+{
+    string cellId = termA.cellId;
+    int terminalId = termA.terminalId;
+
+    // Search the nets on this cell to find termA, and then return the other terminal
+    for (auto net : m_cells[cellId].m_nets)
+    {
+        if (net.m_connections[0].cellId == cellId && net.m_connections[0].terminalId == terminalId)
+        {
+            return net.m_connections[1];
+        }
+        else if (net.m_connections[1].cellId == cellId && net.m_connections[1].terminalId == terminalId)
+        {
+            return net.m_connections[0];
+        }
+    }
+
+    throw("This terminal is not part of a net");
 }

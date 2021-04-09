@@ -110,34 +110,12 @@ public:
     int m_netCount;
 
     map<string, Cell> m_cells;
-    //vector<Net> m_nets;
 
     void addCell(Cell cell) { m_cells.emplace(cell.m_id, cell); };
     void printTrace(Terminal beginningTerminal);
 
-    /*
-    void addNet(Net netToAdd) { 
-        m_nets.push_back(netToAdd); 
-    }
-    void removeNet(Net netToRemove) { 
-        m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end()); 
-    }
-    */
-
-    //See if the terminal given is actually being used for a net
-    /*
-    bool IsTerminalInUse(Terminal TermA) {
-        int CellID = TermA.cellId;
-        int TermID = TermA.cellId;
-
-        vector<int> terms = m_cells[CellID].GetActiveTerminals();
-        for (auto i : terms)
-            if (TermID == i)
-                return true;
-
-        return false;
-    }
-    */
+    // Given a terminal, find the other terminal on the same net
+    Terminal getOtherTerminal(Terminal termA);
 
     // Given a terminal, find the Net ID that contains it
     int GetNetID(Terminal term)
@@ -158,32 +136,6 @@ public:
 
         return -1;
         //throw;
-    }
-
-    // Given a terminal, find the other terminal on the same net
-    Terminal GetOtherTerminal(Terminal TermA)
-    {
-        string cellID = TermA.cellId;
-        int correctNetId = GetNetID(TermA);
-        for (auto net : m_cells[cellID].m_nets)
-        {
-            if (net.m_id != correctNetId)
-            {
-                continue;
-            }
-
-            Terminal firstTerminal = net.m_connections[0];
-            if (firstTerminal.cellId == TermA.cellId && firstTerminal.terminalId == TermA.terminalId)
-            {
-                return net.m_connections[1];
-            }
-            else
-            {
-                return net.m_connections[0];
-            }
-        }
-
-        throw; //This should really not happen
     }
 };
 
