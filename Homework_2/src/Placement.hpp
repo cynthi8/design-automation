@@ -51,7 +51,6 @@ class Grid
 {
 public:
     Grid(int rows, int cols);
-    ~Grid();
 
     GridCell &operator[](const Location &location) { return m_grid[location.row][location.column]; };
     const GridCell &operator[](const Location &location) const { return m_grid[location.row][location.column]; }
@@ -79,12 +78,15 @@ public:
     unordered_map<string, Location> m_locations;
 
     void ForceDirectedPlace(int iterations);
+    void SimulatedAnealingPlace(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep);
     void ForceDirectedFlip(int iterations);
     void InsertFeedthroughs();
     void Print();
 
+    void PlaceCell(Location newLocation, string cellId);
+    Location PickUpCell(string cellId);
+
     void UpdateCellLocation(Location newLocation, string cellId);
-    void PickUpCell(string cellId);
     void InvalidateLocation(string cellId);
     void InsertCell(Location location, string cellId);
 
@@ -96,6 +98,11 @@ public:
     int CalculateChannelRow(Terminal term);
 
 private:
+    int CalculateDeltaCost(string cellId0, string cellId1);
+    void AcceptSwap(string cellId0, string cellId1, int deltaCost);
+    void Swap(string cellId0, string cellId1);
+
+    int m_cost;
     vector<pair<string, int>> m_sortedCells;
 };
 

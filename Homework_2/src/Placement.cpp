@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <random>
 
 #define FEED_THROUGH_TOP_TERMINAL 1
 #define FEED_THROUGH_BOTTOM_TERMINAL 3
@@ -30,17 +31,6 @@ Grid::Grid(int rows, int cols) : m_rows(rows), m_cols(cols)
 	for (int row = 0; row < rows; row++)
 	{
 		m_grid[row].resize(cols);
-	}
-}
-
-Grid::~Grid()
-{
-	for (int row = 0; row < m_rows; row++)
-	{
-		for (int col = 0; col < m_cols; col++)
-		{
-			m_grid[row][col].~GridCell();
-		}
 	}
 }
 
@@ -160,7 +150,7 @@ void Placement::InvalidateLocation(string cellId)
 	m_locations[cellId].column = INVALID_COLUMN;
 }
 
-void Placement::PickUpCell(string cellId)
+Location Placement::PickUpCell(string cellId)
 {
 	Location location = m_locations[cellId];
 	if (location.isValid())
@@ -169,6 +159,7 @@ void Placement::PickUpCell(string cellId)
 		m_grid[location].locked = false;
 	}
 	InvalidateLocation(cellId);
+	return location;
 }
 
 void Placement::InsertCell(Location location, string cellId)
@@ -196,6 +187,12 @@ void Placement::InsertCell(Location location, string cellId)
 		Location newLocation = m_locations[displacedCellId] + Location(0, 1);
 		UpdateCellLocation(newLocation, displacedCellId);
 	}
+}
+
+void Placement::PlaceCell(Location newLocation, string cellId)
+{
+	m_grid.PlaceAndLockCell(newLocation, cellId);
+	UpdateCellLocation(newLocation, cellId);
 }
 
 int Placement::CalculatePlacementCost()
@@ -313,6 +310,73 @@ void Placement::ForceDirectedPlace(int iterations)
 			}
 		}
 	}
+}
+
+void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep)
+{
+	std::mt19937 m_generator; //Mersenne_Twister and not seeded for reproducibility
+	std::uniform_int_distribution<int> m_cellDistribution(1, m_netlist.m_cellCount);
+	std::uniform_real_distribution<float> m_unitDistribution(0, 1);
+
+	float temperature = initialTemperature;
+	while (temperature > freezingTemperature)
+	{
+		float boltzmanLimit = exp(-1 / temperature);
+		int numAccepted = 0;
+		for (int i = 0; i < movesPerStep; i++)
+		{
+			int cell0 = m_cellDistribution(m_generator);
+			int cell1 = m_cellDistribution(m_generator);
+
+			if (cell0 == cell1)
+			{
+				continue;
+			}
+
+			string cell0Id = to_string(cell0);
+			string cell1Id = to_string(cell1);
+
+			int deltaCost = CalculateDeltaCost(cell0Id, cell1Id);
+			if (deltaCost < 0)
+			{
+				m_cost -= deltaCost;
+				numAccepted++;
+			}
+			else
+			{
+				if (m_unitDistribution(m_generator) < pow(boltzmanLimit, deltaCost))
+				{
+					// Probablistically accept increases in cost
+					m_cost -= deltaCost;
+					numAccepted++;
+				}
+				else
+				{
+					// Swap back
+					Swap(cell0Id, cell1Id);
+				}
+			}
+		}
+		float acceptProportion = (float)numAccepted / (float)movesPerStep;
+		cout << acceptProportion;
+		temperature *= heatRetention;
+	}
+}
+
+int Placement::CalculateDeltaCost(string cellId0, string cellId1)
+{
+	int costBefore = CalculateCellCost(cellId0) + CalculateCellCost(cellId1);
+	Swap(cellId0, cellId1);
+	int costAfter = CalculateCellCost(cellId0) + CalculateCellCost(cellId1);
+	return costAfter - costBefore;
+}
+void Placement::Swap(string cellId0, string cellId1)
+{
+	Location location0 = PickUpCell(cellId0);
+	Location location1 = PickUpCell(cellId1);
+
+	PlaceCell(location1, cellId0);
+	PlaceCell(location0, cellId1);
 }
 
 void Placement::ForceDirectedFlip(int iterations)
@@ -439,9 +503,9 @@ void Placement::Print()
 
 int Placement::CalculateCellCost(string cellId)
 {
-	Cell &cell = m_netlist.m_cells[cellId];
+	const Cell &cell = m_netlist.m_cells[cellId];
 	int cost = 0;
-	for (auto net : cell.m_nets)
+	for (auto &net : cell.m_nets)
 	{
 		// We assume there are just two terminals (specified in HW2.pdf)
 		Terminal term0 = net.m_connections[0];

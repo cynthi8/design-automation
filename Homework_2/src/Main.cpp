@@ -85,12 +85,34 @@ void Test_ForceDirectedPlacement()
     cout << endl;
 }
 
+void Test_SimulatedAnealingPlacement()
+{
+    Graph graph("Benchmarks/b_50_50");
+    Placement placement(graph, 10);
+    Test_FixPlacement(placement);
+    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.SimulatedAnealingPlace(40000, 1, .99, 100);
+    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedFlip(10);
+    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.InsertFeedthroughs();
+    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+    cout << endl;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    Test_ForceDirectedPlacement();
+    Test_SimulatedAnealingPlacement();
 
     cout << "Goodbye World\n";
     return 0;
