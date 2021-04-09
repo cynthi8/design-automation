@@ -75,8 +75,8 @@ public:
 		: Term(term), NetID(NetID), AboveCell("", -1), Above(false) {}
 
 	Terminal Term;
-	Terminal AboveCell;
 	int NetID;
+	Terminal AboveCell;
 	bool Above;
 };
 

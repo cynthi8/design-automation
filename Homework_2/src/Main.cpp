@@ -11,6 +11,7 @@ Group: Nathaniel Hernandez; Erin Cold
 
 #include "Graph.hpp"
 #include "Placement.hpp"
+#include "Routing.hpp"
 
 //#include "Magic.hpp"
 
@@ -158,20 +159,45 @@ void Test_FeedthroughCounts()
     cout << endl;
 }
 
-vector<Benchmark> R_Benchmarks{
-    {"Benchmarks/TestRouting_5_5", (int)sqrt(5) * 2},
-};
-
-void Test_Routing()
+void Test_Routing(Benchmark benchmark)
 {
-    for (auto benchmark : R_Benchmarks)
-    {
-        Test_FeedthroughCount(benchmark.fileName, benchmark.gridWidth);
-    }
-    Graph graph(fileName);
-    Placement placement(graph, gridWidth);
+    // Process Graph
+    Graph graph(benchmark.fileName);
 
-    return;
+    // Do Placement and Collect Data
+    Placement placement(graph, benchmark.gridWidth);
+    placement.Print();
+
+    // Do Routing
+    Routing routing(placement);
+}
+
+void PlaceAndRoute(Benchmark benchmark)
+{
+    auto start = chrono::system_clock::now();
+
+    // Process Graph
+    Graph graph(benchmark.fileName);
+
+    // Do Placement and Collect Data
+    Placement placement(graph, benchmark.gridWidth);
+    int originalPlacementCost = placement.CalculatePlacementCost();
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    int postSimulatedAnealingCost = placement.CalculatePlacementCost();
+    placement.GreedyFlipping(10);
+    int postFlippingCost = placement.CalculatePlacementCost();
+    placement.InsertFeedthroughs();
+    int postFeedthroughsCost = placement.CalculatePlacementCost();
+    int feedthroughCount = placement.m_feedthroughCount;
+
+    // Do Routing
+    Routing routing(placement);
+
+    int msPassed = MilisecondsPassed(start);
+
+    // Print out
+    cout << benchmark.fileName << "\t" << originalPlacementCost << "\t\t\t" << postSimulatedAnealingCost << "\t\t\t"
+         << postFlippingCost << "\t\t\t" << postFeedthroughsCost << "\t\t" << feedthroughCount << "\t\t" << msPassed << endl;
 }
 
 // Entry point for code
