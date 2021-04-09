@@ -46,12 +46,12 @@ void Test_FixPlacement(Placement &placement)
     //Overwrite the placement grid with a fixed placement (linear scan from 1 to m_cellCount)
     for (int i = 0; i < placement.m_netlist.m_cellCount; i++)
     {
+        int gridWidth = placement.m_grid.m_grid[0].size(); // assume all rows are same size
         string cellId = to_string(i + 1);
-        int row = i / placement.m_gridWidth;
-        int col = i % placement.m_gridWidth;
+        int row = i / gridWidth;
+        int col = i % gridWidth;
         Location newLocation = {row, col};
-        placement.m_grid.PlaceCell(newLocation, cellId);
-        placement.UpdateCellLocation(newLocation, cellId);
+        placement.PlaceCell(newLocation, cellId);
     }
 }
 
@@ -95,7 +95,7 @@ void Test_Placement(string fileName, const int gridWidth)
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
     int originalPlacementCost = placement.CalculatePlacementCost();
-    placement.SimulatedAnealingPlace(1000, 1, .95, 10000);
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
     int postSimulatedAnealingCost = placement.CalculatePlacementCost();
     placement.GreedyFlipping(10);
     int postFlippingCost = placement.CalculatePlacementCost();

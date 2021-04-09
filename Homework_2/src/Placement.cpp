@@ -111,11 +111,10 @@ Location Grid::FindNextUnoccupiedLocation(Location location)
 	throw;
 }
 
-Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
-													 m_gridHeight(UnsafeRoundUpDivision(netlist.m_cellCount, gridWidth)),
-													 m_grid(m_gridHeight, gridWidth),
+Placement::Placement(Graph netlist, int gridWidth) : m_grid(UnsafeRoundUpDivision(netlist.m_cellCount, gridWidth), gridWidth),
 													 m_netlist(netlist),
-													 m_feedthroughCount(0)
+													 m_feedthroughCount(0),
+													 m_gridWidth(gridWidth)
 {
 	// Initialize location list and grid arbitrarily
 	int i = 0;
@@ -128,8 +127,7 @@ Placement::Placement(Graph netlist, int gridWidth) : m_gridWidth(gridWidth),
 
 		Location newLocation = {row, col};
 
-		m_grid.PlaceCell(newLocation, cellId);
-		UpdateCellLocation(newLocation, cellId);
+		PlaceCell(newLocation, cellId);
 		m_sortedCells.push_back({cellId, cellConnectivity});
 		i++;
 	}

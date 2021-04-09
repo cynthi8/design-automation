@@ -72,8 +72,6 @@ class Placement
 public:
     Placement(Graph netlist, int gridWidth);
 
-    const int m_gridWidth;
-    const int m_gridHeight;
     Grid m_grid;
     Graph m_netlist;
     int m_feedthroughCount;
@@ -106,6 +104,7 @@ private:
     void AcceptSwap(string cellId0, string cellId1, int deltaCost);
     void Swap(string cellId0, string cellId1);
 
+    const int m_gridWidth;
     int m_cost;
     vector<pair<string, int>> m_sortedCells;
 };
