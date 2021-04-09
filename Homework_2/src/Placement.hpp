@@ -93,6 +93,7 @@ public:
 
     int CalculatePlacementCost();
     Location CalculateEquilibriumLocation(string cellId);
+    int EstimateCellCost(string cellId);
     int CalculateCellCost(string cellId);
     int CalculateTerminalDistance(Terminal term0, Terminal term1);
     Coordinates CalculateCoordinates(Terminal term);

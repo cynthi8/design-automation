@@ -11,7 +11,7 @@
 
 #define FEED_THROUGH_TOP_TERMINAL 1
 #define FEED_THROUGH_BOTTOM_TERMINAL 3
-#define COL_PREFERENCE 10
+#define VERTICAL_COST_WEIGHT 10
 #define CELL_WIDTH 6
 #define CELL_HEIGHT 6
 
@@ -61,7 +61,7 @@ Location Grid::FindClosestUnlockedLocation(Location location)
 {
 	for (int rowMag = 0; rowMag < m_rows; rowMag++)
 	{
-		int colSearchWidth = min((rowMag + 1) * COL_PREFERENCE + 1, m_cols);
+		int colSearchWidth = min((rowMag + 1) * VERTICAL_COST_WEIGHT + 1, m_cols);
 		for (int rowSign = 1; rowSign > -2; rowSign -= 2)
 		{
 			int row = rowSign * rowMag;
@@ -323,7 +323,7 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 	while (temperature > freezingTemperature)
 	{
 		float boltzmanLimit = exp(-1 / temperature);
-		int numAccepted = 0;
+		//int numAccepted = 0;
 		for (int i = 0; i < movesPerStep; i++)
 		{
 			int cell0 = m_cellDistribution(m_generator);
@@ -341,7 +341,7 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 			if (deltaCost < 0)
 			{
 				m_cost -= deltaCost;
-				numAccepted++;
+				//numAccepted++;
 			}
 			else
 			{
@@ -349,7 +349,7 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 				{
 					// Probablistically accept increases in cost
 					m_cost -= deltaCost;
-					numAccepted++;
+					//numAccepted++;
 				}
 				else
 				{
@@ -358,17 +358,16 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 				}
 			}
 		}
-		float acceptProportion = (float)numAccepted / (float)movesPerStep;
-		cout << acceptProportion << endl;
+		//float acceptProportion = (float)numAccepted / (float)movesPerStep;
 		temperature *= heatRetention;
 	}
 }
 
 int Placement::CalculateDeltaCost(string cellId0, string cellId1)
 {
-	int costBefore = CalculateCellCost(cellId0) + CalculateCellCost(cellId1);
+	int costBefore = EstimateCellCost(cellId0) + EstimateCellCost(cellId1);
 	Swap(cellId0, cellId1);
-	int costAfter = CalculateCellCost(cellId0) + CalculateCellCost(cellId1);
+	int costAfter = EstimateCellCost(cellId0) + EstimateCellCost(cellId1);
 	return costAfter - costBefore;
 }
 void Placement::Swap(string cellId0, string cellId1)
@@ -501,6 +500,19 @@ void Placement::Print()
 		}
 		cout << endl;
 	}
+}
+int Placement::EstimateCellCost(string cellId)
+{
+	// Estimates do not use coordinates, but vertical distance is weighted higher
+	int cost = 0;
+	for (auto &net : m_netlist.m_cells[cellId].m_nets)
+	{
+		Location location0 = m_locations[net.m_connections[0].cellId];
+		Location location1 = m_locations[net.m_connections[1].cellId];
+
+		cost += abs(location1.row - location0.row) * VERTICAL_COST_WEIGHT + abs(location1.column - location0.column);
+	}
+	return cost;
 }
 
 int Placement::CalculateCellCost(string cellId)
