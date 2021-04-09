@@ -65,8 +65,8 @@ void Test_InsertFeedthroughs()
 
 void Test_ForceDirectedPlacement()
 {
-    Graph graph("Benchmarks/b_tiny");
-    Placement placement(graph, 2);
+    Graph graph("Benchmarks/b_50_50");
+    Placement placement(graph, 10);
     Test_FixPlacement(placement);
     cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
     placement.Print();

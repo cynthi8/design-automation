@@ -235,6 +235,7 @@ void Placement::ForceDirectedPlace(int iterations)
 {
 	for (int i = 0; i < iterations; i++)
 	{
+		m_grid.UnlockAll();
 		for (auto cellConnectivityPair : m_sortedCells)
 		{
 			// Skip cells already locked
