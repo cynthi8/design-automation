@@ -208,8 +208,6 @@ int main(int argc, char *argv[])
         //Test_Placements();
         //Test_FeedthroughCounts();
 
-        //PlaceAndRoute({"Benchmarks/b_feedthrough_0", 2});
-        Test_Routing({"Benchmarks/b_feedthrough_0", 2});
     }
     catch (invalid_argument &e)
     {
