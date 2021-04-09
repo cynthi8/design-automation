@@ -6,13 +6,49 @@
 
 Routing::Routing(Placement place)
 {
+	// Build the rows of cells and terminals
+	BuildRows(place);
+
+	//pad the rows with zeros
+	PadRows(); 
+
+	//for each row, build it up
+	m_Channel.resize(m_rowCount);
+	for (int i = 0; i < m_rowCount; i++)
+	{
+
+		// Build the range first in case we have to change it for the V graph
+		vector<NetAndRanges> NetsAndXRanges;
+		BuildRange(i, NetsAndXRanges);
+
+		// Build the V Graph
+		vector<vector<int>> V;
+		BuildV(i, V);
+
+		// Fix Doglegs by changing range
+		FixDogLegs(i, V, NetsAndXRanges);
+
+		// Build the S / H Graph
+		vector<SSet> S(m_colCount);
+		BuildS(i, S, NetsAndXRanges);
+
+		// Finally Route the nets
+		RouteNets(i, S, V, NetsAndXRanges);
+	}
+
+	return;
+}
+
+// Build the Rows of Cells and Terminals
+void Routing::BuildRows(Placement& place) {
 	//This function needs to populate the rows such that we can do channel routing
-	int i;
-	int j;
-	string cell_id;
+	int i, j;
 	int maxCols = 0;
 
 	vector<pair<int, int>> Terminals;
+	string cell_id;
+
+
 	int placeHeight = (int)place.m_grid.m_grid.size();
 	SetRowSize(placeHeight);
 
@@ -57,36 +93,9 @@ Routing::Routing(Placement place)
 	}
 
 	this->m_colCount = maxCols;
-
-	PadRows(); //pad the rows with zeros
-
-	//for each row, build it up
-	m_Channel.resize(m_rowCount);
-	for (i = 0; i < m_rowCount; i++)
-	{
-
-		// Build the range first in case we have to change it for the V graph
-		vector<NetAndRanges> NetsAndXRanges;
-		BuildRange(i, NetsAndXRanges);
-
-		// Build the V Graph
-		vector<vector<int>> V;
-		BuildV(i, V);
-
-		// Fix Doglegs by changing range
-		FixDogLegs(i, V, NetsAndXRanges);
-
-		// Build the S / H Graph
-		vector<SSet> S(m_colCount);
-		BuildS(i, S, NetsAndXRanges);
-
-		//TODO route
-		RouteNets(i, S, V, NetsAndXRanges);
-	}
-
-	return;
 }
 
+// Route the nets through the channel
 void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -196,11 +205,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<N
 	return;
 }
 
-//how do I want to fix the dog legs
-//I suppose I can just change the x range for the second to last element
-// 1-2-3-4-1 -> 1-2-3-4a(x1,x2a or something), 4b(x2b,x3)-1
-// 1-2-1 -> 1-2b(x1,x2a), 2b(x2b, x3)-1
-// 1(range), 2(two ranges)
+// Fix any doglegs that appear by splitting the range of the nets
 void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -244,7 +249,8 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &Ne
 	return;
 }
 
-void Routing::BuildV(int i, vector<vector<int>> &V)
+// Build the VCG Graph
+void Routing::BuildV(int i, vector<vector<int>>& V)
 {
 	//vector<vector<int>> V;
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -287,6 +293,7 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 	return;
 }
 
+// Build all the ranges of the nets
 void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -323,6 +330,7 @@ void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 	}
 }
 
+// Find the columns a particular net crosses
 NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 {
 	//Get the X columns for each net
@@ -362,6 +370,7 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 	return NetAndRanges(netID, {{j, x2}});
 }
 
+// Build the HCG Graph, ie what nets cannot be on the same track as one another
 void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
@@ -412,6 +421,7 @@ void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 	return;
 }
 
+// Debug Printing I suppose
 void Routing::Print()
 {
 	for (auto i : m_Channel)

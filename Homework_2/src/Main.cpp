@@ -158,13 +158,30 @@ void Test_FeedthroughCounts()
     cout << endl;
 }
 
+vector<Benchmark> R_Benchmarks{
+    {"Benchmarks/TestRouting_5_5", (int)sqrt(5) * 2},
+};
+
+void Test_Routing()
+{
+    for (auto benchmark : R_Benchmarks)
+    {
+        Test_FeedthroughCount(benchmark.fileName, benchmark.gridWidth);
+    }
+    Graph graph(fileName);
+    Placement placement(graph, gridWidth);
+
+    return;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     try
     {
         //Test_Placements();
-        Test_FeedthroughCounts();
+        //Test_FeedthroughCounts();
+
     }
     catch (invalid_argument &e)
     {
