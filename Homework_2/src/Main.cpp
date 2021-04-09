@@ -124,12 +124,47 @@ void Test_Placements()
     cout << endl;
 }
 
+void Test_FeedthroughCount(string fileName, const int gridWidth)
+{
+    Graph graph(fileName);
+    Placement placement(graph, gridWidth);
+    placement.InsertFeedthroughs();
+    int originalFeedthroughCount = placement.m_feedthroughCount;
+
+    Placement placement1(graph, gridWidth);
+    placement1.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    placement1.InsertFeedthroughs();
+    int postPlacementFeedthroughCount = placement1.m_feedthroughCount;
+
+    Placement placement2(graph, gridWidth);
+    placement2.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    placement2.GreedyFlipping(10);
+    placement2.InsertFeedthroughs();
+    int postFlippingFeedthroughCount = placement2.m_feedthroughCount;
+
+    cout << fileName << "\t" << originalFeedthroughCount << "\t\t\t" << postPlacementFeedthroughCount << "\t\t\t" << postFlippingFeedthroughCount << endl;
+}
+
+void Test_FeedthroughCounts()
+{
+    cout << "fileName \t"
+         << "originalFeedthroughCount "
+         << "postPlacementFeedthroughCount "
+         << "postFlippingFeedthroughCount " << endl;
+    for (auto benchmark : Benchmarks)
+    {
+        Test_FeedthroughCount(benchmark.fileName, benchmark.gridWidth);
+    }
+    cout << endl;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     try
     {
-        Test_Placements();
+        //Test_Placements();
+        Test_FeedthroughCounts();
     }
     catch (invalid_argument &e)
     {
