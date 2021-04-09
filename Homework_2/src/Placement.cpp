@@ -198,6 +198,16 @@ void Placement::InsertCell(Location location, string cellId)
 	}
 }
 
+int Placement::CalculatePlacementCost()
+{
+	int cost = 0;
+	for (auto &cellEntry : m_netlist.m_cells)
+	{
+		cost += CalculateCellCost(cellEntry.first);
+	}
+	return cost;
+}
+
 Location Placement::CalculateEquilibriumLocation(string cellId)
 {
 	Cell &cell = m_netlist.m_cells[cellId];
@@ -221,119 +231,124 @@ Location Placement::CalculateEquilibriumLocation(string cellId)
 	return eqLoc;
 }
 
-void Placement::ForceDirectedPlace()
+void Placement::ForceDirectedPlace(int iterations)
 {
-	for (auto cellConnectivityPair : m_sortedCells)
+	for (int i = 0; i < iterations; i++)
 	{
-		// Skip cells already locked
-		string baseCellId = cellConnectivityPair.first;
-		Location curLoc = m_locations[baseCellId];
-		if (curLoc.isValid() && m_grid[curLoc].locked)
+		for (auto cellConnectivityPair : m_sortedCells)
 		{
-			continue;
-		}
-
-		// Pick up the base cell
-		PickUpCell(baseCellId);
-
-		bool rippleMove;
-		do
-		{
-			rippleMove = false;
-
-			// Skip lonely cells
-			if (m_netlist.m_cells[baseCellId].m_connectivity == 0)
+			// Skip cells already locked
+			string baseCellId = cellConnectivityPair.first;
+			Location curLoc = m_locations[baseCellId];
+			if (curLoc.isValid() && m_grid[curLoc].locked)
 			{
 				continue;
 			}
 
-			Location newLoc = CalculateEquilibriumLocation(baseCellId);
+			// Pick up the base cell
+			PickUpCell(baseCellId);
 
-			// Move cell to equilibrium position
-			if (m_grid[newLoc].occupied == false)
+			bool rippleMove;
+			do
 			{
-				// Easy case where the new location is vacant
-				m_grid.PlaceAndLockCell(newLoc, baseCellId);
-				UpdateCellLocation(newLoc, baseCellId);
+				rippleMove = false;
+
+				// Skip lonely cells
+				if (m_netlist.m_cells[baseCellId].m_connectivity == 0)
+				{
+					continue;
+				}
+
+				Location newLoc = CalculateEquilibriumLocation(baseCellId);
+
+				// Move cell to equilibrium position
+				if (m_grid[newLoc].occupied == false)
+				{
+					// Easy case where the new location is vacant
+					m_grid.PlaceAndLockCell(newLoc, baseCellId);
+					UpdateCellLocation(newLoc, baseCellId);
+				}
+				else
+				{
+					// Find an unlocked location
+					if (m_grid[newLoc].locked == true)
+					{
+						newLoc = m_grid.FindClosestUnlockedLocation(newLoc);
+					}
+
+					// Kick the current occupant if needed
+					string kickedCellId;
+					if (m_grid[newLoc].occupied == true)
+					{
+						kickedCellId = m_grid[newLoc].getCellId();
+						PickUpCell(kickedCellId);
+						rippleMove = true;
+					}
+
+					// Place our base cell
+					m_grid.PlaceAndLockCell(newLoc, baseCellId);
+					UpdateCellLocation(newLoc, baseCellId);
+
+					// Set up baseCellId for next loop if we are rippling
+					if (rippleMove)
+					{
+						baseCellId = kickedCellId;
+					}
+				}
+			} while (rippleMove == true);
+		}
+
+		// Place cells with invalid locations (scan for open spots)
+		Location curLoc(0, 0);
+		for (auto &mapEntry : m_netlist.m_cells)
+		{
+			string cellId = mapEntry.first;
+			if (m_locations[cellId].isValid() == false)
+			{
+				Location newLoc = m_grid.FindNextUnoccupiedLocation(curLoc);
+				m_grid.PlaceAndLockCell(newLoc, cellId);
+				UpdateCellLocation(newLoc, cellId);
+				curLoc = newLoc;
+			}
+		}
+	}
+}
+
+void Placement::ForceDirectedFlip(int iterations)
+{
+	for (int i = 0; i < iterations; i++)
+	{
+		for (auto cellConnectivityPair : m_sortedCells)
+		{
+			int currentCost, potentialCost;
+			string baseCellId = cellConnectivityPair.first;
+			Cell &baseCell = m_netlist.m_cells[baseCellId];
+
+			currentCost = CalculateCellCost(baseCellId);
+
+			baseCell.FlipLeftToRight();
+			potentialCost = CalculateCellCost(baseCellId);
+			if (potentialCost >= currentCost)
+			{
+				//unflip
+				baseCell.FlipLeftToRight();
 			}
 			else
 			{
-				// Find an unlocked location
-				if (m_grid[newLoc].locked == true)
-				{
-					newLoc = m_grid.FindClosestUnlockedLocation(newLoc);
-				}
-
-				// Kick the current occupant if needed
-				string kickedCellId;
-				if (m_grid[newLoc].occupied == true)
-				{
-					kickedCellId = m_grid[newLoc].getCellId();
-					PickUpCell(kickedCellId);
-					rippleMove = true;
-				}
-
-				// Place our base cell
-				m_grid.PlaceAndLockCell(newLoc, baseCellId);
-				UpdateCellLocation(newLoc, baseCellId);
-
-				// Set up baseCellId for next loop if we are rippling
-				if (rippleMove)
-				{
-					baseCellId = kickedCellId;
-				}
+				currentCost = potentialCost;
 			}
-		} while (rippleMove == true);
-	}
 
-	// Place cells with invalid locations (scan for open spots)
-	Location curLoc(0, 0);
-	for (auto &mapEntry : m_netlist.m_cells)
-	{
-		string cellId = mapEntry.first;
-		if (m_locations[cellId].isValid() == false)
-		{
-			Location newLoc = m_grid.FindNextUnoccupiedLocation(curLoc);
-			m_grid.PlaceAndLockCell(newLoc, cellId);
-			UpdateCellLocation(newLoc, cellId);
-			curLoc = newLoc;
-		}
-	}
-	return;
-}
-
-void Placement::ForceDirectedFlip()
-{
-	for (auto cellConnectivityPair : m_sortedCells)
-	{
-		int currentCost, potentialCost;
-		string baseCellId = cellConnectivityPair.first;
-		Cell &baseCell = m_netlist.m_cells[baseCellId];
-
-		currentCost = CalculateFineCost(baseCellId);
-
-		baseCell.FlipLeftToRight();
-		potentialCost = CalculateFineCost(baseCellId);
-		if (potentialCost >= currentCost)
-		{
-			//unflip
-			baseCell.FlipLeftToRight();
-		}
-		else
-		{
-			currentCost = potentialCost;
-		}
-
-		baseCell.FlipTopToBottom();
-		potentialCost = CalculateFineCost(baseCellId);
-		if (potentialCost >= currentCost)
-		{
-			//unflip
 			baseCell.FlipTopToBottom();
-		}
-		else
-		{
-			currentCost = potentialCost;
+			potentialCost = CalculateCellCost(baseCellId);
+			if (potentialCost >= currentCost)
+			{
+				//unflip
+				baseCell.FlipTopToBottom();
+			}
+			else
+			{
+				currentCost = potentialCost;
+			}
 		}
 	}
 }
@@ -374,7 +389,7 @@ void Placement::InsertFeedthroughs()
 			cell1.removeNet(net);
 
 			// Create Feedthroughs all the way up (like a ladder)
-			Cell &lowerCell = cell0;
+			string lowerCellId = cell0.m_id;
 			Terminal lowerTerminal = term0;
 			int cellColumn = m_locations[cellId0].column;
 			for (int cellRow = channelRow0; cellRow < channelRow1; cellRow++)
@@ -383,7 +398,6 @@ void Placement::InsertFeedthroughs()
 				string feedthroughId = "F" + to_string(feedthroughNum);
 				feedthroughNum++;
 				m_netlist.addCell(Cell(feedthroughId));
-				Cell &feedthroughCell = m_netlist.m_cells[feedthroughId];
 				InsertCell({cellRow, cellColumn}, feedthroughId);
 
 				// Build the top rung
@@ -391,17 +405,17 @@ void Placement::InsertFeedthroughs()
 
 				// Link the two rungs
 				Net feedthroughNet = Net(net.m_id, lowerTerminal, upperTerminal);
-				lowerCell.addNet(feedthroughNet);
-				feedthroughCell.addNet(feedthroughNet);
+				m_netlist.m_cells[lowerCellId].addNet(feedthroughNet);
+				m_netlist.m_cells[feedthroughId].addNet(feedthroughNet);
 
 				// Set the lower rung for next loop
-				lowerCell = feedthroughCell;
+				lowerCellId = feedthroughId;
 				lowerTerminal = Terminal(feedthroughId, FEED_THROUGH_TOP_TERMINAL);
 			}
 
 			// Final rung links to already existing term1
 			Net feedthroughNet = Net(net.m_id, lowerTerminal, term1);
-			lowerCell.addNet(feedthroughNet);
+			m_netlist.m_cells[lowerCellId].addNet(feedthroughNet);
 			cell1.addNet(feedthroughNet);
 		}
 	}
@@ -422,7 +436,7 @@ void Placement::Print()
 	}
 }
 
-int Placement::CalculateFineCost(string cellId)
+int Placement::CalculateCellCost(string cellId)
 {
 	Cell &cell = m_netlist.m_cells[cellId];
 	int cost = 0;
@@ -431,12 +445,12 @@ int Placement::CalculateFineCost(string cellId)
 		// We assume there are just two terminals (specified in HW2.pdf)
 		Terminal term0 = net.m_connections[0];
 		Terminal term1 = net.m_connections[1];
-		cost += CalculateFineDistance(term0, term1);
+		cost += CalculateTerminalDistance(term0, term1);
 	}
 	return cost;
 }
 
-int Placement::CalculateFineDistance(Terminal term0, Terminal term1)
+int Placement::CalculateTerminalDistance(Terminal term0, Terminal term1)
 {
 	FineLocation fineLocation0 = CalculateFineLocation(term0);
 	FineLocation fineLocation1 = CalculateFineLocation(term1);
