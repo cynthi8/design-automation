@@ -67,8 +67,8 @@ void Test_InsertFeedthroughs()
 
 void Test_ForceDirectedPlacement()
 {
-    Graph graph("Benchmarks/b_tiny");
-    Placement placement(graph, 2);
+    Graph graph("Benchmarks/b_50_50");
+    Placement placement(graph, 10);
     Test_FixPlacement(placement);
     cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
     placement.Print();
@@ -87,6 +87,28 @@ void Test_ForceDirectedPlacement()
     cout << endl;
 
     Routing route(graph, placement);
+}
+
+void Test_SimulatedAnealingPlacement()
+{
+    Graph graph("Benchmarks/b_50_50");
+    Placement placement(graph, 10);
+    Test_FixPlacement(placement);
+    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.SimulatedAnealingPlace(40000, 1, .99, 100);
+    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedFlip(10);
+    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.InsertFeedthroughs();
+    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+    cout << endl;
 }
 
 // Entry point for code
