@@ -7,6 +7,7 @@ Group: Nathaniel Hernandez; Erin Cold
 #include <iostream>
 #include <cassert>
 #include <chrono>
+#include <cmath>
 
 #include "Graph.hpp"
 #include "Placement.hpp"
@@ -14,6 +15,24 @@ Group: Nathaniel Hernandez; Erin Cold
 //#include "Magic.hpp"
 
 using namespace std;
+
+struct Benchmark
+{
+    string fileName;
+    int gridWidth;
+};
+
+vector<Benchmark> Benchmarks{
+    {"Benchmarks/b_50_50", (int)sqrt(50) * 2},
+    {"Benchmarks/b_100_100", (int)sqrt(100) * 2},
+    {"Benchmarks/b_400_400", (int)sqrt(400) * 2},
+    {"Benchmarks/b_600_1000", (int)sqrt(600) * 2},
+    {"Benchmarks/b_900_800", (int)sqrt(900) * 2},
+    {"Benchmarks/b_1000_1000", (int)sqrt(1000) * 2},
+    {"Benchmarks/b_1000_1200", (int)sqrt(1000) * 2},
+    {"Benchmarks/b_1200_1500", (int)sqrt(1200) * 2},
+    {"Benchmarks/b_1500_1500", (int)sqrt(1500) * 2},
+    {"Benchmarks/b_2000_2000", (int)sqrt(2000) * 2}};
 
 int MilisecondsPassed(chrono::system_clock::time_point start)
 {
@@ -70,49 +89,52 @@ void Test_InsertFeedthroughs()
     Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
-void Test_SimulatedAnealingPlacement(string fileName, const int gridWidth)
+void Test_Placement(string fileName, const int gridWidth)
 {
-
     auto start = chrono::system_clock::now();
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
-    Test_FixPlacement(placement);
-    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
-
-    placement.SimulatedAnealingPlace(1000, 1, .95, 2000);
-    cout << "Placement Cost after Simulated Anealing: " << placement.CalculatePlacementCost() << endl;
-
-    placement.ForceDirectedFlip(10);
-    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
-
+    int originalPlacementCost = placement.CalculatePlacementCost();
+    placement.SimulatedAnealingPlace(1000, 1, .95, 10000);
+    int postSimulatedAnealingCost = placement.CalculatePlacementCost();
+    placement.GreedyFlipping(10);
+    int postFlippingCost = placement.CalculatePlacementCost();
     placement.InsertFeedthroughs();
-    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-
-    placement.Print();
-    cout << "Feedthrough Cells: " << placement.m_feedthroughCount << endl;
+    int postFeedthroughsCost = placement.CalculatePlacementCost();
+    int feedthroughCount = placement.m_feedthroughCount;
     int msPassed = MilisecondsPassed(start);
-    cout << "Execution Time (ms): " << msPassed << endl;
 
+    cout << fileName << "\t" << originalPlacementCost << "\t\t\t" << postSimulatedAnealingCost << "\t\t\t"
+         << postFlippingCost << "\t\t\t" << postFeedthroughsCost << "\t\t" << feedthroughCount << "\t\t" << msPassed << endl;
+}
+
+void Test_Placements()
+{
+    cout << "fileName \t"
+         << "originalPlacementCost "
+         << "postSimulatedAnealingCost "
+         << "postFlippingCost "
+         << "postFeedthroughsCost "
+         << "feedthroughCount "
+         << "msPassed " << endl;
+    for (auto benchmark : Benchmarks)
+    {
+        Test_Placement(benchmark.fileName, benchmark.gridWidth);
+    }
     cout << endl;
 }
 
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    cout << "Hello World\n";
-
     try
     {
-        //Test_InsertFeedthroughs();
-        Test_SimulatedAnealingPlacement("Benchmarks/b_50_50", 10);
-        //Test_FeedthroughRouting();
+        Test_Placements();
     }
     catch (invalid_argument &e)
     {
         cerr << e.what() << endl;
         return 1;
     }
-
-    cout << "Goodbye World\n";
     return 0;
 }

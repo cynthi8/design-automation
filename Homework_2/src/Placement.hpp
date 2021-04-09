@@ -60,9 +60,11 @@ public:
     Location FindClosestUnlockedLocation(Location location);
     Location FindNextUnoccupiedLocation(Location location);
 
+    vector<vector<GridCell>> m_grid;
+
+private:
     const int m_rows;
     const int m_cols;
-    vector<vector<GridCell>> m_grid;
 };
 
 class Placement
@@ -80,7 +82,7 @@ public:
 
     void ForceDirectedPlace(int iterations);
     void SimulatedAnealingPlace(float initialTemperature, float freezingTemperature, float heatRetention, int movesPerStep);
-    void ForceDirectedFlip(int iterations);
+    void GreedyFlipping(int iterations);
     void InsertFeedthroughs();
     void Print();
 

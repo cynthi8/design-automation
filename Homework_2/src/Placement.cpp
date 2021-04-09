@@ -11,7 +11,7 @@
 
 #define FEED_THROUGH_TOP_TERMINAL 1
 #define FEED_THROUGH_BOTTOM_TERMINAL 3
-#define VERTICAL_COST_WEIGHT 10
+#define VERTICAL_COST_WEIGHT 20
 #define CELL_WIDTH 6
 #define CELL_HEIGHT 6
 
@@ -379,7 +379,7 @@ void Placement::Swap(string cellId0, string cellId1)
 	PlaceCell(location0, cellId1);
 }
 
-void Placement::ForceDirectedFlip(int iterations)
+void Placement::GreedyFlipping(int iterations)
 {
 	for (int i = 0; i < iterations; i++)
 	{
