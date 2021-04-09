@@ -36,7 +36,7 @@ void Test_FeedthroughRouting()
     Test_FixPlacement(placement);
     placement.InsertFeedthroughs();
     Cell &cell = placement.m_netlist.m_cells["1"];
-    Trace(cell, cell.m_nets)
+    Trace(cell, cell.m_nets);
 }
 
 void Test_InsertFeedthrough(string fileName, const int gridWidth)

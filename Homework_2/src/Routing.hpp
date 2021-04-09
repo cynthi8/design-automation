@@ -5,6 +5,9 @@
 #include <algorithm> 
 #include <vector>
 #include <utility>
+#include <cstdlib>
+#include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -26,11 +29,13 @@ And then there also the top and bottom TerminalRows
 class Track
 {
 public:
-	vector<Net> m_nets;
+	vector<int> m_nets;
 	vector<pair<int, int>> m_locs;
 
-	bool TrackOverlap(int Left, int Right)
+	bool TrackOverlap(pair<int, int> locs)
 	{
+		int Left = locs.first;
+		int Right = locs.second;
 		for (auto i : this->m_locs)
 		{
 			//iterate over pairs and see if a or b of the pair is inbetween any other pair
@@ -41,12 +46,12 @@ public:
 		}
 	}
 
-	bool AddNet(Net net, int left, int right)
+	bool AddNet(int net, pair<int,int> locs)
 	{
-		if (!TrackOverlap(left, right))
+		if (!TrackOverlap(locs))
 		{
 			this->m_nets.push_back(net);
-			this->m_locs.push_back({ left, right });
+			this->m_locs.push_back(locs);
 			return true;
 		}
 		return false;
@@ -56,14 +61,8 @@ public:
 // Channel has some number of tracks that will be used for routing wires
 class Channel
 {
+public:
 	vector<Track> m_tracks;
-	void addTrack(Track track)
-	{
-		m_tracks.push_back(track);
-		num_tracks++;
-		return;
-	}
-	int num_tracks;
 };
 
 // This is essentially a cell in each row for Routing
@@ -125,6 +124,22 @@ public:
 	vector<pair<int, int>> ranges;
 };
 
+class SSet
+{
+public:
+	SSet(int colID, set<pair<int, int>> sets)
+		: colID(colID), nets( sets ) {}
+
+	int colID;					//need to keep track of the column this originated from
+	set<pair<int, int>> nets;	//all of the nets that cross this column
+
+	void addSet(int colID, pair<int, int> sets) {
+		this->colID = colID;
+		nets.insert(sets);
+	}
+};
+//S[j].addSet(j, { k.net, iter });	//push net
+// 
 // Top class, to be called by main
 class Routing
 {
@@ -137,10 +152,10 @@ public:
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
-	void BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals);
+	void BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals);
 	void BuildV(int i, vector<vector<int>>& V);
 	void FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
-	void RouteNets(int i, vector<set<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
+	void RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {

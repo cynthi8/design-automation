@@ -4,11 +4,6 @@
 #include "Graph.hpp"
 #include "Routing.hpp"
 
-#include <tuple>
-#include <vector>
-#include <cstdlib>
-#include <algorithm>
-#include <set>
 
 void Routing::Route(Graph graph, Placement place)
 {
@@ -77,7 +72,7 @@ void Routing::Route(Graph graph, Placement place)
 		FixDogLegs(i, V, NetsAndXRanges);
 
 		// Build the S / H Graph
-		vector<set<pair<int, int>>> S(m_colCount);
+		vector<SSet> S(m_colCount);
 		BuildS(i, S, NetsAndXRanges);
 
 		//TODO route
@@ -87,10 +82,101 @@ void Routing::Route(Graph graph, Placement place)
 	return;
 }
 
-void Routing::RouteNets(int i, vector<set<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) 
+void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges)
 {
+	vector<int>& rowT = TopRow[i].RowNets;
+	vector<int>& rowB = BotRow[i].RowNets;
 
+	Track track;
 	
+	vector<vector<bool>> netsRangesDone(NetsAndXRanges.size());
+	vector<bool> netsDone(NetsAndXRanges.size());
+	map<int, int> NetTracks;
+
+	for (int j = 0; j < NetsAndXRanges.size(); j++) {
+		netsRangesDone[j].insert(netsRangesDone[j].begin(), NetsAndXRanges[j].ranges.size(), false);
+		NetTracks.insert({ NetsAndXRanges[j].net, -1 });
+	}
+	int j = 0;
+	bool Done = false;
+
+	while (Done) {
+		if (netsDone[j]) {
+			j++;
+			continue;
+		}
+		int netID = NetsAndXRanges[j].net;
+
+		for (int rangeID = 0; rangeID < NetsAndXRanges[j].ranges.size(); rangeID++) {
+			bool inS = false;
+			bool inV = false;
+			int removefromV = -1;
+			int Vidx = -1;
+			pair<int, int> range = NetsAndXRanges[j].ranges[rangeID];
+
+			//Check if this net is in a VCG
+			for (int k = 0; k < V.size(); k++) {
+				//if the value is in the VCG and isn't the very last one, then skip it
+				auto iter = find(V[k].begin(), V[k].end(), netID);
+				if (iter < V[k].end() - 1)
+				{
+					inV = true;
+					break;
+				}
+				else if(iter == V[k].end() - 1){
+					removefromV = iter - V[k].begin();
+					Vidx = k;
+				}
+				//else its not in it
+			}
+
+			if (inV)
+				continue;
+
+			//Check if this net and its range is in S
+			int maxtrack = 0;
+			for (int k = 0; k < S.size(); k++) {
+				if (S[k].nets.find({ netID , rangeID }) != S[k].nets.end()
+					&& S[k].nets.size() > 1)
+				{
+					for (auto l : S[k].nets)
+						if (NetTracks[l.first] > maxtrack)
+							maxtrack = NetTracks[l.first] + 1;
+
+					break;
+				}
+			}
+
+			NetTracks[netID] = maxtrack;
+			if (maxtrack > Channel.m_tracks.size())
+				Channel.m_tracks.resize(maxtrack + 1);
+
+			Channel.m_tracks[maxtrack].AddNet(netID, range);
+			if(Vidx >= 0)
+				V[Vidx].erase(V[Vidx].begin() + removefromV);
+
+			netsRangesDone[j][rangeID] = true;
+		}
+
+		netsDone[j] = true;
+		for (auto k : netsRangesDone[j]) {
+			if (k != true) {
+				netsDone[j] = false;
+				break;
+			}
+		}
+
+		Done = true;
+		for (auto k : netsDone) {
+			if (k != true) {
+				Done = false;
+				break;
+			}
+		}
+
+		if (++j >= NetsAndXRanges.size())
+			j = 0;
+	}
 
 	return;
 }
@@ -243,7 +329,7 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 }
 
 
-void Routing::BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals)
+void Routing::BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
 	for (int j = 0; j < m_colCount; j++){				//all cols
@@ -251,7 +337,8 @@ void Routing::BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>
 			int iter = 0;
 			for (auto& l : k.ranges) {					//all ranges for each net
 				if (l.first >= j && l.second <= j) {	//check if net's x ranges overlap this col
-					S[j].insert({ k.net,iter });		//push net
+					//S[j].insert({ k.net,iter });		//push net
+					S[j].addSet(j, { k.net, iter });	//push net
 				}
 				iter++;
 			}
@@ -259,19 +346,28 @@ void Routing::BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>
 	}
 
 	vector<int> DeleteS;
-	//check each vector to see if its contained in another vector
+
+	//check each set to see if its contained in another set
 	for (int j = 0; j < S.size(); j++){
+		/*
+		if (S[j].nets.size() < 2) {
+			DeleteS.push_back(j);
+		}
+		*/
+
 		for (int k = 0; k < S.size(); k++) {
-			for (int l = 0; l < S.size(); l++) {
-				if (includes(S[k].begin(), S[k].end(), S[l].begin(), S[l].end())) {
-					DeleteS.push_back(k);
-				}
+			if (includes(S[j].nets.begin(), S[j].nets.end(), 
+				S[k].nets.begin(), S[k].nets.end())) {
+
+				DeleteS.push_back(j);
 			}
 		}
 	}
 
+	//if a set is contained within another, delete it
 	for (int j = DeleteS.size()-1; j >= 0; j--)
-		remove(S.begin(), S.end(), DeleteS[j]);
+		S.erase(S.begin() + DeleteS[j]);
+		//remove(S.begin(), S.end(), DeleteS[j]);
 
 	return;
 }
