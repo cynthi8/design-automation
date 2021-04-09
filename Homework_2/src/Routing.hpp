@@ -153,7 +153,7 @@ public:
 
 	vector<Row> m_TopRow;
 	vector<Row> m_BotRow;
-	vector<Channel> m_Channel;
+	vector<Channel> m_channels;
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);

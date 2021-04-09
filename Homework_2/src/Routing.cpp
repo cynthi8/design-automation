@@ -23,24 +23,19 @@ Routing::Routing(Placement place)
 		Row RowBottomTemp;
 		for (j = 0; j < place.m_grid.m_grid[i].size(); j++)
 		{
-
-			//Get the cell id
+			// Get the cell id
 			cell_id = place.m_grid[Location(i, j)].m_cellId;
 			Cell cell = place.m_netlist.m_cells[cell_id];
 
-			//find all the terminals on this cell
-			auto Terminals = cell.getTerminalLocations();
-
-			//add terminals and nets to row in order
-			for (auto terms : Terminals)
+			// Add terminals and nets to row in order
+			for (auto terminal : cell.getSortedTerminals())
 			{
-				Terminal term(cell_id, terms.first);
-				int NetID = place.m_netlist.GetNetID(term);
-
-				if (term.IsTerminalTop())
-					RowTopTemp.AddRowVal(term, NetID);
+				// Even if the terminal is not connected, add it to the terminal row
+				int NetID = place.m_netlist.GetNetID(terminal);
+				if (cell.isTerminalTop(terminal))
+					RowTopTemp.AddRowVal(terminal, NetID);
 				else
-					RowBottomTemp.AddRowVal(term, NetID);
+					RowBottomTemp.AddRowVal(terminal, NetID);
 			}
 		}
 
@@ -61,7 +56,7 @@ Routing::Routing(Placement place)
 	PadRows(); //pad the rows with zeros
 
 	//for each row, build it up
-	m_Channel.resize(m_rowCount);
+	m_channels.resize(m_rowCount);
 	for (i = 0; i < m_rowCount; i++)
 	{
 
@@ -159,10 +154,10 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<N
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > m_Channel[i].m_tracks.size())
-				m_Channel[i].m_tracks.resize(maxtrack + 1);
+			if (maxtrack > m_channels[i].m_tracks.size())
+				m_channels[i].m_tracks.resize(maxtrack + 1);
 
-			m_Channel[i].m_tracks[maxtrack].AddNet(netID, range);
+			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
 			if (Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
@@ -414,7 +409,7 @@ void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 
 void Routing::Print()
 {
-	for (auto i : m_Channel)
+	for (auto i : m_channels)
 	{
 		for (auto j : i.m_tracks)
 		{
