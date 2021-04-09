@@ -26,7 +26,7 @@ Routing::Routing(Graph graph, Placement place)
 		for (j = 0; j < place.m_grid.m_grid[i].size(); j++) {
 
 			//Get the cell id
-			cell_id = place.m_grid[Location::Location(i, j)].m_cellId;
+			cell_id = place.m_grid[Location(i, j)].m_cellId;
 			Cell cell = place.m_netlist.m_cells[cell_id];
 
 			//find all the terminals on this cell
