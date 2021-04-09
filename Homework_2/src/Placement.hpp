@@ -78,8 +78,8 @@ public:
 
     unordered_map<string, Location> m_locations;
 
-    void ForceDirectedPlace();
-    void ForceDirectedFlip();
+    void ForceDirectedPlace(int iterations);
+    void ForceDirectedFlip(int iterations);
     void InsertFeedthroughs();
     void Print();
 
@@ -88,9 +88,10 @@ public:
     void InvalidateLocation(string cellId);
     void InsertCell(Location location, string cellId);
 
+    int CalculatePlacementCost();
     Location CalculateEquilibriumLocation(string cellId);
-    int CalculateFineCost(string cellId);
-    int CalculateFineDistance(Terminal term0, Terminal term1);
+    int CalculateCellCost(string cellId);
+    int CalculateTerminalDistance(Terminal term0, Terminal term1);
     FineLocation CalculateFineLocation(Terminal term);
     int CalculateChannelRow(Terminal term);
 

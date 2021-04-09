@@ -2,6 +2,10 @@
 #include <fstream>
 #include <cassert>
 #include <algorithm>
+#include <iostream>
+
+#define FEED_THROUGH_TOP_TERMINAL 1
+#define FEED_THROUGH_BOTTOM_TERMINAL 3
 
 using namespace std;
 
@@ -46,6 +50,31 @@ Graph::Graph(string fileName)
         //addNet(net);
     }
     fs.close();
+}
+
+void Graph::printTrace(Terminal beginningTerminal)
+{
+    // Start with a terminal
+    Terminal currentTerminal = beginningTerminal;
+    cout << "Current Cell: " << currentTerminal.cellId << " Current Terminal: " << currentTerminal.terminalId << endl;
+    Terminal otherTerminal = GetOtherTerminal(currentTerminal);
+    cout << "is connected to Cell: " << otherTerminal.cellId << " Terminal: " << otherTerminal.terminalId << endl;
+
+    // If the terminal connects to a feedthrough cell, follow the chain
+    currentTerminal = otherTerminal;
+
+    if (m_cells[currentTerminal.cellId].isFeedthrough())
+    {
+        if (currentTerminal.terminalId == FEED_THROUGH_TOP_TERMINAL)
+        {
+            currentTerminal = m_cells[currentTerminal.cellId].getTerminal(FEED_THROUGH_BOTTOM_TERMINAL);
+        }
+        else
+        {
+            currentTerminal = m_cells[currentTerminal.cellId].getTerminal(FEED_THROUGH_TOP_TERMINAL);
+        }
+        printTrace(currentTerminal);
+    }
 }
 
 // Get the topological location of a terminal
@@ -121,4 +150,19 @@ bool Cell::isFeedthrough()
         return true;
     }
     return false;
+}
+
+Terminal Cell::getTerminal(int terminalId)
+{
+    for (auto &net : m_nets)
+    {
+        for (auto &terminal : net.m_connections)
+        {
+            if (terminal.cellId == m_id && terminal.terminalId == terminalId)
+            {
+                return terminal;
+            }
+        }
+    }
+    throw("terminalId is not connected on cell");
 }

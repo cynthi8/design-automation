@@ -35,8 +35,9 @@ void Test_FeedthroughRouting()
     Placement placement(graph, 2);
     Test_FixPlacement(placement);
     placement.InsertFeedthroughs();
+    assert(placement.m_netlist.m_cells["2"].m_id == "2");
     Cell &cell = placement.m_netlist.m_cells["1"];
-    Trace(cell, cell.m_nets);
+    placement.m_netlist.printTrace(cell.getTerminal(1));
 }
 
 void Test_InsertFeedthrough(string fileName, const int gridWidth)
@@ -62,21 +63,34 @@ void Test_InsertFeedthroughs()
     Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
+void Test_ForceDirectedPlacement()
+{
+    Graph graph("Benchmarks/b_tiny");
+    Placement placement(graph, 2);
+    Test_FixPlacement(placement);
+    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedPlace(10);
+    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.ForceDirectedFlip(10);
+    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+
+    placement.InsertFeedthroughs();
+    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
+    placement.Print();
+    cout << endl;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     cout << "Hello World\n";
 
-    Test_FeedthroughRouting();
-
-    Test_InsertFeedthroughs();
-
-    Graph graph("Benchmarks/b_50_50");
-    Placement placement(graph, 10);
-    placement.ForceDirectedPlace();
-    placement.ForceDirectedFlip();
-    placement.InsertFeedthroughs();
-    placement.Print();
+    Test_ForceDirectedPlacement();
 
     cout << "Goodbye World\n";
     return 0;

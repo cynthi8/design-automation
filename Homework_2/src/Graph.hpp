@@ -38,7 +38,8 @@ struct Terminal
     Terminal(string cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
     string cellId;
     int terminalId;
-    bool IsTerminalTop() {
+    bool IsTerminalTop()
+    {
         if (terminalId == TopLeft || terminalId == TopRight)
             return true;
         return false;
@@ -69,26 +70,31 @@ public:
     // Get the topological location of all the terminals
     vector<pair<TerminalLocation, int>> getTerminalLocations();
 
-    void FlipLeftToRight() {
-        const unordered_map<Flips, Flips> FlipResult{ {FlipNone, FlipLR}, {FlipLR, FlipNone}, {FlipTB, FlipBoth}, {FlipBoth, FlipTB} };
+    void FlipLeftToRight()
+    {
+        const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipLR}, {FlipLR, FlipNone}, {FlipTB, FlipBoth}, {FlipBoth, FlipTB}};
         m_orientation = FlipResult.at(m_orientation);
     }
 
-    void FlipTopToBottom() {
-        const unordered_map<Flips, Flips> FlipResult{ {FlipNone, FlipTB}, {FlipLR, FlipBoth}, {FlipTB, FlipNone}, {FlipBoth, FlipLR} };
+    void FlipTopToBottom()
+    {
+        const unordered_map<Flips, Flips> FlipResult{{FlipNone, FlipTB}, {FlipLR, FlipBoth}, {FlipTB, FlipNone}, {FlipBoth, FlipLR}};
         m_orientation = FlipResult.at(m_orientation);
     }
 
-    void addNet(Net netToAdd) {
+    void addNet(Net netToAdd)
+    {
         m_nets.push_back(netToAdd);
         m_connectivity++;
     }
-    void removeNet(Net netToRemove) {
+    void removeNet(Net netToRemove)
+    {
         m_nets.erase(remove(m_nets.begin(), m_nets.end(), netToRemove), m_nets.end());
         m_connectivity--;
     }
 
     bool isFeedthrough();
+    Terminal getTerminal(int terminalId);
 
     vector<Net> m_nets;
     string m_id;
@@ -107,6 +113,7 @@ public:
     //vector<Net> m_nets;
 
     void addCell(Cell cell) { m_cells.emplace(cell.m_id, cell); };
+    void printTrace(Terminal beginningTerminal);
 
     /*
     void addNet(Net netToAdd) { 
