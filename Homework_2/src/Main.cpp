@@ -29,13 +29,11 @@ void Test_FixPlacement(Placement &placement)
 
 void Test_FeedthroughRouting()
 {
-    Graph graph("Benchmarks/b_feedthrough_1_left");
+    Graph graph("Benchmarks/b_feedthrough_multi");
     Placement placement(graph, 2);
     Test_FixPlacement(placement);
     placement.InsertFeedthroughs();
-    assert(placement.m_netlist.m_cells["2"].m_id == "2");
-    Cell &cell = placement.m_netlist.m_cells["1"];
-    placement.m_netlist.printTrace(cell.getTerminal(1));
+    placement.m_netlist.printTrace(placement.m_netlist.m_cells["1"].getTerminal(4));
 }
 
 void Test_InsertFeedthrough(string fileName, const int gridWidth)
@@ -44,7 +42,9 @@ void Test_InsertFeedthrough(string fileName, const int gridWidth)
     Graph graph(fileName);
     Placement placement(graph, gridWidth);
     Test_FixPlacement(placement);
+    cout << "Cost before feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
     placement.InsertFeedthroughs();
+    cout << "Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
     placement.Print();
     cout << endl;
 }
@@ -61,39 +61,15 @@ void Test_InsertFeedthroughs()
     Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
-void Test_ForceDirectedPlacement()
+void Test_SimulatedAnealingPlacement(string fileName, const int gridWidth)
 {
-    Graph graph("Benchmarks/b_50_50");
-    Placement placement(graph, 10);
-    Test_FixPlacement(placement);
-    cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
-
-    placement.ForceDirectedPlace(10);
-    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
-
-    placement.ForceDirectedFlip(10);
-    cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
-
-    placement.InsertFeedthroughs();
-    cout << "Placement Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
-    cout << endl;
-
-    //Routing route(graph, placement);
-}
-
-void Test_SimulatedAnealingPlacement()
-{
-    Graph graph("Benchmarks/b_2000_2000");
-    Placement placement(graph, 60);
+    Graph graph(fileName);
+    Placement placement(graph, gridWidth);
     Test_FixPlacement(placement);
     cout << "Original Placement Cost: " << placement.CalculatePlacementCost() << endl;
 
-    placement.SimulatedAnealingPlace(1000, 1, .95, 5000);
-    cout << "Placement Cost after force directed: " << placement.CalculatePlacementCost() << endl;
+    placement.SimulatedAnealingPlace(1000, .1, .95, 100);
+    cout << "Placement Cost after Simulated Anealing: " << placement.CalculatePlacementCost() << endl;
 
     placement.ForceDirectedFlip(10);
     cout << "Placement Cost after flipping: " << placement.CalculatePlacementCost() << endl;
@@ -110,7 +86,9 @@ int main(int argc, char *argv[])
 
     try
     {
-        Test_SimulatedAnealingPlacement();
+        Test_InsertFeedthroughs();
+        //Test_SimulatedAnealingPlacement("Benchmarks/b_feedthrough_1_left", 2);
+        Test_FeedthroughRouting();
     }
     catch (invalid_argument &e)
     {

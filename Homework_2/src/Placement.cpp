@@ -345,7 +345,7 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 			}
 			else
 			{
-				if (m_unitDistribution(m_generator) < pow(boltzmanLimit, deltaCost))
+				if (m_unitDistribution(m_generator) < pow(boltzmanLimit, deltaCost + 1)) // Add 1 to deltaCost so 0 is not auto-accepted
 				{
 					// Probablistically accept increases in cost
 					m_cost -= deltaCost;
