@@ -1,0 +1,65 @@
+magic
+tech scmos
+timestamp 1618005733
+<< checkpaint >>
+rect -20 26 47 28
+rect -20 -22 50 26
+rect -20 -32 39 -22
+<< error_s >>
+rect 1 6 2 8
+rect 4 6 5 8
+rect 8 6 9 8
+rect 11 6 12 8
+rect 2 5 7 6
+rect 9 5 14 6
+rect 1 1 2 3
+rect 4 1 5 3
+rect 8 1 9 3
+rect 11 1 12 3
+rect 2 0 7 1
+rect 9 0 14 1
+<< metal1 >>
+rect 4 -4 5 1
+rect 1 -6 2 -5
+<< m2contact >>
+rect 1 -5 2 -4
+rect 4 -5 5 -4
+<< metal2 >>
+rect 2 -5 4 -4
+use Cell  Cell_0
+timestamp 1618002388
+transform 1 0 -3 0 1 -7
+box 3 7 10 15
+use Cell  Cell_2
+timestamp 1618002388
+transform -1 0 23 0 1 -7
+box 3 7 10 15
+use Cell  Cell_1
+timestamp 1618002388
+transform 1 0 4 0 -1 13
+box 3 7 10 15
+use Cell  Cell_3
+timestamp 1618002388
+transform -1 0 30 0 -1 13
+box 3 7 10 15
+use Cell  Cell_4
+timestamp 1618002388
+transform 1 0 -3 0 1 -19
+box 3 7 10 15
+use Feed  Feed_0
+timestamp 1618002575
+transform 1 0 6 0 1 -12
+box 0 0 4 8
+use Feed  Feed_1
+timestamp 1618002575
+transform 1 0 9 0 1 -12
+box 0 0 4 8
+use Feed  Feed_2
+timestamp 1618002575
+transform 1 0 12 0 1 -12
+box 0 0 4 8
+use Feed  Feed_3
+timestamp 1618002575
+transform 1 0 15 0 1 -12
+box 0 0 4 8
+<< end >>
