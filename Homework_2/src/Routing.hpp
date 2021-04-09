@@ -115,6 +115,16 @@ public:
 
 };
 
+class NetAndRanges
+{
+public:
+	NetAndRanges(int net, vector<pair<int,int>> Range)
+		: net(net), ranges(Range) {}
+
+	int net;
+	vector<pair<int, int>> ranges;
+};
+
 // Top class, to be called by main
 class Routing
 {
@@ -124,11 +134,13 @@ public:
 	vector<Row> TopRow;
 	vector<Row> BotRow;
 	Channel Channel;
-	//vector<vector<pair<int, int>>> test;
 
-	vector<vector<int>> BuildS(int i, vector<tuple<int, int, int>>& NetsAndXVals);
-	tuple<int, int, int> ColumnsCrossed(int i, int j, int netID, bool isTop);
-	
+	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
+	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
+	void BuildS(int i, vector<set<pair<int, int>>>& S, vector<NetAndRanges>& NetsAndXVals);
+	void BuildV(int i, vector<vector<int>>& V);
+	void FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
+	void RouteNets(int i, vector<set<pair<int, int>>>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows) {
