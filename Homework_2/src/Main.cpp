@@ -8,11 +8,8 @@ Group: Nathaniel Hernandez; Erin Cold
 #include <cassert>
 #include "Graph.hpp"
 #include "Placement.hpp"
-#include "Routing.hpp"
 
-//#include "Routing.hpp"
 //#include "Magic.hpp"
-//#include "Test.cpp"
 
 using namespace std;
 
@@ -85,7 +82,7 @@ void Test_ForceDirectedPlacement()
     placement.Print();
     cout << endl;
 
-    Routing route(graph, placement);
+    //Routing route(graph, placement);
 }
 
 void Test_SimulatedAnealingPlacement()
@@ -113,7 +110,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        Test_ForceDirectedPlacement();
+        Test_SimulatedAnealingPlacement();
     }
     catch (invalid_argument &e)
     {
