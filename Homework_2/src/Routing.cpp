@@ -4,7 +4,7 @@
 #include "Graph.hpp"
 #include "Routing.hpp"
 
-Routing::Routing(Graph graph, Placement place)
+Routing::Routing(Placement place)
 {
 	//This function needs to populate the rows such that we can do channel routing
 	int i;
@@ -410,14 +410,6 @@ void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 	//remove(S.begin(), S.end(), DeleteS[j]);
 
 	return;
-}
-
-template <typename T>
-void swapNum(T &n1, T &n2)
-{
-	T temp = n1;
-	n1 = n2;
-	n2 = temp;
 }
 
 void Routing::Print()
