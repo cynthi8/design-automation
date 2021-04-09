@@ -2,7 +2,7 @@
 
 #include "Graph.hpp"
 #include "Placement.hpp"
-#include <algorithm> 
+#include <algorithm>
 #include <vector>
 #include <utility>
 #include <cstdlib>
@@ -45,9 +45,10 @@ public:
 				return true;
 			return false;
 		}
+		return false;
 	}
 
-	bool AddNet(int net, pair<int,int> locs)
+	bool AddNet(int net, pair<int, int> locs)
 	{
 		if (!TrackOverlap(locs))
 		{
@@ -70,8 +71,8 @@ public:
 class RowCell
 {
 public:
-	RowCell(Terminal term = Terminal(0,0), int NetID = -1) 
-	: Term(term), NetID(NetID), AboveCell("",-1), Above(false) {}
+	RowCell(Terminal term = Terminal(0, 0), int NetID = -1)
+		: Term(term), NetID(NetID), AboveCell("", -1), Above(false) {}
 
 	Terminal Term;
 	Terminal AboveCell;
@@ -96,7 +97,8 @@ public:
 	}
 
 	// if a net has been ordered, return that value
-	int GetUsedNetID(int NetID, int j) {
+	int GetUsedNetID(int NetID, int j)
+	{
 		for (int k = 0; k < j; k++)
 			if (RowCells[k].NetID == NetID)
 				return Order[k];
@@ -104,21 +106,22 @@ public:
 	}
 
 	//Pad Row to colCount
-	void PadRow(int colCount) {
+	void PadRow(int colCount)
+	{
 		int sizeToGrow = colCount - (int)RowCells.size();
-		if (sizeToGrow <= 0) return;
+		if (sizeToGrow <= 0)
+			return;
 
 		RowCell rowCell(Terminal("", Invalid), -1);
 		RowCells.insert(RowCells.end(), sizeToGrow, rowCell);
 		RowNets.insert(RowNets.end(), sizeToGrow, -1);
 	}
-
 };
 
 class NetAndRanges
 {
 public:
-	NetAndRanges(int net, vector<pair<int,int>> Range)
+	NetAndRanges(int net, vector<pair<int, int>> Range)
 		: net(net), ranges(Range) {}
 
 	int net;
@@ -131,49 +134,52 @@ public:
 	//SSet(int colID, pair<int, int> sets)
 	//	: colID(colID), nets.insert(sets) {}
 
-	int colID;					//need to keep track of the column this originated from
-	set<pair<int, int>> nets;	//all of the nets that cross this column
+	int colID;				  //need to keep track of the column this originated from
+	set<pair<int, int>> nets; //all of the nets that cross this column
 
-	void addSet(int colID, pair<int, int> sets) {
+	void addSet(int colID, pair<int, int> sets)
+	{
 		this->colID = colID;
 		nets.insert(sets);
 	}
-
 };
 //S[j].addSet(j, { k.net, iter });	//push net
-// 
+//
 // Top class, to be called by main
 class Routing
 {
 public:
-	Routing(Graph graph, Placement place);
+	Routing(Placement place);
 
-	vector<Row> TopRow;
-	vector<Row> BotRow;
-	vector<Channel> Channel;
+	vector<Row> m_TopRow;
+	vector<Row> m_BotRow;
+	vector<Channel> m_Channel;
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
-	void BuildRange(int i, vector<NetAndRanges>& NetsAndXVals);
-	void BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals);
-	void BuildV(int i, vector<vector<int>>& V);
-	void FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
-	void RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges);
+	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);
+	void BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals);
+	void BuildV(int i, vector<vector<int>> &V);
+	void FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
+	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
 
 	void Print();
 
 	// Set the number of rows, should be +1 than the number given
-	void SetRowSize(int rows) {
+	void SetRowSize(int rows)
+	{
 		this->m_rowCount = rows + 1;
-		this->TopRow.resize(this->m_rowCount);
-		this->BotRow.resize(this->m_rowCount);
+		this->m_TopRow.resize(this->m_rowCount);
+		this->m_BotRow.resize(this->m_rowCount);
 	}
 
-	// Pad the end of the rows with zeros so they all 
+	// Pad the end of the rows with zeros so they all
 	// have the same number of zeros
-	void PadRows() {
-		for (int i = 0; i < m_rowCount; i++) {
-			TopRow[i].PadRow(m_colCount);
-			BotRow[i].PadRow(m_colCount);
+	void PadRows()
+	{
+		for (int i = 0; i < m_rowCount; i++)
+		{
+			m_TopRow[i].PadRow(m_colCount);
+			m_BotRow[i].PadRow(m_colCount);
 		}
 	}
 

@@ -4,9 +4,7 @@
 #include "Graph.hpp"
 #include "Routing.hpp"
 
-
-
-Routing::Routing(Graph graph, Placement place)
+Routing::Routing(Placement place)
 {
 	//This function needs to populate the rows such that we can do channel routing
 	int i;
@@ -14,25 +12,28 @@ Routing::Routing(Graph graph, Placement place)
 	string cell_id;
 	int maxCols = 0;
 
-
 	vector<pair<int, int>> Terminals;
-	SetRowSize(place.m_grid.m_rows);
+	int placeHeight = (int)place.m_grid.m_grid.size();
+	SetRowSize(placeHeight);
 
 	// go through the entire 2D grid that's been placed
-	for (i = 0; i < place.m_gridHeight; i++) {
+	for (i = 0; i < placeHeight; i++)
+	{
 		Row RowTopTemp;
 		Row RowBottomTemp;
-		for (j = 0; j < place.m_gridWidth; j++) {
+		for (j = 0; j < place.m_grid.m_grid[i].size(); j++)
+		{
 
 			//Get the cell id
-			cell_id = place.m_grid[Location::Location(i, j)].m_cellId;
+			cell_id = place.m_grid[Location(i, j)].m_cellId;
 			Cell cell = place.m_netlist.m_cells[cell_id];
 
 			//find all the terminals on this cell
 			auto Terminals = cell.getTerminalLocations();
 
 			//add terminals and nets to row in order
-			for (auto terms : Terminals) {
+			for (auto terms : Terminals)
+			{
 				Terminal term(cell_id, terms.first);
 				int NetID = place.m_netlist.GetNetID(term);
 
@@ -46,13 +47,13 @@ Routing::Routing(Graph graph, Placement place)
 		// add the temp rows to the array
 		// the top most row should be empty
 		// the bottom most row should be empty
-		this->BotRow[i] = RowBottomTemp;
-		this->TopRow[i + 1] = RowTopTemp;
+		this->m_BotRow[i] = RowBottomTemp;
+		this->m_TopRow[i + 1] = RowTopTemp;
 
-		if (TopRow[i].RowCells.size() > maxCols)
-			maxCols = (int)TopRow[i].RowCells.size();
-		if (BotRow[i].RowCells.size() > maxCols)
-			maxCols = (int)BotRow[i].RowCells.size();
+		if (m_TopRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_TopRow[i].RowCells.size();
+		if (m_BotRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_BotRow[i].RowCells.size();
 	}
 
 	this->m_colCount = maxCols;
@@ -60,9 +61,10 @@ Routing::Routing(Graph graph, Placement place)
 	PadRows(); //pad the rows with zeros
 
 	//for each row, build it up
-	Channel.resize(m_rowCount);
-	for (i = 0; i < m_rowCount; i++) {
-		
+	m_Channel.resize(m_rowCount);
+	for (i = 0; i < m_rowCount; i++)
+	{
+
 		// Build the range first in case we have to change it for the V graph
 		vector<NetAndRanges> NetsAndXRanges;
 		BuildRange(i, NetsAndXRanges);
@@ -85,32 +87,36 @@ Routing::Routing(Graph graph, Placement place)
 	return;
 }
 
-void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges)
+void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	Track track;
-	
+
 	vector<vector<bool>> netsRangesDone(NetsAndXRanges.size());
 	vector<bool> netsDone(NetsAndXRanges.size());
 	map<int, int> NetTracks;
 
-	for (int j = 0; j < NetsAndXRanges.size(); j++) {
+	for (int j = 0; j < NetsAndXRanges.size(); j++)
+	{
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), NetsAndXRanges[j].ranges.size(), false);
-		NetTracks.insert({ NetsAndXRanges[j].net, -1 });
+		NetTracks.insert({NetsAndXRanges[j].net, -1});
 	}
 	int j = 0;
 	bool Done = false;
 
-	while (Done) {
-		if (netsDone[j]) {
+	while (Done)
+	{
+		if (netsDone[j])
+		{
 			j++;
 			continue;
 		}
 		int netID = NetsAndXRanges[j].net;
 
-		for (int rangeID = 0; rangeID < NetsAndXRanges[j].ranges.size(); rangeID++) {
+		for (int rangeID = 0; rangeID < NetsAndXRanges[j].ranges.size(); rangeID++)
+		{
 			bool inS = false;
 			bool inV = false;
 			int removefromV = -1;
@@ -118,7 +124,8 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 			pair<int, int> range = NetsAndXRanges[j].ranges[rangeID];
 
 			//Check if this net is in a VCG
-			for (int k = 0; k < V.size(); k++) {
+			for (int k = 0; k < V.size(); k++)
+			{
 				//if the value is in the VCG and isn't the very last one, then skip it
 				auto iter = find(V[k].begin(), V[k].end(), netID);
 				if (iter < V[k].end() - 1)
@@ -126,7 +133,8 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 					inV = true;
 					break;
 				}
-				else if(iter == V[k].end() - 1){
+				else if (iter == V[k].end() - 1)
+				{
 					removefromV = (int)(iter - V[k].begin());
 					Vidx = k;
 				}
@@ -138,9 +146,9 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 
 			//Check if this net and its range is in S
 			int maxtrack = 0;
-			for (int k = 0; k < S.size(); k++) {
-				if (S[k].nets.find({ netID , rangeID }) != S[k].nets.end()
-					&& S[k].nets.size() > 1)
+			for (int k = 0; k < S.size(); k++)
+			{
+				if (S[k].nets.find({netID, rangeID}) != S[k].nets.end() && S[k].nets.size() > 1)
 				{
 					for (auto l : S[k].nets)
 						if (NetTracks[l.first] > maxtrack)
@@ -151,27 +159,31 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > Channel[i].m_tracks.size())
-				Channel[i].m_tracks.resize(maxtrack + 1);
+			if (maxtrack > m_Channel[i].m_tracks.size())
+				m_Channel[i].m_tracks.resize(maxtrack + 1);
 
-			Channel[i].m_tracks[maxtrack].AddNet(netID, range);
-			if(Vidx >= 0)
+			m_Channel[i].m_tracks[maxtrack].AddNet(netID, range);
+			if (Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
 			netsRangesDone[j][rangeID] = true;
 		}
 
 		netsDone[j] = true;
-		for (auto k : netsRangesDone[j]) {
-			if (k != true) {
+		for (auto k : netsRangesDone[j])
+		{
+			if (k != true)
+			{
 				netsDone[j] = false;
 				break;
 			}
 		}
 
 		Done = true;
-		for (auto k : netsDone) {
-			if (k != true) {
+		for (auto k : netsDone)
+		{
+			if (k != true)
+			{
 				Done = false;
 				break;
 			}
@@ -189,74 +201,83 @@ void Routing::RouteNets(int i, vector<SSet>& S, vector<vector<int>>& V, vector<N
 // 1-2-3-4-1 -> 1-2-3-4a(x1,x2a or something), 4b(x2b,x3)-1
 // 1-2-1 -> 1-2b(x1,x2a), 2b(x2b, x3)-1
 // 1(range), 2(two ranges)
-void Routing::FixDogLegs(int i, vector<vector<int>>& V, vector<NetAndRanges>& NetsAndXRanges) 
+void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//Go though all values in the V graph
-	for (auto i = 0; i < V.size(); i++) {
+	for (auto i = 0; i < V.size(); i++)
+	{
 
 		//if the first and last element are the same, then we have a dogleg
-		if (V[i][0] == V[i].back()) {
+		if (V[i][0] == V[i].back())
+		{
 			//split the second to last net's x range into two
 			int netIDProb = *(V[i].rbegin() + 1);
 			int netIDEnd = *(V[i].rbegin());
 
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-				[netIDProb](NetAndRanges const& item) {return item.net == netIDProb; });
+								[netIDProb](NetAndRanges const &item) { return item.net == netIDProb; });
 			int idx = (int)(iter - NetsAndXRanges.begin());
 			pair<int, int> ORange = NetsAndXRanges[idx].ranges[0];
 
 			//Need to find an empty place to split it
 			int j;
-			for (j = ORange.first; j <= ORange.second; j++) {
+			for (j = ORange.first; j <= ORange.second; j++)
+			{
 				if (rowT[j] <= 0 || rowB[j] <= 0)
 					break;
 			}
-			pair<int, int> NewRange1 = { ORange.first, j };
-			pair<int, int> NewRange2 = { j, ORange.second };
+			pair<int, int> NewRange1 = {ORange.first, j};
+			pair<int, int> NewRange2 = {j, ORange.second};
 			NetsAndXRanges[idx].ranges[0] = NewRange1;
 			NetsAndXRanges[idx].ranges.push_back(NewRange2);
 
 			//remove the last two elements causing the dogleg problem
 			V[i].pop_back();
 			V[i].pop_back();
-			V.push_back({ netIDProb , netIDEnd });
+			V.push_back({netIDProb, netIDEnd});
 		}
 	}
 
 	return;
 }
 
-
-void Routing::BuildV(int i, vector<vector<int>>& V)
+void Routing::BuildV(int i, vector<vector<int>> &V)
 {
 	//vector<vector<int>> V;
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
-	for (int j = 0; j < m_colCount; j++) {
+	for (int j = 0; j < m_colCount; j++)
+	{
 		int netIDT = rowT[j];
 		int netIDB = rowB[j];
 
-		if (netIDT > 0 && netIDB > 0) {
-			for (int k = 0; k < V.size(); k++) {
-				if (netIDB == V[k][0]) {
+		if (netIDT > 0 && netIDB > 0)
+		{
+			for (int k = 0; k < V.size(); k++)
+			{
+				if (netIDB == V[k][0])
+				{
 					V[k].insert(V[k].begin(), netIDT);
 					goto EndOuterForLoop;
 				}
-				else {
-					for (int l = 0; l < V[k].size(); l++) {
-						if (V[k][l] == netIDT) {
+				else
+				{
+					for (int l = 0; l < V[k].size(); l++)
+					{
+						if (V[k][l] == netIDT)
+						{
 							V[k].push_back(netIDB);
 							goto EndOuterForLoop;
 						}
 					}
 				}
 			}
-			V.push_back({ netIDT, netIDB });
+			V.push_back({netIDT, netIDB});
 		}
 
 	EndOuterForLoop:
@@ -266,49 +287,54 @@ void Routing::BuildV(int i, vector<vector<int>>& V)
 	return;
 }
 
-
-void Routing::BuildRange(int i, vector<NetAndRanges>& NetsAndXRanges)
+void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 {
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
-	for (int j = 0; j < m_colCount; j++) {
+	for (int j = 0; j < m_colCount; j++)
+	{
 		int netID = rowT[j];
-		if (netID > 0) {
+		if (netID > 0)
+		{
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-				[netID](NetAndRanges const& item) {return item.net == netID; });
+								[netID](NetAndRanges const &item) { return item.net == netID; });
 
 			//if the net doesn't exist in the list, add it
-			if (iter == NetsAndXRanges.end()) {
+			if (iter == NetsAndXRanges.end())
+			{
 				NetsAndXRanges.push_back(ColumnsCrossed(i, j, netID, true));
 			}
 		}
 
 		netID = rowB[j];
-		if (netID > 0) {
+		if (netID > 0)
+		{
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-				[netID](NetAndRanges const& item) {return item.net == netID; });
+								[netID](NetAndRanges const &item) { return item.net == netID; });
 
 			//if the net doesn't exist in the list, add it
-			if (iter == NetsAndXRanges.end()) {
+			if (iter == NetsAndXRanges.end())
+			{
 				NetsAndXRanges.push_back(ColumnsCrossed(i, j, netID, false));
 			}
 		}
 	}
 }
 
-
 NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 {
 	//Get the X columns for each net
-	vector<int>& rowT = TopRow[i].RowNets;
-	vector<int>& rowB = BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//in case the other terminal for the net is actually in the same column
 	int TopAdj = 0, BotAdj = 0;
-	if (isTop) TopAdj++;
-	else BotAdj++;
+	if (isTop)
+		TopAdj++;
+	else
+		BotAdj++;
 
 	vector<int>::iterator iter1 = rowT.begin() + j + TopAdj;
 	vector<int>::iterator iter2 = rowB.begin() + j + BotAdj;
@@ -320,31 +346,36 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 	iter2 = find(iter2, rowB.end(), netID);
 
 	//net is only in top
-	if (iter1 != rowT.end()) {
+	if (iter1 != rowT.end())
+	{
 		x2 = (int)(find(iter1, rowT.end(), netID) - rowB.begin());
 	}
 	//net is only in bottom
-	else if (iter2 != rowB.end()) {
+	else if (iter2 != rowB.end())
+	{
 		x2 = (int)(find(iter2, rowB.end(), netID) - rowB.begin());
 	}
 
-	if(x2 == -1)
+	if (x2 == -1)
 		throw invalid_argument("Placement is borked; Missing Nets in Row.");
 
-	return NetAndRanges(netID, { { j, x2 } });
+	return NetAndRanges(netID, {{j, x2}});
 }
 
-
-void Routing::BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals)
+void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
-	for (int j = 0; j < m_colCount; j++){				//all cols
-		for (auto& k : NetsAndXVals) {					//all nets and x ranges
+	for (int j = 0; j < m_colCount; j++)
+	{ //all cols
+		for (auto &k : NetsAndXVals)
+		{ //all nets and x ranges
 			int iter = 0;
-			for (auto& l : k.ranges) {					//all ranges for each net
-				if (l.first >= j && l.second <= j) {	//check if net's x ranges overlap this col
+			for (auto &l : k.ranges)
+			{ //all ranges for each net
+				if (l.first >= j && l.second <= j)
+				{ //check if net's x ranges overlap this col
 					//S[j].insert({ k.net,iter });		//push net
-					S[j].addSet(j, { k.net, iter });	//push net
+					S[j].addSet(j, {k.net, iter}); //push net
 				}
 				iter++;
 			}
@@ -354,16 +385,19 @@ void Routing::BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals)
 	vector<int> DeleteS;
 
 	//check each set to see if its contained in another set
-	for (int j = 0; j < S.size(); j++){
+	for (int j = 0; j < S.size(); j++)
+	{
 		/*
 		if (S[j].nets.size() < 2) {
 			DeleteS.push_back(j);
 		}
 		*/
 
-		for (int k = 0; k < S.size(); k++) {
-			if (includes(S[j].nets.begin(), S[j].nets.end(), 
-				S[k].nets.begin(), S[k].nets.end())) {
+		for (int k = 0; k < S.size(); k++)
+		{
+			if (includes(S[j].nets.begin(), S[j].nets.end(),
+						 S[k].nets.begin(), S[k].nets.end()))
+			{
 
 				DeleteS.push_back(j);
 			}
@@ -371,30 +405,21 @@ void Routing::BuildS(int i, vector<SSet>& S, vector<NetAndRanges>& NetsAndXVals)
 	}
 
 	//if a set is contained within another, delete it
-	for (int j = (int)(DeleteS.size()-1); j >= 0; j--)
+	for (int j = (int)(DeleteS.size() - 1); j >= 0; j--)
 		S.erase(S.begin() + DeleteS[j]);
-		//remove(S.begin(), S.end(), DeleteS[j]);
+	//remove(S.begin(), S.end(), DeleteS[j]);
 
 	return;
 }
 
-
-template <typename T>
-void swapNum(T& n1, T& n2)
-{
-	T temp = n1;
-	n1 = n2;
-	n2 = temp;
-}
-
-
 void Routing::Print()
 {
-	for (auto i : Channel)
+	for (auto i : m_Channel)
 	{
 		for (auto j : i.m_tracks)
 		{
-			for (auto k = 0; k < j.m_nets.size(); k++) {
+			for (auto k = 0; k < j.m_nets.size(); k++)
+			{
 				int netID = j.m_nets[k];
 				pair<int, int> locs = j.m_locs[k];
 
