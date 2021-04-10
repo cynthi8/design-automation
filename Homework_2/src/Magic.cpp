@@ -56,8 +56,6 @@ void Magic::Output(string szDirectory, string szFileName)
 // Create an object that has all the necessary info to create the Magic File
 void Magic::CreateLayout(Routing route, Placement place)
 {
-    //Might not need place
-
     vector<vector<MCell>> MagCells;
     vector<vector<MNet>> MagNets;
 
@@ -179,16 +177,16 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
 // Create a 3x6 2 terminal Feed Cell for reference
 void Magic::OutputFeedCell(string szDirectory)
 {
-    string filePath = szDirectory + "/FeedCell";
+    string filePath = szDirectory + "/FeedCell.mag";
     fstream outputStream;
     outputStream.open(filePath, ios::out);
 
     Header(outputStream);
 
     // Terminals = rect xbot ybot xtop ytop
-    magRect T1(1, 0, 2, 1);
-    magRect T3(1, 5, 2, 6);
-    vector<magRect> Terms = {T1, T3};
+    MagRect T1(1, 0, 2, 1);
+    MagRect T3(1, 5, 2, 6);
+    vector<MagRect> Terms = {T1, T3};
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
@@ -214,18 +212,18 @@ void Magic::OutputFeedCell(string szDirectory)
 // Create a standard 6x6 4 terminal Cell for reference
 void Magic::OutputStandardCell(string szDirectory)
 {
-    string filePath = szDirectory + "/Cell";
+    string filePath = szDirectory + "/Cell.mag";
     fstream outputStream;
     outputStream.open(filePath, ios::out);
 
     Header(outputStream);
 
     // Terminals = rect xbot ybot xtop ytop
-    magRect T1(1, 5, 2, 6);
-    magRect T2(4, 5, 5, 6);
-    magRect T3(1, 0, 2, 1);
-    magRect T4(4, 0, 5, 1);
-    vector<magRect> Terms = {T1, T2, T3, T4};
+    MagRect T1(1, 5, 2, 6);
+    MagRect T2(4, 5, 5, 6);
+    MagRect T3(1, 0, 2, 1);
+    MagRect T4(4, 0, 5, 1);
+    vector<MagRect> Terms = {T1, T2, T3, T4};
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;

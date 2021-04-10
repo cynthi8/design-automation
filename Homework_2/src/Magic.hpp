@@ -50,10 +50,10 @@ public:
     pair<MBranch, MBranch> m_branches;
 };
 
-class magRect
+class MagRect
 {
 public:
-    magRect(int xbot, int ybot, int xtop, int ytop)
+    MagRect(int xbot, int ybot, int xtop, int ytop)
         : xbot(xbot), ybot(ybot), xtop(xtop), ytop(ytop) {}
     int xbot;
     int ybot;
@@ -62,12 +62,13 @@ public:
 
     string szRect(string type)
     {
-        type += " " + xbot;
-        type += " " + ybot;
-        type += " " + xtop;
-        type += " " + xbot;
+        string outputString = type;
+        outputString += " " + to_string(xbot);
+        outputString += " " + to_string(ybot);
+        outputString += " " + to_string(xtop);
+        outputString += " " + to_string(xbot);
 
-        return type;
+        return outputString;
     }
     void outputRect(std::ostream &outputStream, string type)
     {

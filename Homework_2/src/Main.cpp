@@ -214,7 +214,7 @@ void Test_Magic(Benchmark benchmark)
     routing.Print();
 
     Magic magic(placement, routing);
-    magic.Output("output", benchmark.fileName);
+    magic.Output("output", benchmark.fileName + ".mag");
 }
 
 // Entry point for code
