@@ -9,7 +9,7 @@ using namespace std;
 // Magic Intro Function
 Magic::Magic(Placement place, Routing route)
 {
-    return;
+    //return;
     CreateLayout(route, place);
     Output("", "");
 }

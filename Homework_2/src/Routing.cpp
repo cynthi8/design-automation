@@ -70,6 +70,9 @@ void Routing::BuildRows(Placement &place)
 			if(j > 0)
 				cell_id2 = place.m_grid[Location(i, j-1)].m_cellId;
 
+			bool TopTermAdded = false;
+			bool BotTermAdded = false;
+
 			// Add terminals and nets to row in order
 			for (auto terminal : cell.getSortedTerminals())
 			{
@@ -79,17 +82,21 @@ void Routing::BuildRows(Placement &place)
 				// If the terminal is at the top of the cell, it will be at the bottom of the channel
 				if (cell.isTerminalTop(terminal)) 
 				{
-					if(!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2))
-						bottomTerminalRowTemp.AddUnusedVal();
+					if(!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2)
+						&& !TopTermAdded)
+						topTerminalRowTemp.AddUnusedVal();
 
-					bottomTerminalRowTemp.AddRowVal(terminal, NetID);
+					topTerminalRowTemp.AddRowVal(terminal, NetID);
+					TopTermAdded = true;
 				}
 				else 
 				{
-					if (!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2))
+					if (!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2)
+						&& !BotTermAdded)
 						bottomTerminalRowTemp.AddUnusedVal();
 
-					topTerminalRowTemp.AddRowVal(terminal, NetID);
+					bottomTerminalRowTemp.AddRowVal(terminal, NetID);
+					BotTermAdded = true;
 				}
 			}
 		}
