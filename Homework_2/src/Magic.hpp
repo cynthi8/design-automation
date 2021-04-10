@@ -28,6 +28,9 @@ public:
     int netID;
     vector<MTrunk> m_trunks;
     vector<MBranch> m_branches;
+    string makeMetal1();
+    string makeMetal2();
+    string makeMetal2Contact();
 };
 
 class MCell
