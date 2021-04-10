@@ -4,9 +4,6 @@
 #include <algorithm>
 #include <iostream>
 
-#define FEED_THROUGH_TOP_TERMINAL 1
-#define FEED_THROUGH_BOTTOM_TERMINAL 3
-
 using namespace std;
 
 // Construct a netlist graph from a file name

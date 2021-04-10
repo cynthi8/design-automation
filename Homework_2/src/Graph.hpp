@@ -10,6 +10,8 @@
 using namespace std;
 
 #define UNCONNECTED_TERMINAL -1
+#define FEED_THROUGH_TOP_TERMINAL 1
+#define FEED_THROUGH_BOTTOM_TERMINAL 3
 
 /*
 Graph has Cells
@@ -102,9 +104,9 @@ class Graph
 {
 public:
     Graph(string fileName);
-    
+
     string szFileName;
-    
+
     int m_cellCount;
     int m_netCount;
 

@@ -1,15 +1,16 @@
 #include "Magic.hpp"
 
-
 // Magic Intro Function
-Magic::Magic(Routing route, Graph graph) {
+Magic::Magic(Routing route, Graph graph)
+{
 
     CreateLayout(route, graph);
-    Print("","");
+    Print("", "");
 }
 
 // Create a standard Header for Magic
-void Magic::Header(std::ostream& outputStream) {
+void Magic::Header(std::ostream &outputStream)
+{
     outputStream << "magic" << endl;
     outputStream << "tech scmos" << endl;
     outputStream << "timestamp ";
@@ -17,12 +18,14 @@ void Magic::Header(std::ostream& outputStream) {
 }
 
 // End the Magic File
-void Magic::Footer(std::ostream& outputStream) {
+void Magic::Footer(std::ostream &outputStream)
+{
     outputStream << "<< end >>" << endl;
 }
 
 // Get Current Time
-long long Magic::GetTime() {
+long long Magic::GetTime()
+{
     // We actually don't want a different time as then it rechecks the drc
     /*
     const auto now = std::chrono::system_clock::now();
@@ -48,7 +51,8 @@ void Magic::Print(string szDirectory, string szFileName)
 }
 
 // Create an object that has all the necessary info to create the Magic File
-void Magic::CreateLayout(Routing route, Placement place, Graph graph) {
+void Magic::CreateLayout(Routing route, Placement place, Graph graph)
+{
     //Might not need place
 
     vector<vector<MCells>> MagCells;
@@ -56,29 +60,30 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph) {
 
     int totalTracks = 0;
     int y = 0;
-    for (int i = 0; i < route.m_rowCount; i++) 
+    for (int i = 0; i < route.m_channelCount; i++)
     {
         int x = 0;
         totalTracks += route.m_channels[i].m_tracks.size();
-        y = i * 6 + totalTracks*2 + 1;
-
+        y = i * 6 + totalTracks * 2 + 1;
         vector<int> colsTransformation(route.m_colCount);
-
-        for (int j = 0; j < route.m_colCount; j++) 
+        for (int j = 0; j < route.m_colCount; j++)
         {
             string cellIDL = "";
             string cellID = route.m_TopRow[i].RowCells[j].Term.cellId;
             Cell cell = place.m_netlist.m_cells[cellID];
 
-            if (j > 0) {
+            if (j > 0)
+            {
                 cellIDL = route.m_TopRow[i].RowCells[j - 1].Term.cellId;
-                if (cellID != cellIDL) {
+                if (cellID != cellIDL)
+                {
                     if (cell.isFeedthrough())
                         x += 3;
                     else
                         x += 7;
                 }
-                else {
+                else
+                {
                     x += 3;
                 }
             }
@@ -134,8 +139,8 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph) {
         // Probably delete
         for (int l = 0; l < route.m_channels[i].m_tracks.size(); l++)
         {
-            auto& j = route.m_channels[i].m_tracks[l];
-            for (int k = 0; k < j.m_nets.size(); k++) 
+            auto &j = route.m_channels[i].m_tracks[l];
+            for (int k = 0; k < j.m_nets.size(); k++)
             {
                 MNets mnet;
                 mnet.netID = j.m_nets[k];
@@ -151,14 +156,14 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph) {
                 MagNets[i].push_back(mnet);
             }
         }
-
     }
 
     return;
 }
 
 // Output the Final Result
-void Magic::OutputLayout(string szDirectory, string szFileName) {
+void Magic::OutputLayout(string szDirectory, string szFileName)
+{
     string szFeedCell = szDirectory + szFileName;
     fstream outputStream;
     outputStream.open(szFeedCell, ios::out);
@@ -176,7 +181,8 @@ void Magic::OutputLayout(string szDirectory, string szFileName) {
 }
 
 // Create a 3x6 2 terminal Feed Cell for reference
-void Magic::OutputFeedCell(string szDirectory) {
+void Magic::OutputFeedCell(string szDirectory)
+{
     string szFeedCell = szDirectory + "FeedCell";
     fstream outputStream;
     outputStream.open(szFeedCell, ios::out);
@@ -186,16 +192,14 @@ void Magic::OutputFeedCell(string szDirectory) {
     // Terminals = rect xbot ybot xtop ytop
     magRect T1(1, 0, 2, 1);
     magRect T3(1, 5, 2, 6);
-    vector<magRect> Terms = { T1, T3 };
-
+    vector<magRect> Terms = {T1, T3};
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
     string type = "rect";
 
-    for (auto& i : Terms)
+    for (auto &i : Terms)
         i.outputRect(outputStream, type);
-
 
     // Label Rectangles
     outputStream << "<< labels >>" << endl;
@@ -203,7 +207,6 @@ void Magic::OutputFeedCell(string szDirectory) {
 
     for (auto i = 0; i < Terms.size(); i++)
         Terms[i].outputLabel(outputStream, type, i);
-
 
     // Exit and close
     Footer(outputStream);
@@ -213,7 +216,8 @@ void Magic::OutputFeedCell(string szDirectory) {
 }
 
 // Create a standard 6x6 4 terminal Cell for reference
-void Magic::OutputStandardCell(string szDirectory) {
+void Magic::OutputStandardCell(string szDirectory)
+{
     string szFeedCell = szDirectory + "Cell";
     fstream outputStream;
     outputStream.open(szFeedCell, ios::out);
@@ -225,16 +229,14 @@ void Magic::OutputStandardCell(string szDirectory) {
     magRect T2(4, 5, 5, 6);
     magRect T3(1, 0, 2, 1);
     magRect T4(4, 0, 5, 1);
-    vector<magRect> Terms = { T1, T2, T3, T4 };
-
+    vector<magRect> Terms = {T1, T2, T3, T4};
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
     string type = "rect";
 
-    for (auto& i : Terms)
+    for (auto &i : Terms)
         i.outputRect(outputStream, type);
-
 
     // Label Rectangles
     outputStream << "<< labels >>" << endl;
@@ -243,14 +245,12 @@ void Magic::OutputStandardCell(string szDirectory) {
     for (auto i = 0; i < Terms.size(); i++)
         Terms[i].outputLabel(outputStream, type, i);
 
-
     // Exit and close
     Footer(outputStream);
     outputStream.close();
 
     return;
 }
-
 
 /*
 Magic uses its own internal ASCII format for storing cells in disk files. Each cell name is stored in its

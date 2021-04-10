@@ -118,10 +118,10 @@ public:
 	}
 };
 
-class NetAndRanges
+class Span
 {
 public:
-	NetAndRanges(int net, vector<pair<int, int>> Range)
+	Span(int net, vector<pair<int, int>> Range)
 		: net(net), ranges(Range) {}
 
 	int net;
@@ -158,34 +158,34 @@ public:
 
 	void BuildRows(Placement &place);
 
-	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
-	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);
-	void BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAndXVals);
+	Span CalculateSpan(int i, int j, int netID, bool isTop);
+	void BuildSpans(int i, vector<Span> &NetsAndXVals);
+	void BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals);
 	void BuildV(int i, vector<vector<int>> &V);
-	void FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
-	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
+	void FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
+	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
 
 	void Print();
 
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows)
 	{
-		this->m_rowCount = rows + 1;
-		this->m_TopRow.resize(this->m_rowCount);
-		this->m_BotRow.resize(this->m_rowCount);
+		this->m_channelCount = rows + 1;
+		this->m_TopRow.resize(this->m_channelCount);
+		this->m_BotRow.resize(this->m_channelCount);
 	}
 
 	// Pad the end of the rows with zeros so they all
 	// have the same number of zeros
 	void PadRows()
 	{
-		for (int i = 0; i < m_rowCount; i++)
+		for (int i = 0; i < m_channelCount; i++)
 		{
 			m_TopRow[i].PadRow(m_colCount);
 			m_BotRow[i].PadRow(m_colCount);
 		}
 	}
 
-	int m_rowCount;
+	int m_channelCount;
 	int m_colCount;
 };
