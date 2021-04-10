@@ -22,7 +22,7 @@ struct Benchmark
     int gridWidth;
 };
 
-vector<Benchmark> TestBenchmarks{
+const vector<Benchmark> TestBenchmarks{
     {"Benchmarks/b_routing_easy", 2},
     {"Benchmarks/b_tiny", 2},
     {"Benchmarks/b_feedthrough_0", 2},
@@ -33,7 +33,7 @@ vector<Benchmark> TestBenchmarks{
     {"Benchmarks/b_feedthrough_3_right", 2},
     {"Benchmarks/b_feedthrough_multi", 2}};
 
-vector<Benchmark> Benchmarks{
+const vector<Benchmark> Benchmarks{
     {"Benchmarks/b_50_50", (int)sqrt(50) * 2},
     {"Benchmarks/b_100_100", (int)sqrt(100) * 2},
     {"Benchmarks/b_400_400", (int)sqrt(400) * 2},
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Magic(TestBenchmarks[0]);
+        Test_Magic(TestBenchmarks.back());
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
         PlaceAndRoute(Benchmarks[3]);
