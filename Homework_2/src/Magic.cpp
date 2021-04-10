@@ -7,11 +7,11 @@
 using namespace std;
 
 // Magic Intro Function
-Magic::Magic(Routing route, Placement place, Graph graph)
+Magic::Magic(Placement place, Routing route)
 {
 
-    CreateLayout(route, place, graph);
-    Print("", "");
+    CreateLayout(route, place);
+    Output("", "");
 }
 
 // Create a standard Header for Magic

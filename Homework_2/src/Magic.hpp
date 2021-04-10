@@ -97,7 +97,7 @@ public:
     void OutputFeedCell(string szDirectory);
     void OutputStandardCell(string szDirectory);
 
-    void CreateLayout(Routing route, Placement place, Graph graph);
+    void CreateLayout(Routing route, Placement place);
     void OutputLayout(string szDirectory, string szFileName);
 
 private:
