@@ -83,7 +83,7 @@ public:
 class Magic
 {
 public:
-    Magic(Placement place, Routing route, int BenchNum = 0);
+    Magic(Placement place, Routing route);
     void Output(string szDirectory, string szFileName);
 
     long long GetTime();

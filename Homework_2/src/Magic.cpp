@@ -7,10 +7,9 @@
 using namespace std;
 
 // Magic Intro Function
-Magic::Magic(Placement place, Routing route, int BenchNum = 0)
+Magic::Magic(Placement place, Routing route)
 {
     CreateLayout(route, place);
-    Output("Output", to_string(BenchNum));
 }
 
 // Create a standard Header for Magic

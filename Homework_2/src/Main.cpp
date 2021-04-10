@@ -171,18 +171,21 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
     //placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
     placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     int postSimulatedAnealingCost = placement.CalculatePlacementCost();
+
     placement.GreedyFlipping(10);
     int postFlippingCost = placement.CalculatePlacementCost();
+
     placement.InsertFeedthroughs();
     int postFeedthroughsCost = placement.CalculatePlacementCost();
+
     int feedthroughCount = placement.m_feedthroughCount;
 
     // Do Routing
     Routing routing(placement);
     routing.Print();
 
-    Magic magic(placement, routing, BenchNum);
-
+    Magic magic(placement, routing);
+    magic.Output("Output", to_string(BenchNum) + ".mag");
     int msPassed = MilisecondsPassed(start);
 
     // Print out
@@ -217,7 +220,7 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Magic(TestBenchmarks.back());
+        //Test_Magic(TestBenchmarks.back());
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
         PlaceAndRoute(Benchmarks[0], 1);
