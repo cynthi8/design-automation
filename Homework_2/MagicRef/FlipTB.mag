@@ -1,0 +1,8 @@
+magic
+tech scmos
+timestamp 1
+use Cell Cell_FlipTB
+timestamp 1
+transform 1 0 0 0 -1 6
+box 0 0 6 6
+<< end >>
