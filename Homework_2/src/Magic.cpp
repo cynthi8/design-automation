@@ -55,7 +55,7 @@ void Magic::CreateLayout(Routing route, Placement place)
     {
         // Create MCells
         int tracksInChannel = route.m_channels[channelIndex].m_tracks.size();
-        y = channelIndex * 6 + tracksInChannel * 2 + 1;
+        y += tracksInChannel * 2;
         for (int col = 0; col < route.m_colCount; col++)
         {
             string cellId = route.m_TopRow[channelIndex].RowCells[col].Term.cellId;
@@ -77,6 +77,7 @@ void Magic::CreateLayout(Routing route, Placement place)
                 alreadyPlacedCellIds.insert(cellId);
             }
         }
+        y += 6 + 1; // The next section will be a cell height above, plus 1 for spacing
     }
 
     // go thru all nets
