@@ -12,20 +12,20 @@ using namespace std;
 class MCell
 {
 public:
-    MCell(int x, int y, bool isFeed, string cellID, Flips m_orientation)
-        : x(x), y(y), isFeed(isFeed),
-          cellID(cellID), m_orientation(m_orientation) {}
+    MCell(int x, int y, bool isFeed, string cellId, Flips m_orientation)
+        : x(x), y(y), isFeed(isFeed), m_cellId(cellId), m_orientation(m_orientation)
+    {
+        transform();
+    }
+    void transform();
+    string makeCell();
 
     int x;
     int y;
     bool isFeed;
-    string cellID;
+    string m_cellId;
     Flips m_orientation;
-    string transf;
-    void transform()
-    {
-        //change the transf string according to x, y, and orientation
-    }
+    string m_transformString;
 };
 
 class MBranch
@@ -63,10 +63,10 @@ public:
     string makeBoundingBox()
     {
         string outputString;
-        outputString += " " + to_string(xbot);
-        outputString += " " + to_string(ybot);
-        outputString += " " + to_string(xtop);
-        outputString += " " + to_string(ytop);
+        outputString += ' ' + to_string(xbot);
+        outputString += ' ' + to_string(ybot);
+        outputString += ' ' + to_string(xtop);
+        outputString += ' ' + to_string(ytop);
 
         return outputString;
     }
@@ -102,6 +102,8 @@ public:
     void OutputLayout(string szDirectory, string szFileName);
 
 private:
+    vector<MCell> m_MCells;
+    vector<MNet> m_MNets;
 };
 
 #endif
