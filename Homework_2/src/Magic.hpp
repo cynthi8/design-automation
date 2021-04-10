@@ -35,6 +35,7 @@ public:
     vector<MTrunk> m_trunks;
     vector<MBranch> m_branches;
     vector<MContact> m_contacts;
+    //string makePaint();
     string makeMetal1();
     string makeMetal2();
     string makeMetal2Contact();

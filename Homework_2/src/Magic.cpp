@@ -358,6 +358,50 @@ string MCell::makeCell()
     return cellGroup;
 }
 
+
+string MNet::makeMetal1()
+{
+    // rect 4 8 5 11
+
+    string netBranches = "rect";
+    for (auto& i : m_branches) {
+        MagRect T1(i.x, i.y_locs.first, i.x, i.y_locs.second);
+        netBranches += T1.makeBoundingBox();
+        netBranches += "\n";
+    }
+
+    return netBranches;
+}
+
+string MNet::makeMetal2()
+{
+    // rect 4 8 5 11
+
+    string netTrunks = "rect";
+    for (auto& i : m_trunks) {
+        MagRect T1(i.x_locs.first, i.y, i.x_locs.second, i.y);
+        netTrunks += T1.makeBoundingBox();
+        netTrunks += "\n";
+    }
+
+    return netTrunks;
+}
+
+string MNet::makeMetal2Contact() 
+{
+    // rect 4 8 5 11
+
+    string netContacts = "rect";
+    for (auto& i : m_contacts) {
+        MagRect T1(i.x, i.y, i.x, i.y);
+        netContacts += T1.makeBoundingBox();
+        netContacts += "\n";
+    }
+
+    return netContacts;
+}
+
+
 string MagRect::makeBoundingBox()
 {
     string outputString;
