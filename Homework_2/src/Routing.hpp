@@ -131,10 +131,10 @@ public:
 class SSet
 {
 public:
-	SSet(int colID)
-		: colID(colID) {}
+	SSet() : colID(-1) {}
+	SSet(int colID) : colID(colID) {}
 
-	int colID = 0;			  //need to keep track of the column this originated from
+	int colID;				  //need to keep track of the column this originated from
 	set<pair<int, int>> nets; //all of the nets that cross this column
 
 	void addSet(int colID, pair<int, int> sets)
@@ -154,11 +154,11 @@ public:
 	vector<Row> m_BotRow;
 	vector<Channel> m_channels;
 
-	void BuildRows(Placement& place);
+	void BuildRows(Placement &place);
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);
-	void BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals);
+	void BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAndXVals);
 	void BuildV(int i, vector<vector<int>> &V);
 	void FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
 	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
