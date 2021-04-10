@@ -10,6 +10,7 @@ using namespace std;
 Magic::Magic(Placement place, Routing route)
 {
     CreateLayout(route, place);
+    Output("Output", place.m_netlist.szFileName);
 }
 
 // Create a standard Header for Magic
@@ -408,7 +409,7 @@ string MNet::makeLabel()
             Labels += "\n";
         }
     }
-
+    return Labels;
 }
 
 string MNet::makeMetal2()
