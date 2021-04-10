@@ -13,10 +13,8 @@ Routing::Routing(Placement place)
 	PadRows();
 
 	//for each row, build it up
-	m_channels.resize(m_rowCount);
-	m_netRanges.resize(m_rowCount);
-	for (int i = 0; i < m_rowCount; i++)
 	m_channels.resize(m_channelCount);
+	m_Spans.resize(m_channelCount);
 	for (int i = 0; i < m_channelCount; i++)
 	{
 		// Build the range first in case we have to change it for the V graph
@@ -36,9 +34,8 @@ Routing::Routing(Placement place)
 
 		// Finally Route the nets
 		RouteNets(i, S, V, Spans);
-		RouteNets(i, S, V, NetsAndXRanges);
 
-		m_netRanges[i] = NetsAndXRanges;
+		m_Spans[i] = Spans;
 	}
 
 	return;
@@ -110,10 +107,10 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 
 	for (int j = 0; j < Spans.size(); j++)
 	{
-		netsRangesDone[j].insert(netsRangesDone[j].begin(), NetsAndXRanges[j].ranges.size(), false);
-		NetTracks.insert({NetsAndXRanges[j].net, -1});
-		int k = NetsAndXRanges[j].ranges.size();
-		NetsAndXRanges[j].n_tracks.resize(k);
+		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
+		NetTracks.insert({ Spans[j].net, -1});
+		int k = Spans[j].ranges.size();
+		Spans[j].n_tracks.resize(k);
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
 		NetTracks.insert({Spans[j].net, -1});
 	}
@@ -122,7 +119,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 	int j = 0;
 	bool Done = false;
 
-	while (Done)
+	while (!Done)
 	{
 		if (netsDone[j])
 		{
@@ -184,7 +181,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 
 			netsRangesDone[j][rangeID] = true;
 
-			NetsAndXRanges[j].n_tracks[rangeID] = maxtrack;
+			Spans[j].n_tracks[rangeID] = maxtrack;
 		}
 
 		netsDone[j] = true;

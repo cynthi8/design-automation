@@ -99,9 +99,9 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
         }
 
         // go thru all nets
-        for (int l = 0; l < route.m_netRanges[i].size(); l++)
+        for (int l = 0; l < route.m_Spans[i].size(); l++)
         {
-            auto& j = route.m_netRanges[i][l];
+            auto& j = route.m_Spans[i][l];
             //go thru all tracks for that net
             for (int k = 0; k < j.ranges.size(); k++)
             {

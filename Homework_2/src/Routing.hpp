@@ -154,7 +154,7 @@ public:
 	vector<Row> m_TopRow;
 	vector<Row> m_BotRow;
 	vector<Channel> m_channels;
-	vector<vector<NetAndRanges>> m_netRanges;
+	vector<vector<Span>> m_Spans;
 
 	void BuildRows(Placement &place);
 
