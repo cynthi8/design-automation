@@ -49,11 +49,13 @@ void Magic::Output(string szDirectory, string szFileName)
 // Create an object that has all the necessary info to create the Magic File
 void Magic::CreateLayout(Routing route, Placement place)
 {
+    /***********************
+    /* Create MCells
+    /***********************/
     int y = 0;
     set<string> alreadyPlacedCellIds;
     for (int channelIndex = 0; channelIndex < route.m_channelCount - 1; channelIndex++)
     {
-        // Create MCells
         int tracksInChannel = route.m_channels[channelIndex].m_tracks.size();
         y += tracksInChannel * 2;
         for (int col = 0; col < route.m_colCount; col++)
@@ -80,6 +82,9 @@ void Magic::CreateLayout(Routing route, Placement place)
         y += 6 + 1; // The next section will be a cell height above, plus 1 for spacing
     }
 
+    /***********************
+    /* Create MNets
+    /***********************/
     y = 0;
     for (int channelIndex = 0; channelIndex < route.m_channelCount; channelIndex++)
     {
