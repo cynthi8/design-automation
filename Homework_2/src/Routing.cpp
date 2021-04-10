@@ -113,9 +113,13 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 		NetTracks.insert({Spans[j].net, -1});
 	}
 
-
 	int j = 0;
 	bool Done = false;
+
+	if (Spans.size() == 0)
+	{
+		Done = true;
+	}
 
 	//While all nets haven't been placed
 	while (!Done)

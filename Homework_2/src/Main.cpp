@@ -12,8 +12,7 @@ Group: Nathaniel Hernandez; Erin Cold
 #include "Graph.hpp"
 #include "Placement.hpp"
 #include "Routing.hpp"
-
-//#include "Magic.hpp"
+#include "Magic.hpp"
 
 using namespace std;
 
@@ -201,6 +200,23 @@ void PlaceAndRoute(Benchmark benchmark)
          << postFlippingCost << "\t\t\t" << postFeedthroughsCost << "\t\t" << feedthroughCount << "\t\t" << msPassed << endl;
 }
 
+void Test_Magic(Benchmark benchmark)
+{
+    // Process Graph
+    Graph graph(benchmark.fileName);
+
+    // Do Placement and Collect Data
+    Placement placement(graph, benchmark.gridWidth);
+    placement.Print();
+
+    // Do Routing
+    Routing routing(placement);
+    routing.Print();
+
+    Magic magic(placement, routing);
+    magic.Output("output", benchmark.fileName + ".mag");
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
@@ -208,7 +224,7 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Routing({"Benchmarks/b_routing_easy", 2});
+        Test_Magic({"Benchmarks/b_routing_easy", 2});
     }
     catch (invalid_argument &e)
     {
