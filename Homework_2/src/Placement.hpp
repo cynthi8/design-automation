@@ -105,7 +105,6 @@ private:
     void Swap(string cellId0, string cellId1);
 
     const int m_gridWidth;
-    int m_cost;
     vector<pair<string, int>> m_sortedCells;
 };
 
