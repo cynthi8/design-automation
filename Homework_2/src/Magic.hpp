@@ -9,6 +9,46 @@
 
 using namespace std;
 
+class MCells 
+{
+public:
+    MCells(int x, int y, bool isFeed, string cellID, Flips m_orientation)
+    : x(x), y(y), isFeed(isFeed), 
+      cellID (cellID), m_orientation(m_orientation) {}
+
+    int x;
+    int y;
+    bool isFeed;
+    string cellID;
+    Flips m_orientation;
+    string transf;
+    void transform() {
+        //change the transf string according to x, y, and orientation 
+    }
+};
+
+class MNets
+{
+public:
+    int netID;
+    MTrunk m_trunk;
+    pair<MBranch, MBranch> m_branches;
+};
+
+class MTrunk
+{
+public:
+    pair<int, int> x_locs;
+    int y;
+};
+
+class MBranch
+{
+public:
+    pair<int, int> y_locs;
+    int x;
+};
+
 class magRect
 {
 public:
