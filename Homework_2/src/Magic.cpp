@@ -150,6 +150,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                 {
                     // Doglegs :( Handle inter trunk connections
                 }
+                newMNet.m_branches.push_back(leftBranch);
+                newMNet.m_branches.push_back(rightBranch);
             }
             m_MNets.push_back(newMNet);
         }
@@ -323,7 +325,27 @@ string MCell::makeCell()
     return cellGroup;
 }
 
-void MNet::BuildBranches()
+string MagRect::makeBoundingBox()
 {
-    return;
+    string outputString;
+    outputString += ' ' + to_string(xbot);
+    outputString += ' ' + to_string(ybot);
+    outputString += ' ' + to_string(xtop);
+    outputString += ' ' + to_string(ytop);
+
+    return outputString;
+}
+
+string MagRect::makeRect()
+{
+    return "rect" + makeBoundingBox() + '\n';
+}
+
+string MagRect::makeRlabel(string layer, int text)
+{
+    return "rlabel " + layer + makeBoundingBox() + " 0 " + to_string(text) + '\n';
+}
+string MagRect::makeRlabel(string layer, string text)
+{
+    return "rlabel " + layer + makeBoundingBox() + " 0 " + text + '\n';
 }

@@ -9,6 +9,30 @@
 
 using namespace std;
 
+struct MBranch
+{
+public:
+    pair<int, int> y_locs;
+    int x;
+};
+
+struct MTrunk
+{
+    pair<int, int> x_locs;
+    int y;
+};
+
+class MNet
+{
+public:
+    int netID;
+    vector<MTrunk> m_trunks;
+    vector<MBranch> m_branches;
+    string makeMetal1();
+    string makeMetal2();
+    string makeMetal2Contact();
+};
+
 class MCell
 {
 public:
@@ -28,28 +52,6 @@ public:
     string m_transformString;
 };
 
-struct MBranch
-{
-public:
-    pair<int, int> y_locs;
-    int x;
-};
-
-struct MTrunk
-{
-    pair<int, int> x_locs;
-    int y;
-};
-
-class MNet
-{
-public:
-    void BuildBranches();
-    int netID;
-    vector<MTrunk> m_trunks;
-    vector<MBranch> m_branches;
-};
-
 class MagRect
 {
 public:
@@ -60,30 +62,10 @@ public:
     int xtop;
     int ytop;
 
-    string makeBoundingBox()
-    {
-        string outputString;
-        outputString += ' ' + to_string(xbot);
-        outputString += ' ' + to_string(ybot);
-        outputString += ' ' + to_string(xtop);
-        outputString += ' ' + to_string(ytop);
-
-        return outputString;
-    }
-
-    string makeRect()
-    {
-        return "rect" + makeBoundingBox() + '\n';
-    }
-
-    string makeRlabel(string layer, int text)
-    {
-        return "rlabel " + layer + makeBoundingBox() + " 0 " + to_string(text) + '\n';
-    }
-    string makeRlabel(string layer, string text)
-    {
-        return "rlabel " + layer + makeBoundingBox() + " 0 " + text + '\n';
-    }
+    string makeBoundingBox();
+    string makeRect();
+    string makeRlabel(string layer, int text);
+    string makeRlabel(string layer, string text);
 };
 
 class Magic
