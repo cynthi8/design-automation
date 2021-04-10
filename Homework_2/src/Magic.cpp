@@ -1,74 +1,14 @@
 #include "Magic.hpp"
 
-void Magic::OutputFeedCell(string szDirectory) {
-    string szFeedCell = szDirectory + "FeedCell";
-    fstream outputStream;
-    outputStream.open(szFeedCell, ios::out);
-    
-    Header(outputStream);
 
-    //rect xbot ybot xtop ytop
-    magRect T1(1, 0, 2, 1);
-    magRect T3(1, 5, 2, 6);
+// Magic Intro Function
+Magic::Magic(Routing route, Graph graph) {
 
-    vector<magRect> Terms = { T1, T3 };
-
-    outputStream << "<< metal1 >>" << endl;
-    string type = "rect";
-
-    for (auto& i : Terms)
-        i.outputRect(outputStream, type);
-
-    outputStream << "<< labels >>" << endl;
-    type = "rlabel metal1";
-
-    for (auto i = 0; i < Terms.size(); i++)
-        Terms[i].outputLabel(outputStream, type, i);
-
-    Footer(outputStream);
-
-    outputStream.close();
-
-    return;
+    CreateLayout(route, graph);
+    Print("","");
 }
 
-void Magic::OutputStandardCell(string szDirectory) {
-    string szFeedCell = szDirectory + "Cell";
-    fstream outputStream;
-    outputStream.open(szFeedCell, ios::out);
-
-    Header(outputStream);
-
-    //rect xbot ybot xtop ytop
-    magRect T1(1, 0, 2, 1);
-    magRect T2(4, 0, 5, 1);
-    magRect T3(1, 5, 2, 6);
-    magRect T4(4, 5, 5, 6);
-
-    vector<magRect> Terms = { T1, T2, T3, T4 };
-
-    outputStream << "<< metal1 >>" << endl;
-    string type = "rect";
-
-    for (auto& i : Terms)
-        i.outputRect(outputStream, type);
-
-    outputStream << "<< labels >>" << endl;
-    type = "rlabel metal1";
-
-    for (auto i = 0; i < Terms.size(); i++)
-        Terms[i].outputLabel(outputStream, type, i);
-
-    //magRect Cell(0,0,6,6);
-    //Cell.outputLabel(outputStream, type, ".");
-
-    Footer(outputStream);
-
-    outputStream.close();
-
-    return;
-}
-
+// Create a standard Header for Magic
 void Magic::Header(std::ostream& outputStream) {
     outputStream << "magic" << endl;
     outputStream << "tech scmos" << endl;
@@ -76,10 +16,12 @@ void Magic::Header(std::ostream& outputStream) {
     outputStream << GetTime() << endl;
 }
 
+// End the Magic File
 void Magic::Footer(std::ostream& outputStream) {
     outputStream << "<< end >>" << endl;
 }
 
+// Get Current Time
 long long Magic::GetTime() {
     // We actually don't want a different time as then it rechecks the drc
     /*
@@ -90,12 +32,6 @@ long long Magic::GetTime() {
     */
 
     return 1;
-}
-
-Magic::Magic(Routing route, Graph graph) {
-
-    CreateLayout(route, graph);
-    Print("","");
 }
 
 // Function to print the final Magic File
@@ -111,52 +47,118 @@ void Magic::Print(string szDirectory, string szFileName)
     return;
 }
 
-
+// Create an object that has all the necessary info to create the Magic File
 void Magic::CreateLayout(Routing route, Graph graph) {
 
     //Do stuff here
 
+    for (int i = 0; i < route.m_rowCount; i++) 
+    {
+        for (int j = 0; j < route.m_colCount; j++) 
+        {
 
+
+
+        }
+    }
 
     return;
 }
 
+// Output the Final Result
 void Magic::OutputLayout(string szDirectory, string szFileName) {
     string szFeedCell = szDirectory + szFileName;
     fstream outputStream;
     outputStream.open(szFeedCell, ios::out);
 
+    // Begin File
     Header(outputStream);
 
-    //rect xbot ybot xtop ytop
+    // Do the important bit here
+
+    // Exit and close
+    Footer(outputStream);
+    outputStream.close();
+
+    return;
+}
+
+// Create a 3x6 2 terminal Feed Cell for reference
+void Magic::OutputFeedCell(string szDirectory) {
+    string szFeedCell = szDirectory + "FeedCell";
+    fstream outputStream;
+    outputStream.open(szFeedCell, ios::out);
+
+    Header(outputStream);
+
+    // Terminals = rect xbot ybot xtop ytop
     magRect T1(1, 0, 2, 1);
-    magRect T2(4, 0, 5, 1);
     magRect T3(1, 5, 2, 6);
-    magRect T4(4, 5, 5, 6);
+    vector<magRect> Terms = { T1, T3 };
 
-    vector<magRect> Terms = { T1, T2, T3, T4 };
 
+    // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
     string type = "rect";
 
     for (auto& i : Terms)
         i.outputRect(outputStream, type);
 
+
+    // Label Rectangles
     outputStream << "<< labels >>" << endl;
     type = "rlabel metal1";
 
     for (auto i = 0; i < Terms.size(); i++)
         Terms[i].outputLabel(outputStream, type, i);
 
-    //magRect Cell(0,0,6,6);
-    //Cell.outputLabel(outputStream, type, ".");
 
+    // Exit and close
     Footer(outputStream);
-
     outputStream.close();
 
     return;
 }
+
+// Create a standard 6x6 4 terminal Cell for reference
+void Magic::OutputStandardCell(string szDirectory) {
+    string szFeedCell = szDirectory + "Cell";
+    fstream outputStream;
+    outputStream.open(szFeedCell, ios::out);
+
+    Header(outputStream);
+
+    // Terminals = rect xbot ybot xtop ytop
+    magRect T1(1, 5, 2, 6);
+    magRect T2(4, 5, 5, 6);
+    magRect T3(1, 0, 2, 1);
+    magRect T4(4, 0, 5, 1);
+    vector<magRect> Terms = { T1, T2, T3, T4 };
+
+
+    // Metal Rectangles
+    outputStream << "<< metal1 >>" << endl;
+    string type = "rect";
+
+    for (auto& i : Terms)
+        i.outputRect(outputStream, type);
+
+
+    // Label Rectangles
+    outputStream << "<< labels >>" << endl;
+    type = "rlabel metal1";
+
+    for (auto i = 0; i < Terms.size(); i++)
+        Terms[i].outputLabel(outputStream, type, i);
+
+
+    // Exit and close
+    Footer(outputStream);
+    outputStream.close();
+
+    return;
+}
+
 
 /*
 Magic uses its own internal ASCII format for storing cells in disk files. Each cell name is stored in its
@@ -230,6 +232,7 @@ The timestamp line is optional; if present, it gives the last time this cell was
 filename changed. If there is no timestamp line, a timestamp of 0 is assumed. When the subcell is
 read in, this value is compared to the actual value at the beginning of the child cell. If there is a difference,
 the ��timestamp mismatch�� message is printed, and Magic rechecks design-rules around the child.
+
 The transform line gives the geometric transform from coordinates of the child filename into coordinates
 of the cell being read. The six integers a, b, c, d, e, and f are part of the following transformation
 matrix, which is used to postmultiply all coordinates in the child filename whenever their coordinates in
