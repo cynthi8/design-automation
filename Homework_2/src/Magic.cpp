@@ -150,6 +150,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                 {
                     // Doglegs :( Handle inter trunk connections
                 }
+                newMNet.m_branches.push_back(leftBranch);
+                newMNet.m_branches.push_back(rightBranch);
             }
             m_MNets.push_back(newMNet);
         }
@@ -321,9 +323,4 @@ string MCell::makeCell()
     cellGroup = useString + timestampString + m_transformString + boxString;
 
     return cellGroup;
-}
-
-void MNet::BuildBranches()
-{
-    return;
 }

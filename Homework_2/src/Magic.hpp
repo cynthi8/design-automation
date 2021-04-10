@@ -44,7 +44,6 @@ struct MTrunk
 class MNet
 {
 public:
-    void BuildBranches();
     int netID;
     vector<MTrunk> m_trunks;
     vector<MBranch> m_branches;
