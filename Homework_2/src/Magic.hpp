@@ -33,6 +33,7 @@ struct MContact
 class MNet
 {
 public:
+    MNet(int netID) : netID(netID){};
     int netID;
     vector<MTrunk> m_trunks;
     vector<MBranch> m_branches;

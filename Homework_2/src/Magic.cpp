@@ -50,8 +50,8 @@ void Magic::Output(string szDirectory, string szFileName)
 void Magic::CreateLayout(Routing route, Placement place)
 {
     /***********************
-    /* Create MCells
-    /***********************/
+    * Create MCells
+    ***********************/
     int y = 0;
     set<string> alreadyPlacedCellIds;
     for (int channelIndex = 0; channelIndex < route.m_channelCount - 1; channelIndex++)
@@ -83,80 +83,75 @@ void Magic::CreateLayout(Routing route, Placement place)
     }
 
     /***********************
-    /* Create MNets
-    /***********************/
+    * Create MNets
+    ***********************/
     y = 0;
     for (int channelIndex = 0; channelIndex < route.m_channelCount; channelIndex++)
     {
         int channelBottom = y;
         int channelTop = y + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
         map<int, MNet> channelNetMapping;
-        for (auto track : route.m_channels[channelIndex].m_tracks)
+        for (auto span : route.m_Spans[channelIndex])
         {
-            // Each track has trunks on them
-            // Add these trunks to the channelNetMapping
-            for (unsigned int trunk = 0; trunk < track.m_nets.size(); trunk++)
+            /* Assumption: All the ranges are in ascending order (left to right) and there is a max of 2 */
+
+            int netId = span.net;
+            MNet newMNet(netId);
+
+            // Build Trunks
+            for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
             {
-                int netId = track.m_nets[trunk];
-                auto range = track.m_locs[trunk];
-                MTrunk newTrunk = {range, y};
-                channelNetMapping[netId].m_trunks.push_back(newTrunk);
-                y += 2; // The next track is two units above this one
+                MTrunk newTrunk;
+                newTrunk.y = span.n_tracks[trunk];
+                newTrunk.x_locs = span.ranges[trunk];
+                newMNet.m_trunks.push_back(newTrunk);
             }
-        }
-        y += 6 + 1; // The next section will be a cell height above, plus 1 for spacing
 
-        // Build the branches between trunks in the MNets
-        for (auto mapEntry : channelNetMapping)
-        {
-            int netId = mapEntry.first;
-            MNet newMNet = mapEntry.second;
-
-            // Add branches for each trunk
-            for (auto trunk : newMNet.m_trunks)
+            // Build Left Most Branch
+            MBranch leftMostBranch;
+            leftMostBranch.x = span.ranges[0].first;
+            if (netId == route.m_BotRow[channelIndex].RowCells[leftMostBranch.x].NetID)
             {
-                MBranch leftBranch;
-                MBranch rightBranch;
-                leftBranch.x = trunk.x_locs.first;
-                rightBranch.x = trunk.x_locs.second;
+                // Construct a branch down
+                leftMostBranch.y_locs = {channelBottom, span.n_tracks[0]};
+            }
+            else if (netId == route.m_TopRow[channelIndex].RowCells[leftMostBranch.x].NetID)
+            {
+                // Construct a branch up
+                leftMostBranch.y_locs = {span.n_tracks[0], channelTop};
+            }
+            else
+            {
+                throw("Left most branch should go to a row cell");
+            }
+            newMNet.m_branches.push_back(leftMostBranch);
 
-                // Build Left Branch
-                int leftBotNetId = route.m_BotRow[channelIndex].RowCells[leftBranch.x].NetID;
-                int leftTopNetId = route.m_TopRow[channelIndex].RowCells[leftBranch.x].NetID;
-                if (leftBotNetId == netId)
-                {
-                    // Construct a branch down
-                    leftBranch.y_locs = {channelBottom, trunk.y};
-                }
-                else if (leftTopNetId == netId)
-                {
-                    // Construct a branch up
-                    leftBranch.y_locs = {trunk.y, channelTop};
-                }
-                else
-                {
-                    // Handle inter trunk connections
-                }
+            // Build Right Most Branch
+            MBranch rightMostBranch;
+            rightMostBranch.x = span.ranges.back().second;
+            if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            {
+                // Construct a branch down
+                rightMostBranch.y_locs = {channelBottom, span.n_tracks.back()};
+            }
+            else if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            {
+                // Construct a branch up
+                rightMostBranch.y_locs = {span.n_tracks.back(), channelTop};
+            }
+            else
+            {
+                throw("Right most branch should go to a row cell");
+            }
+            newMNet.m_branches.push_back(rightMostBranch);
 
-                // Build Right Branch
-                int rightBotNetId = route.m_BotRow[channelIndex].RowCells[rightBranch.x].NetID;
-                int rightTopNetId = route.m_TopRow[channelIndex].RowCells[rightBranch.x].NetID;
-                if (rightBotNetId == netId)
-                {
-                    // Construct a branch down
-                    rightBranch.y_locs = {channelBottom, trunk.y};
-                }
-                else if (rightTopNetId == netId)
-                {
-                    // Construct a branch up
-                    rightBranch.y_locs = {trunk.y, channelTop};
-                }
-                else
-                {
-                    // Doglegs :( Handle inter trunk connections
-                }
-                newMNet.m_branches.push_back(leftBranch);
-                newMNet.m_branches.push_back(rightBranch);
+            if (span.ranges.size() == 2)
+            {
+                // Build the branch between the trunks
+                MBranch middleBranch;
+                middleBranch.x = span.ranges[0].second;
+                middleBranch.y_locs = {span.n_tracks[0], span.n_tracks[1]};
+                newMNet.m_branches.push_back(middleBranch);
             }
             m_MNets.push_back(newMNet);
         }
@@ -206,7 +201,7 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
     outputStream << "<< labels >>" << endl;
     for (auto net : m_MNets)
     {
-        outputStream << net.makeLabel();
+        //outputStream << net.makeLabel();
     }
 
     // Exit and close
@@ -360,7 +355,6 @@ string MCell::makeCell()
     return cellGroup;
 }
 
-
 string MNet::makeMetal1()
 {
     string netBranches = "rect";
@@ -419,7 +413,7 @@ string MNet::makeMetal2()
     return netTrunks;
 }
 
-string MNet::makeMetal2Contact() 
+string MNet::makeMetal2Contact()
 {
     string netContacts = "rect";
 
@@ -431,7 +425,6 @@ string MNet::makeMetal2Contact()
 
     return netContacts;
 }
-
 
 string MagRect::makeBoundingBox()
 {
