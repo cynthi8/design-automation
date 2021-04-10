@@ -110,7 +110,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 	int j = 0;
 	bool Done = false;
 
-	while (Done)
+	while (!Done)
 	{
 		if (netsDone[j])
 		{
