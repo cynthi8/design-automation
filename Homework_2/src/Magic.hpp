@@ -9,12 +9,12 @@
 
 using namespace std;
 
-class MCells 
+class MCell
 {
 public:
-    MCells(int x, int y, bool isFeed, string cellID, Flips m_orientation)
-    : x(x), y(y), isFeed(isFeed), 
-      cellID (cellID), m_orientation(m_orientation) {}
+    MCell(int x, int y, bool isFeed, string cellID, Flips m_orientation)
+        : x(x), y(y), isFeed(isFeed),
+          cellID(cellID), m_orientation(m_orientation) {}
 
     int x;
     int y;
@@ -22,17 +22,17 @@ public:
     string cellID;
     Flips m_orientation;
     string transf;
-    void transform() {
-        //change the transf string according to x, y, and orientation 
+    void transform()
+    {
+        //change the transf string according to x, y, and orientation
     }
 };
 
-class MNets
+class MBranch
 {
 public:
-    int netID;
-    MTrunk m_trunk;
-    pair<MBranch, MBranch> m_branches;
+    pair<int, int> y_locs;
+    int x;
 };
 
 class MTrunk
@@ -42,11 +42,12 @@ public:
     int y;
 };
 
-class MBranch
+class MNet
 {
 public:
-    pair<int, int> y_locs;
-    int x;
+    int netID;
+    MTrunk m_trunk;
+    pair<MBranch, MBranch> m_branches;
 };
 
 class magRect
@@ -59,7 +60,8 @@ public:
     int xtop;
     int ytop;
 
-    string szRect(string type) {
+    string szRect(string type)
+    {
         type += " " + xbot;
         type += " " + ybot;
         type += " " + xtop;
@@ -67,14 +69,17 @@ public:
 
         return type;
     }
-    void outputRect(std::ostream& outputStream, string type) {
+    void outputRect(std::ostream &outputStream, string type)
+    {
         outputStream << szRect(type) << endl;
     }
 
-    void outputLabel(std::ostream& outputStream, string type, int i) {
+    void outputLabel(std::ostream &outputStream, string type, int i)
+    {
         outputStream << szRect(type) << " 0 " << i << endl;
     }
-    void outputLabel(std::ostream& outputStream, string type, string i) {
+    void outputLabel(std::ostream &outputStream, string type, string i)
+    {
         outputStream << szRect(type) << " 0 " << i << endl;
     }
 };
@@ -82,16 +87,16 @@ public:
 class Magic
 {
 public:
-    Magic(Routing route, Graph graph);
-    void Print(string szDirectory, string szFileName);
+    Magic(Placement place, Routing route);
+    void Output(string szDirectory, string szFileName);
 
     long long GetTime();
-    void Header(std::ostream& outputStream);
-    void Footer(std::ostream& outputStream);
+    void Header(std::ostream &outputStream);
+    void Footer(std::ostream &outputStream);
     void OutputFeedCell(string szDirectory);
     void OutputStandardCell(string szDirectory);
 
-    void CreateLayout(Routing route, Graph graph);
+    void CreateLayout(Routing route, Placement place);
     void OutputLayout(string szDirectory, string szFileName);
 
 private:
