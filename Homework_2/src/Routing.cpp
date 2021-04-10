@@ -172,7 +172,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > m_channels[i].m_tracks.size())
+			if (maxtrack >= m_channels[i].m_tracks.size())
 				m_channels[i].m_tracks.resize(maxtrack + 1);
 
 			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
