@@ -89,7 +89,7 @@ void Magic::CreateLayout(Routing route, Placement place)
     for (int channelIndex = 0; channelIndex < route.m_channelCount; channelIndex++)
     {
         int channelBottom = nextChannelBottom;
-        int channelTop = y + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
+        int channelTop = nextChannelBottom + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
 
         int tracksInChannel = route.m_channels[channelIndex].m_tracks.size();
         nextChannelBottom += tracksInChannel * 2;
