@@ -75,8 +75,8 @@ public:
 		: Term(term), NetID(NetID), AboveCell("", -1), Above(false) {}
 
 	Terminal Term;
-	Terminal AboveCell;
 	int NetID;
+	Terminal AboveCell;
 	bool Above;
 };
 
@@ -131,10 +131,10 @@ public:
 class SSet
 {
 public:
-	//SSet(int colID, pair<int, int> sets)
-	//	: colID(colID), nets.insert(sets) {}
+	SSet(int colID)
+		: colID(colID) {}
 
-	int colID;				  //need to keep track of the column this originated from
+	int colID = 0;			  //need to keep track of the column this originated from
 	set<pair<int, int>> nets; //all of the nets that cross this column
 
 	void addSet(int colID, pair<int, int> sets)
@@ -143,8 +143,7 @@ public:
 		nets.insert(sets);
 	}
 };
-//S[j].addSet(j, { k.net, iter });	//push net
-//
+
 // Top class, to be called by main
 class Routing
 {
@@ -153,7 +152,9 @@ public:
 
 	vector<Row> m_TopRow;
 	vector<Row> m_BotRow;
-	vector<Channel> m_Channel;
+	vector<Channel> m_channels;
+
+	void BuildRows(Placement& place);
 
 	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
 	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);

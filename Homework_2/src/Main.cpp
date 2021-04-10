@@ -11,6 +11,7 @@ Group: Nathaniel Hernandez; Erin Cold
 
 #include "Graph.hpp"
 #include "Placement.hpp"
+#include "Routing.hpp"
 
 //#include "Magic.hpp"
 
@@ -158,13 +159,55 @@ void Test_FeedthroughCounts()
     cout << endl;
 }
 
+void Test_Routing(Benchmark benchmark)
+{
+    // Process Graph
+    Graph graph(benchmark.fileName);
+
+    // Do Placement and Collect Data
+    Placement placement(graph, benchmark.gridWidth);
+    placement.Print();
+
+    // Do Routing
+    Routing routing(placement);
+}
+
+void PlaceAndRoute(Benchmark benchmark)
+{
+    auto start = chrono::system_clock::now();
+
+    // Process Graph
+    Graph graph(benchmark.fileName);
+
+    // Do Placement and Collect Data
+    Placement placement(graph, benchmark.gridWidth);
+    int originalPlacementCost = placement.CalculatePlacementCost();
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    int postSimulatedAnealingCost = placement.CalculatePlacementCost();
+    placement.GreedyFlipping(10);
+    int postFlippingCost = placement.CalculatePlacementCost();
+    placement.InsertFeedthroughs();
+    int postFeedthroughsCost = placement.CalculatePlacementCost();
+    int feedthroughCount = placement.m_feedthroughCount;
+
+    // Do Routing
+    Routing routing(placement);
+
+    int msPassed = MilisecondsPassed(start);
+
+    // Print out
+    cout << benchmark.fileName << "\t" << originalPlacementCost << "\t\t\t" << postSimulatedAnealingCost << "\t\t\t"
+         << postFlippingCost << "\t\t\t" << postFeedthroughsCost << "\t\t" << feedthroughCount << "\t\t" << msPassed << endl;
+}
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
     try
     {
         //Test_Placements();
-        Test_FeedthroughCounts();
+        //Test_FeedthroughCounts();
+
     }
     catch (invalid_argument &e)
     {

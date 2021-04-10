@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define UNCONNECTED_TERMINAL -1
+
 /*
 Graph has Cells
 Each Cell has Nets 
@@ -38,12 +40,6 @@ struct Terminal
     Terminal(string cellId, int terminalId) : cellId(cellId), terminalId(terminalId){};
     string cellId;
     int terminalId;
-    bool IsTerminalTop()
-    {
-        if (terminalId == TopLeft || terminalId == TopRight)
-            return true;
-        return false;
-    }
 };
 
 class Net
@@ -67,8 +63,7 @@ public:
     // Get all the terminals that are being used
     vector<int> GetActiveTerminals();
 
-    // Get the topological location of all the terminals
-    vector<pair<TerminalLocation, int>> getTerminalLocations();
+    vector<Terminal> getSortedTerminals();
 
     void FlipLeftToRight()
     {
@@ -95,6 +90,7 @@ public:
 
     bool isFeedthrough();
     Terminal getTerminal(int terminalId);
+    bool isTerminalTop(Terminal terminal);
 
     vector<Net> m_nets;
     string m_id;
@@ -133,9 +129,7 @@ public:
                 }
             }
         }
-
-        return -1;
-        //throw;
+        return UNCONNECTED_TERMINAL;
     }
 };
 

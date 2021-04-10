@@ -126,9 +126,11 @@ vector<int> Cell::GetActiveTerminals()
     return Terminals;
 }
 
-vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
+vector<Terminal> Cell::getSortedTerminals()
 {
-    vector<pair<TerminalLocation, int>> terminalLocations;
+    // Returns all terminals on a cell (even those that don't exist on a net)
+    // sorted w.r.t TerminalLocation. The order goes [TopLeft, TopRight, BottomLeft, BottomRight]
+    vector<Terminal> sortedTerminals;
     vector<int> Terms;
 
     if (isFeedthrough())
@@ -136,15 +138,10 @@ vector<pair<TerminalLocation, int>> Cell::getTerminalLocations()
     else
         Terms = {1, 2, 3, 4};
 
-    for (auto i : Terms)
-    {
-        TerminalLocation termLoc = getTerminalLocation(i);
-        terminalLocations.push_back({termLoc, i});
-    }
-
-    //sort based on terminal location
-    sort(terminalLocations.begin(), terminalLocations.end());
-    return terminalLocations;
+    // Sort based on terminal location
+    sort(sortedTerminals.begin(), sortedTerminals.end(), [this](const Terminal &lhs, const Terminal &rhs) {
+        return getTerminalLocation(lhs.terminalId) < getTerminalLocation(rhs.terminalId);
+    });
 }
 
 bool Cell::isFeedthrough()
@@ -154,6 +151,19 @@ bool Cell::isFeedthrough()
         return true;
     }
     return false;
+}
+
+bool Cell::isTerminalTop(Terminal terminal)
+{
+    TerminalLocation termLoc = getTerminalLocation(terminal.terminalId);
+    if (termLoc == TopLeft || termLoc == TopRight)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 Terminal Cell::getTerminal(int terminalId)

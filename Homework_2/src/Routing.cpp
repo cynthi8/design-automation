@@ -6,63 +6,15 @@
 
 Routing::Routing(Placement place)
 {
-	//This function needs to populate the rows such that we can do channel routing
-	int i;
-	int j;
-	string cell_id;
-	int maxCols = 0;
+	// Build the rows of cells and terminals
+	BuildRows(place);
 
-	vector<pair<int, int>> Terminals;
-	int placeHeight = (int)place.m_grid.m_grid.size();
-	SetRowSize(placeHeight);
-
-	// go through the entire 2D grid that's been placed
-	for (i = 0; i < placeHeight; i++)
-	{
-		Row RowTopTemp;
-		Row RowBottomTemp;
-		for (j = 0; j < place.m_grid.m_grid[i].size(); j++)
-		{
-
-			//Get the cell id
-			cell_id = place.m_grid[Location(i, j)].m_cellId;
-			Cell cell = place.m_netlist.m_cells[cell_id];
-
-			//find all the terminals on this cell
-			auto Terminals = cell.getTerminalLocations();
-
-			//add terminals and nets to row in order
-			for (auto terms : Terminals)
-			{
-				Terminal term(cell_id, terms.first);
-				int NetID = place.m_netlist.GetNetID(term);
-
-				if (term.IsTerminalTop())
-					RowTopTemp.AddRowVal(term, NetID);
-				else
-					RowBottomTemp.AddRowVal(term, NetID);
-			}
-		}
-
-		// add the temp rows to the array
-		// the top most row should be empty
-		// the bottom most row should be empty
-		this->m_BotRow[i] = RowBottomTemp;
-		this->m_TopRow[i + 1] = RowTopTemp;
-
-		if (m_TopRow[i].RowCells.size() > maxCols)
-			maxCols = (int)m_TopRow[i].RowCells.size();
-		if (m_BotRow[i].RowCells.size() > maxCols)
-			maxCols = (int)m_BotRow[i].RowCells.size();
-	}
-
-	this->m_colCount = maxCols;
-
-	PadRows(); //pad the rows with zeros
+	//pad the rows with zeros
+	PadRows(); 
 
 	//for each row, build it up
 	m_Channel.resize(m_rowCount);
-	for (i = 0; i < m_rowCount; i++)
+	for (int i = 0; i < m_rowCount; i++)
 	{
 
 		// Build the range first in case we have to change it for the V graph
@@ -80,13 +32,65 @@ Routing::Routing(Placement place)
 		vector<SSet> S(m_colCount);
 		BuildS(i, S, NetsAndXRanges);
 
-		//TODO route
+		// Finally Route the nets
 		RouteNets(i, S, V, NetsAndXRanges);
 	}
 
 	return;
 }
 
+// Build the Rows of Cells and Terminals
+void Routing::BuildRows(Placement& place) {
+	//This function needs to populate the rows such that we can do channel routing
+	int i, j;
+	int maxCols = 0;
+
+	vector<pair<int, int>> Terminals;
+	string cell_id;
+
+
+	int placeHeight = (int)place.m_grid.m_grid.size();
+	SetRowSize(placeHeight);
+
+	// go through the entire 2D grid that's been placed
+	for (i = 0; i < placeHeight; i++)
+	{
+		Row RowTopTemp;
+		Row RowBottomTemp;
+		for (j = 0; j < place.m_grid.m_grid[i].size(); j++)
+		{
+			// Get the cell id
+			cell_id = place.m_grid[Location(i, j)].m_cellId;
+			Cell cell = place.m_netlist.m_cells[cell_id];
+
+			// Add terminals and nets to row in order
+			for (auto terminal : cell.getSortedTerminals())
+			{
+				// Even if the terminal is not connected, add it to the terminal row
+				int NetID = place.m_netlist.GetNetID(terminal);
+				if (cell.isTerminalTop(terminal))
+					RowTopTemp.AddRowVal(terminal, NetID);
+				else
+					RowBottomTemp.AddRowVal(terminal, NetID);
+			}
+		}
+
+		// add the temp rows to the array
+		// the top most row should be empty
+		// the bottom most row should be empty
+		this->m_BotRow[i] = RowBottomTemp;
+		this->m_TopRow[i + 1] = RowTopTemp;
+
+		if (m_TopRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_TopRow[i].RowCells.size();
+		if (m_BotRow[i].RowCells.size() > maxCols)
+			maxCols = (int)m_BotRow[i].RowCells.size();
+	}
+
+	this->m_colCount = maxCols;
+}
+
+// Route the nets through the channel
 void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -159,10 +163,10 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<N
 			}
 
 			NetTracks[netID] = maxtrack;
-			if (maxtrack > m_Channel[i].m_tracks.size())
-				m_Channel[i].m_tracks.resize(maxtrack + 1);
+			if (maxtrack > m_channels[i].m_tracks.size())
+				m_channels[i].m_tracks.resize(maxtrack + 1);
 
-			m_Channel[i].m_tracks[maxtrack].AddNet(netID, range);
+			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
 			if (Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
@@ -196,11 +200,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<N
 	return;
 }
 
-//how do I want to fix the dog legs
-//I suppose I can just change the x range for the second to last element
-// 1-2-3-4-1 -> 1-2-3-4a(x1,x2a or something), 4b(x2b,x3)-1
-// 1-2-1 -> 1-2b(x1,x2a), 2b(x2b, x3)-1
-// 1(range), 2(two ranges)
+// Fix any doglegs that appear by splitting the range of the nets
 void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -244,7 +244,8 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &Ne
 	return;
 }
 
-void Routing::BuildV(int i, vector<vector<int>> &V)
+// Build the VCG Graph
+void Routing::BuildV(int i, vector<vector<int>>& V)
 {
 	//vector<vector<int>> V;
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -287,6 +288,7 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 	return;
 }
 
+// Build all the ranges of the nets
 void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -323,6 +325,7 @@ void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 	}
 }
 
+// Find the columns a particular net crosses
 NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 {
 	//Get the X columns for each net
@@ -362,6 +365,7 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 	return NetAndRanges(netID, {{j, x2}});
 }
 
+// Build the HCG Graph, ie what nets cannot be on the same track as one another
 void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
@@ -412,9 +416,10 @@ void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
 	return;
 }
 
+// Debug Printing I suppose
 void Routing::Print()
 {
-	for (auto i : m_Channel)
+	for (auto i : m_channels)
 	{
 		for (auto j : i.m_tracks)
 		{
