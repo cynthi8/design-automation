@@ -28,16 +28,15 @@ public:
     string m_transformString;
 };
 
-class MBranch
+struct MBranch
 {
 public:
     pair<int, int> y_locs;
     int x;
 };
 
-class MTrunk
+struct MTrunk
 {
-public:
     pair<int, int> x_locs;
     int y;
 };
@@ -45,9 +44,10 @@ public:
 class MNet
 {
 public:
+    void BuildBranches();
     int netID;
-    MTrunk m_trunk;
-    pair<MBranch, MBranch> m_branches;
+    vector<MTrunk> m_trunks;
+    vector<MBranch> m_branches;
 };
 
 class MagRect

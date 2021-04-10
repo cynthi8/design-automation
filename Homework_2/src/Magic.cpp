@@ -80,58 +80,81 @@ void Magic::CreateLayout(Routing route, Placement place)
         y += 6 + 1; // The next section will be a cell height above, plus 1 for spacing
     }
 
-    // go thru all nets
-    /*
-    for (unsigned int l = 0; l < route.m_Spans[channelIndex].size(); l++)
+    y = 0;
+    for (int channelIndex = 0; channelIndex < route.m_channelCount; channelIndex++)
     {
-        auto &j = route.m_Spans[channelIndex][l];
-        //go thru all tracks for that net
-        for (unsigned int k = 0; k < j.ranges.size(); k++)
+        int channelBottom = y;
+        int channelTop = y + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
+        map<int, MNet> channelNetMapping;
+        for (auto track : route.m_channels[channelIndex].m_tracks)
         {
-            MNet mnet;
-            mnet.netID = j.net;
-
-            MTrunk m_trunk;
-            int left = j.ranges[k].first;
-            int right = j.ranges[k].second;
-            int newLeft = colsTransformation[i][left];
-            int newRight = colsTransformation[i][right];
-            m_trunk.x_locs = {newLeft, newRight};
-
-            m_trunk.y = channelIndex * 6 + j.n_tracks[k] * 2;
-            mnet.m_trunk = m_trunk;
-
-            MBranch mbranchL;
-            MBranch mbranchR;
-            mbranchL.x = newLeft;
-            mbranchR.x = newRight;
-
-            int botNetID = route.m_BotRow[channelIndex].RowCells[left].NetID;
-            int topNetID = route.m_TopRow[channelIndex].RowCells[left].NetID;
-            if (k == 0 || k == (j.ranges.size() - 1))
+            // Each track has trunks on them
+            // Add these trunks to the channelNetMapping
+            for (unsigned int trunk = 0; trunk < track.m_nets.size(); trunk++)
             {
-                if (mnet.netID == botNetID)
+                int netId = track.m_nets[trunk];
+                auto range = track.m_locs[trunk];
+                MTrunk newTrunk = {range, y};
+                channelNetMapping[netId].m_trunks.push_back(newTrunk);
+                y += 2; // The next track is two units above this one
+            }
+        }
+        y += 6 + 1; // The next section will be a cell height above, plus 1 for spacing
+
+        // Build the branches between trunks in the MNets
+        for (auto mapEntry : channelNetMapping)
+        {
+            int netId = mapEntry.first;
+            MNet newMNet = mapEntry.second;
+
+            // Add branches for each trunk
+            for (auto trunk : newMNet.m_trunks)
+            {
+                MBranch leftBranch;
+                MBranch rightBranch;
+                leftBranch.x = trunk.x_locs.first;
+                rightBranch.x = trunk.x_locs.second;
+
+                // Build Left Branch
+                int leftBotNetId = route.m_BotRow[channelIndex].RowCells[leftBranch.x].NetID;
+                int leftTopNetId = route.m_TopRow[channelIndex].RowCells[leftBranch.x].NetID;
+                if (leftBotNetId == netId)
                 {
+                    // Construct a branch down
+                    leftBranch.y_locs = {channelBottom, trunk.y};
                 }
-                else if (mnet.netID == topNetID)
+                else if (leftTopNetId == netId)
                 {
-                }
-                else if (mnet.netID == topNetID)
-                {
+                    // Construct a branch up
+                    leftBranch.y_locs = {trunk.y, channelTop};
                 }
                 else
                 {
+                    // Handle inter trunk connections
+                }
+
+                // Build Right Branch
+                int rightBotNetId = route.m_BotRow[channelIndex].RowCells[rightBranch.x].NetID;
+                int rightTopNetId = route.m_TopRow[channelIndex].RowCells[rightBranch.x].NetID;
+                if (rightBotNetId == netId)
+                {
+                    // Construct a branch down
+                    rightBranch.y_locs = {channelBottom, trunk.y};
+                }
+                else if (rightTopNetId == netId)
+                {
+                    // Construct a branch up
+                    rightBranch.y_locs = {trunk.y, channelTop};
+                }
+                else
+                {
+                    // Doglegs :( Handle inter trunk connections
                 }
             }
-
-            mbranchL.y_locs = {};
-            mbranchR.y_locs = {};
-
-            mnet.m_branches = {mbranchL, mbranchR};
-            MagNets[channelIndex].push_back(mnet);
+            m_MNets.push_back(newMNet);
         }
     }
-    */
+
     return;
 }
 
@@ -298,4 +321,9 @@ string MCell::makeCell()
     cellGroup = useString + timestampString + m_transformString + boxString;
 
     return cellGroup;
+}
+
+void MNet::BuildBranches()
+{
+    return;
 }
