@@ -93,10 +93,19 @@ void Magic::CreateLayout(Routing route, Placement place)
         map<int, MNet> channelNetMapping;
         for (auto span : route.m_Spans[channelIndex])
         {
+            /* Assumption: All the ranges are in ascending order (left to right) and there is a max of 2 */
+
             int netId = span.net;
             MNet newMNet(netId);
 
-            /* All the ranges are in ascending order (left to right) and there is a max of 2 */
+            // Build Trunks
+            for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
+            {
+                MTrunk newTrunk;
+                newTrunk.y = span.n_tracks[trunk];
+                newTrunk.x_locs = span.ranges[trunk];
+                newMNet.m_trunks.push_back(newTrunk);
+            }
 
             // Build Left Most Branch
             MBranch leftMostBranch;
@@ -192,7 +201,7 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
     outputStream << "<< labels >>" << endl;
     for (auto net : m_MNets)
     {
-        outputStream << net.makeLabel();
+        //outputStream << net.makeLabel();
     }
 
     // Exit and close
@@ -344,14 +353,14 @@ string MCell::makeCell()
     return cellGroup;
 }
 
-
 string MNet::makeMetal1()
 {
     // rect 4 8 5 11
 
     string netBranches = "rect";
-    for (auto& i : m_branches) {
-        MagRect T1(i.x, i.y_locs.first, i.x+1, i.y_locs.second+1);
+    for (auto &i : m_branches)
+    {
+        MagRect T1(i.x, i.y_locs.first, i.x + 1, i.y_locs.second + 1);
         netBranches += T1.makeBoundingBox();
         netBranches += "\n";
     }
@@ -364,8 +373,9 @@ string MNet::makeMetal2()
     // rect 4 8 5 11
 
     string netTrunks = "rect";
-    for (auto& i : m_trunks) {
-        MagRect T1(i.x_locs.first, i.y, i.x_locs.second+1, i.y+1);
+    for (auto &i : m_trunks)
+    {
+        MagRect T1(i.x_locs.first, i.y, i.x_locs.second + 1, i.y + 1);
         netTrunks += T1.makeBoundingBox();
         netTrunks += "\n";
     }
@@ -373,20 +383,20 @@ string MNet::makeMetal2()
     return netTrunks;
 }
 
-string MNet::makeMetal2Contact() 
+string MNet::makeMetal2Contact()
 {
     // rect 4 8 5 11
 
     string netContacts = "rect";
-    for (auto& i : m_contacts) {
-        MagRect T1(i.x, i.y, i.x+1, i.y+1);
+    for (auto &i : m_contacts)
+    {
+        MagRect T1(i.x, i.y, i.x + 1, i.y + 1);
         netContacts += T1.makeBoundingBox();
         netContacts += "\n";
     }
 
     return netContacts;
 }
-
 
 string MagRect::makeBoundingBox()
 {
