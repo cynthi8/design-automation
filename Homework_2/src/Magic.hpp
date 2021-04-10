@@ -15,9 +15,9 @@ public:
     MCell(int x, int y, bool isFeed, string cellId, Flips m_orientation)
         : x(x), y(y), isFeed(isFeed), m_cellId(cellId), m_orientation(m_orientation)
     {
-        transform();
+        updateTransformString();
     }
-    void transform();
+    void updateTransformString();
     string makeCell();
 
     int x;

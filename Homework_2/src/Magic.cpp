@@ -50,31 +50,31 @@ void Magic::Output(string szDirectory, string szFileName)
 void Magic::CreateLayout(Routing route, Placement place)
 {
     int y = 0;
+    set<string> alreadyPlacedCellIds;
     for (int channelIndex = 0; channelIndex < route.m_channelCount - 1; channelIndex++)
     {
         // Create MCells
-        int x = 0;
         int tracksInChannel = route.m_channels[channelIndex].m_tracks.size();
         y = channelIndex * 6 + tracksInChannel * 2 + 1;
         for (int col = 0; col < route.m_colCount; col++)
         {
             string cellId = route.m_TopRow[channelIndex].RowCells[col].Term.cellId;
-            set<string> alreadyPlaced;
 
-            if (alreadyPlaced.find(cellId) == alreadyPlaced.end())
+            //Check if this is a real cellId, i.e. it corresponds to a cell in the netlist
+            if (place.m_netlist.m_cells.find(cellId) == place.m_netlist.m_cells.end())
             {
-                Cell cell = place.m_netlist.m_cells[cellId];
+                continue;
+            }
 
+            Cell cell = place.m_netlist.m_cells.at(cellId);
+
+            if (alreadyPlacedCellIds.find(cellId) == alreadyPlacedCellIds.end())
+            {
+                // Since we scan Left to Right, the start of the cell will be 1 unit to the left of our column
+                int x = col - 1;
                 MCell mcell(x, y, cell.isFeedthrough(), cellId, cell.m_orientation);
-
                 m_MCells.push_back(mcell);
-
-                if (cell.isFeedthrough())
-                    x += 3;
-                else
-                    x += 7;
-
-                alreadyPlaced.insert(cellId);
+                alreadyPlacedCellIds.insert(cellId);
             }
         }
     }
@@ -232,7 +232,7 @@ void Magic::OutputStandardCell(string szDirectory)
     return;
 }
 
-void MCell::transform()
+void MCell::updateTransformString()
 {
     // Update the m_transformString string according to x, y, and orientation
     int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
@@ -263,7 +263,7 @@ void MCell::transform()
     c += x;
     f += y;
 
-    m_transformString = "transform" + ' ' + to_string(a) + ' ' + to_string(b) + ' ' + to_string(c) + ' ' + to_string(d) + ' ' + to_string(e) + ' ' + to_string(f);
+    m_transformString = string("transform") + " " + to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(f) + '\n';
 }
 
 string MCell::makeCell()
@@ -293,7 +293,7 @@ string MCell::makeCell()
         useString = "use Cell " + m_cellId + '\n';
         boxString = "box 0 0 6 6\n";
     }
-    string timestampString = "timestamp 1";
+    string timestampString = "timestamp 1\n";
     cellGroup = useString + timestampString + m_transformString + boxString;
 
     return cellGroup;
