@@ -1,10 +1,10 @@
 #include "Magic.hpp"
 
 // Magic Intro Function
-Magic::Magic(Routing route, Graph graph)
+Magic::Magic(Routing route, Placement place, Graph graph)
 {
 
-    CreateLayout(route, graph);
+    CreateLayout(route, place, graph);
     Print("", "");
 }
 
@@ -156,6 +156,7 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
         }
 
         // Probably delete
+        /*
         for (int l = 0; l < route.m_channels[i].m_tracks.size(); l++)
         {
             auto &j = route.m_channels[i].m_tracks[l];
@@ -175,6 +176,7 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
                 MagNets[i].push_back(mnet);
             }
         }
+        */
     }
 
     return;

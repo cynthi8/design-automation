@@ -127,7 +127,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <AdditionalOptions />
     </ClCompile>
     <Link>
@@ -155,7 +155,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Graph.cpp" />
-    <ClCompile Include="Magic.cpp" />
+    <ClCompile Include="Magic.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Placement.cpp" />
     <ClCompile Include="Routing.cpp" />
@@ -163,7 +165,9 @@
   <ItemGroup>
     <ClInclude Include="Graph.hpp" />
     <ClInclude Include="HW2.hpp" />
-    <ClInclude Include="Magic.hpp" />
+    <ClInclude Include="Magic.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Placement.hpp" />
     <ClInclude Include="Routing.hpp" />
   </ItemGroup>

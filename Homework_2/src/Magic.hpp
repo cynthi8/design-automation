@@ -82,7 +82,7 @@ public:
 class Magic
 {
 public:
-    Magic(Routing route, Graph graph);
+    Magic(Routing route, Placement place, Graph graph);
     void Print(string szDirectory, string szFileName);
 
     long long GetTime();
@@ -91,7 +91,7 @@ public:
     void OutputFeedCell(string szDirectory);
     void OutputStandardCell(string szDirectory);
 
-    void CreateLayout(Routing route, Graph graph);
+    void CreateLayout(Routing route, Placement place, Graph graph);
     void OutputLayout(string szDirectory, string szFileName);
 
 private:
