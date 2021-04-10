@@ -67,6 +67,7 @@ public:
 class MagRect
 {
 public:
+    MagRect() {}
     MagRect(int xbot, int ybot, int xtop, int ytop)
         : xbot(xbot), ybot(ybot), xtop(xtop), ytop(ytop) {}
     int xbot;

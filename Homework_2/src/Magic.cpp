@@ -105,7 +105,18 @@ void Magic::CreateLayout(Routing route, Placement place)
                 newTrunk.y = span.n_tracks[trunk];
                 newTrunk.x_locs = span.ranges[trunk];
                 newMNet.m_trunks.push_back(newTrunk);
+
+                //Build the Contacts, 2 contacts per trunk
+                MContact contact;
+                contact.y = span.n_tracks[trunk];
+                contact.x = span.ranges[trunk].first;
+                newMNet.m_contacts.push_back(contact);
+
+                contact.x = span.ranges[trunk].second;
+                newMNet.m_contacts.push_back(contact);
             }
+
+
 
             // Build Left Most Branch
             MBranch leftMostBranch;
@@ -153,6 +164,7 @@ void Magic::CreateLayout(Routing route, Placement place)
                 middleBranch.y_locs = {span.n_tracks[0], span.n_tracks[1]};
                 newMNet.m_branches.push_back(middleBranch);
             }
+
             m_MNets.push_back(newMNet);
         }
     }
