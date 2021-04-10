@@ -1,36 +1,160 @@
 #include "Magic.hpp"
 
-void Magic::PrintToFile(string szFileName)
-{
+void Magic::OutputFeedCell(string szDirectory) {
+    string szFeedCell = szDirectory + "FeedCell";
     fstream outputStream;
-    outputStream.open(szFileName, ios::out);
-    Print(outputStream);
+    outputStream.open(szFeedCell, ios::out);
+    
+    Header(outputStream);
+
+    //rect xbot ybot xtop ytop
+    magRect T1(1, 0, 2, 1);
+    magRect T3(1, 5, 2, 6);
+
+    vector<magRect> Terms = { T1, T3 };
+
+    outputStream << "<< metal1 >>" << endl;
+    string type = "rect";
+
+    for (auto& i : Terms)
+        i.outputRect(outputStream, type);
+
+    outputStream << "<< labels >>" << endl;
+    type = "rlabel metal1";
+
+    for (auto i = 0; i < Terms.size(); i++)
+        Terms[i].outputLabel(outputStream, type, i);
+
+    Footer(outputStream);
+
+    outputStream.close();
+
     return;
 }
 
-void Magic::Print(std::ostream &outputStream)
-{
-    outputStream << "magic" << endl;
-    outputStream << "tech techname" << endl;
+void Magic::OutputStandardCell(string szDirectory) {
+    string szFeedCell = szDirectory + "Cell";
+    fstream outputStream;
+    outputStream.open(szFeedCell, ios::out);
 
+    Header(outputStream);
+
+    //rect xbot ybot xtop ytop
+    magRect T1(1, 0, 2, 1);
+    magRect T2(4, 0, 5, 1);
+    magRect T3(1, 5, 2, 6);
+    magRect T4(4, 5, 5, 6);
+
+    vector<magRect> Terms = { T1, T2, T3, T4 };
+
+    outputStream << "<< metal1 >>" << endl;
+    string type = "rect";
+
+    for (auto& i : Terms)
+        i.outputRect(outputStream, type);
+
+    outputStream << "<< labels >>" << endl;
+    type = "rlabel metal1";
+
+    for (auto i = 0; i < Terms.size(); i++)
+        Terms[i].outputLabel(outputStream, type, i);
+
+    //magRect Cell(0,0,6,6);
+    //Cell.outputLabel(outputStream, type, ".");
+
+    Footer(outputStream);
+
+    outputStream.close();
+
+    return;
+}
+
+void Magic::Header(std::ostream& outputStream) {
+    outputStream << "magic" << endl;
+    outputStream << "tech scmos" << endl;
     outputStream << "timestamp ";
+    outputStream << GetTime() << endl;
+}
+
+void Magic::Footer(std::ostream& outputStream) {
+    outputStream << "<< end >>" << endl;
+}
+
+long long Magic::GetTime() {
+    // We actually don't want a different time as then it rechecks the drc
+    /*
     const auto now = std::chrono::system_clock::now();
     const auto epoch = now.time_since_epoch();
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(epoch);
-    outputStream << seconds.count() << endl;
-
-    outputStream << "layer go heres" << endl;
-    // << labels >> for cells
-    // then metal 1 for contacts on cells
-    // then metal 1 for wires
-    // Then for loop for metal 2 for wires
-
-    /*
-    * // Go through all the types of layers we will use
-    for (auto i : vec) {
-
-    }
+    return seconds.count();
     */
+
+    return 1;
+}
+
+Magic::Magic(Routing route, Graph graph) {
+
+    CreateLayout(route, graph);
+    Print("","");
+}
+
+// Function to print the final Magic File
+void Magic::Print(string szDirectory, string szFileName)
+{
+
+    OutputStandardCell(szDirectory);
+
+    OutputFeedCell(szDirectory);
+
+    OutputLayout(szDirectory, szFileName);
+
+    return;
+}
+
+
+void Magic::CreateLayout(Routing route, Graph graph) {
+
+    //Do stuff here
+
+
+
+    return;
+}
+
+void Magic::OutputLayout(string szDirectory, string szFileName) {
+    string szFeedCell = szDirectory + szFileName;
+    fstream outputStream;
+    outputStream.open(szFeedCell, ios::out);
+
+    Header(outputStream);
+
+    //rect xbot ybot xtop ytop
+    magRect T1(1, 0, 2, 1);
+    magRect T2(4, 0, 5, 1);
+    magRect T3(1, 5, 2, 6);
+    magRect T4(4, 5, 5, 6);
+
+    vector<magRect> Terms = { T1, T2, T3, T4 };
+
+    outputStream << "<< metal1 >>" << endl;
+    string type = "rect";
+
+    for (auto& i : Terms)
+        i.outputRect(outputStream, type);
+
+    outputStream << "<< labels >>" << endl;
+    type = "rlabel metal1";
+
+    for (auto i = 0; i < Terms.size(); i++)
+        Terms[i].outputLabel(outputStream, type, i);
+
+    //magRect Cell(0,0,6,6);
+    //Cell.outputLabel(outputStream, type, ".");
+
+    Footer(outputStream);
+
+    outputStream.close();
+
     return;
 }
 

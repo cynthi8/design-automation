@@ -6,17 +6,16 @@
 
 Routing::Routing(Placement place)
 {
-	// Build the rows of cells and terminals
+	// Build the terminal rows
 	BuildRows(place);
 
-	//pad the rows with zeros
-	PadRows(); 
+	// Pad the rows with zeros
+	PadRows();
 
 	//for each row, build it up
-	m_Channel.resize(m_rowCount);
+	m_channels.resize(m_rowCount);
 	for (int i = 0; i < m_rowCount; i++)
 	{
-
 		// Build the range first in case we have to change it for the V graph
 		vector<NetAndRanges> NetsAndXRanges;
 		BuildRange(i, NetsAndXRanges);
@@ -40,14 +39,14 @@ Routing::Routing(Placement place)
 }
 
 // Build the Rows of Cells and Terminals
-void Routing::BuildRows(Placement& place) {
+void Routing::BuildRows(Placement &place)
+{
 	//This function needs to populate the rows such that we can do channel routing
 	int i, j;
 	int maxCols = 0;
 
 	vector<pair<int, int>> Terminals;
 	string cell_id;
-
 
 	int placeHeight = (int)place.m_grid.m_grid.size();
 	SetRowSize(placeHeight);
@@ -245,7 +244,7 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &Ne
 }
 
 // Build the VCG Graph
-void Routing::BuildV(int i, vector<vector<int>>& V)
+void Routing::BuildV(int i, vector<vector<int>> &V)
 {
 	//vector<vector<int>> V;
 	vector<int> &rowT = m_TopRow[i].RowNets;
@@ -366,7 +365,7 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 }
 
 // Build the HCG Graph, ie what nets cannot be on the same track as one another
-void Routing::BuildS(int i, vector<SSet> &S, vector<NetAndRanges> &NetsAndXVals)
+void Routing::BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
 	for (int j = 0; j < m_colCount; j++)

@@ -13,7 +13,7 @@ using namespace std;
 Graph::Graph(string fileName)
 {
     ifstream fs;
-    //string test = "test.txt";
+    this->szFileName = fileName;
     fs.open(fileName.c_str(), ios::in);
 
     if (!fs.is_open())
@@ -131,17 +131,24 @@ vector<Terminal> Cell::getSortedTerminals()
     // Returns all terminals on a cell (even those that don't exist on a net)
     // sorted w.r.t TerminalLocation. The order goes [TopLeft, TopRight, BottomLeft, BottomRight]
     vector<Terminal> sortedTerminals;
-    vector<int> Terms;
+    vector<int> terminalIds;
 
     if (isFeedthrough())
-        Terms = {1, 3};
+        terminalIds = {1, 3};
     else
-        Terms = {1, 2, 3, 4};
+        terminalIds = {1, 2, 3, 4};
+
+    for (auto terminalId : terminalIds)
+    {
+        Terminal term = Terminal(m_id, terminalId);
+        sortedTerminals.push_back(term);
+    }
 
     // Sort based on terminal location
     sort(sortedTerminals.begin(), sortedTerminals.end(), [this](const Terminal &lhs, const Terminal &rhs) {
         return getTerminalLocation(lhs.terminalId) < getTerminalLocation(rhs.terminalId);
     });
+    return sortedTerminals;
 }
 
 bool Cell::isFeedthrough()

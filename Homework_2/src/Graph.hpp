@@ -102,6 +102,9 @@ class Graph
 {
 public:
     Graph(string fileName);
+    
+    string szFileName;
+    
     int m_cellCount;
     int m_netCount;
 
