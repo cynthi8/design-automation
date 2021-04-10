@@ -48,18 +48,73 @@ void Magic::Print(string szDirectory, string szFileName)
 }
 
 // Create an object that has all the necessary info to create the Magic File
-void Magic::CreateLayout(Routing route, Graph graph) {
+void Magic::CreateLayout(Routing route, Placement place, Graph graph) {
+    //Might not need place
 
-    //Do stuff here
+    vector<vector<MCells>> MagCells;
+    vector<vector<MNets>> MagNets;
 
+    int totalTracks = 0;
+    int y = 0;
     for (int i = 0; i < route.m_rowCount; i++) 
     {
+        int x = 0;
+        totalTracks += route.m_channels[i].m_tracks.size();
+        y = i * 6 + totalTracks*2 + 1;
+        vector<int> colsTransformation(route.m_colCount);
         for (int j = 0; j < route.m_colCount; j++) 
         {
+            string cellIDL = "";
+            string cellID = route.m_TopRow[i].RowCells[j].Term.cellId;
+            Cell cell = place.m_netlist.m_cells[cellID];
 
+            if (j > 0) {
+                cellIDL = route.m_TopRow[i].RowCells[j - 1].Term.cellId;
+                if (cellID != cellIDL) {
+                    if (cell.isFeedthrough())
+                        x += 3;
+                    else
+                        x += 7;
+                }
+                else {
+                    x += 3;
+                }
+            }
 
+            if (cellID != cellIDL) {
+                MCells mcell;
+                mcell.x = x;
+                mcell.y = y;
+                mcell.id = cellID;
+                mcell.m_orientation = cell.m_orientation;
+                mcell.transform();
 
+                MagCells[i].push_back(mcell);
+            }
+
+            colsTransformation[j] = x;
         }
+
+        for (int l = 0; l < route.m_channels[i].m_tracks.size(); l++)
+        {
+            auto& j = route.m_channels[i].m_tracks[l];
+            for (int k = 0; k < j.m_nets.size(); k++) 
+            {
+                MNets mnet;
+                mnet.netID = j.m_nets[k];
+                int left = j.m_locs[k].first;
+                int right = j.m_locs[k].second;
+
+                int newLeft = colsTransformation[left];
+                int newRight = colsTransformation[right];
+
+                mnet.m_locs = { newLeft, newRight };
+                mnet.y = i * 6 + l * 2;
+                MagNets[i].push_back(mnet);
+
+            }
+        }
+
     }
 
     return;
