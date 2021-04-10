@@ -163,7 +163,7 @@ public:
 	void BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals);
 	void BuildV(int i, vector<vector<int>> &V);
 	void FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
-	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
+	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Span> &NetsAndXRanges);
 
 	void Print();
 
