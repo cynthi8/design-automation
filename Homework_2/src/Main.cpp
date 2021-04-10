@@ -220,10 +220,10 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        //Test_Magic(TestBenchmarks.back());
+        Test_Magic(TestBenchmarks.back());
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
-        PlaceAndRoute(Benchmarks[0], 1);
+        //PlaceAndRoute(Benchmarks[0], 1);
     }
     catch (invalid_argument &e)
     {
