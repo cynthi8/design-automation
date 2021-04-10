@@ -14,12 +14,14 @@ struct MBranch
 public:
     pair<int, int> y_locs;
     int x;
+    MagRect rect;
 };
 
 struct MTrunk
 {
     pair<int, int> x_locs;
     int y;
+    MagRect rect;
 };
 
 struct MContact
