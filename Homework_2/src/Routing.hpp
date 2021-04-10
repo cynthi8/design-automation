@@ -85,7 +85,7 @@ class Row
 public:
 	vector<RowCell> RowCells;
 	vector<int> RowNets;
-	vector<int> Order;
+	//vector<int> Order;
 
 	// Add a terminal and associated Net ID to the Row Cell vector
 	void AddRowVal(Terminal Term, int NetID)
@@ -97,13 +97,13 @@ public:
 	}
 
 	// if a net has been ordered, return that value
-	int GetUsedNetID(int NetID, int j)
-	{
-		for (int k = 0; k < j; k++)
-			if (RowCells[k].NetID == NetID)
-				return Order[k];
-		return -1;
-	}
+	//int GetUsedNetID(int NetID, int j)
+	//{
+	//	for (int k = 0; k < j; k++)
+	//		if (RowCells[k].NetID == NetID)
+	//			return Order[k];
+	//	return -1;
+	//}
 
 	//Pad Row to colCount
 	void PadRow(int colCount)
@@ -126,6 +126,7 @@ public:
 
 	int net;
 	vector<pair<int, int>> ranges;
+	vector<int> n_tracks;
 };
 
 class SSet
@@ -153,6 +154,7 @@ public:
 	vector<Row> m_TopRow;
 	vector<Row> m_BotRow;
 	vector<Channel> m_channels;
+	vector<vector<Span>> m_Spans;
 
 	void BuildRows(Placement &place);
 

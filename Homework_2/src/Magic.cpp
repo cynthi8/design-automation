@@ -88,13 +88,8 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
                 }
             }
 
-            if (cellID != cellIDL)
-            {
-                MCells mcell;
-                mcell.x = x;
-                mcell.y = y;
-                mcell.id = cellID;
-                mcell.m_orientation = cell.m_orientation;
+            if (cellID != cellIDL) {
+                MCells mcell(x, y, cell.isFeedthrough(), cellID, cell.m_orientation);
                 mcell.transform();
 
                 MagCells[i].push_back(mcell);
@@ -103,6 +98,45 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
             colsTransformation[j] = x;
         }
 
+        // go thru all nets
+        for (int l = 0; l < route.m_Spans[i].size(); l++)
+        {
+            auto& j = route.m_Spans[i][l];
+            //go thru all tracks for that net
+            for (int k = 0; k < j.ranges.size(); k++)
+            {
+                MNets mnet;
+                mnet.netID = j.net;
+                
+                MTrunk m_trunk;
+                int left = j.ranges[k].first;
+                int right = j.ranges[k].second;
+                int newLeft = colsTransformation[left];
+                int newRight = colsTransformation[right];
+                m_trunk.x_locs = { newLeft, newRight };
+
+                m_trunk.y = i * 6 + j.n_tracks[k] * 2;
+                mnet.m_trunk = m_trunk;
+
+                MBranch mbranchL;
+                MBranch mbranchR;
+                mbranchL.x = newLeft;
+                mbranchR.x = newRight;
+
+                if(k == 0)
+                
+                mbranchL.y_locs = {};
+                mbranchR.y_locs = {};
+
+                mnet.m_branches = { mbranchL , mbranchR };
+                MagNets[i].push_back(mnet);
+
+
+
+            }
+        }
+
+        // Probably delete
         for (int l = 0; l < route.m_channels[i].m_tracks.size(); l++)
         {
             auto &j = route.m_channels[i].m_tracks[l];
@@ -110,14 +144,15 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
             {
                 MNets mnet;
                 mnet.netID = j.m_nets[k];
+
                 int left = j.m_locs[k].first;
                 int right = j.m_locs[k].second;
-
                 int newLeft = colsTransformation[left];
                 int newRight = colsTransformation[right];
+                mnet.x_locs = { newLeft, newRight };
 
-                mnet.m_locs = {newLeft, newRight};
                 mnet.y = i * 6 + l * 2;
+
                 MagNets[i].push_back(mnet);
             }
         }
