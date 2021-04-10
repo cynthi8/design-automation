@@ -170,6 +170,7 @@ void Test_Routing(Benchmark benchmark)
 
     // Do Routing
     Routing routing(placement);
+    routing.Print();
 }
 
 void PlaceAndRoute(Benchmark benchmark)

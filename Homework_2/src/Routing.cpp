@@ -54,8 +54,8 @@ void Routing::BuildRows(Placement &place)
 	// go through the entire 2D grid that's been placed
 	for (i = 0; i < placeHeight; i++)
 	{
-		Row RowTopTemp;
-		Row RowBottomTemp;
+		Row topTerminalRowTemp;
+		Row bottomTerminalRowTemp;
 		for (j = 0; j < place.m_grid.m_grid[i].size(); j++)
 		{
 			// Get the cell id
@@ -68,17 +68,18 @@ void Routing::BuildRows(Placement &place)
 				// Even if the terminal is not connected, add it to the terminal row
 				int NetID = place.m_netlist.GetNetID(terminal);
 				if (cell.isTerminalTop(terminal))
-					RowTopTemp.AddRowVal(terminal, NetID);
+					// If the terminal is at the top of the cell, it will be at the bottom of the channel
+					bottomTerminalRowTemp.AddRowVal(terminal, NetID);
 				else
-					RowBottomTemp.AddRowVal(terminal, NetID);
+					topTerminalRowTemp.AddRowVal(terminal, NetID);
 			}
 		}
 
 		// add the temp rows to the array
 		// m_BotRow[0] should be empty
 		// m_TopRow[m_channelCount] should be empty
-		this->m_BotRow[i + 1] = RowBottomTemp;
-		this->m_TopRow[i] = RowTopTemp;
+		this->m_BotRow[i + 1] = bottomTerminalRowTemp;
+		this->m_TopRow[i] = topTerminalRowTemp;
 
 		if (m_TopRow[i].RowCells.size() > maxCols)
 			maxCols = (int)m_TopRow[i].RowCells.size();
@@ -294,23 +295,23 @@ void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
-	for (int j = 0; j < m_colCount; j++)
+	for (int col = 0; col < m_colCount; col++)
 	{
-		int netID = rowT[j];
-		if (netID > 0)
+		int netID = rowT[col];
+		if (netID != UNCONNECTED_TERMINAL)
 		{
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-								[netID](NetAndRanges const &item) { return item.net == netID; });
+								[netID](NetAndRanges const &span) { return span.net == netID; });
 
 			//if the net doesn't exist in the list, add it
 			if (iter == NetsAndXRanges.end())
 			{
-				NetsAndXRanges.push_back(ColumnsCrossed(i, j, netID, true));
+				NetsAndXRanges.push_back(ColumnsCrossed(i, col, netID, true));
 			}
 		}
 
-		netID = rowB[j];
-		if (netID > 0)
+		netID = rowB[col];
+		if (netID != UNCONNECTED_TERMINAL)
 		{
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
 								[netID](NetAndRanges const &item) { return item.net == netID; });
@@ -318,7 +319,7 @@ void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 			//if the net doesn't exist in the list, add it
 			if (iter == NetsAndXRanges.end())
 			{
-				NetsAndXRanges.push_back(ColumnsCrossed(i, j, netID, false));
+				NetsAndXRanges.push_back(ColumnsCrossed(i, col, netID, false));
 			}
 		}
 	}
