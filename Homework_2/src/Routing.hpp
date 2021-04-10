@@ -168,22 +168,22 @@ public:
 	// Set the number of rows, should be +1 than the number given
 	void SetRowSize(int rows)
 	{
-		this->m_rowCount = rows + 1;
-		this->m_TopRow.resize(this->m_rowCount);
-		this->m_BotRow.resize(this->m_rowCount);
+		this->m_channelCount = rows + 1;
+		this->m_TopRow.resize(this->m_channelCount);
+		this->m_BotRow.resize(this->m_channelCount);
 	}
 
 	// Pad the end of the rows with zeros so they all
 	// have the same number of zeros
 	void PadRows()
 	{
-		for (int i = 0; i < m_rowCount; i++)
+		for (int i = 0; i < m_channelCount; i++)
 		{
 			m_TopRow[i].PadRow(m_colCount);
 			m_BotRow[i].PadRow(m_colCount);
 		}
 	}
 
-	int m_rowCount;
+	int m_channelCount;
 	int m_colCount;
 };

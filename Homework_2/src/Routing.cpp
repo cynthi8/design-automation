@@ -13,8 +13,8 @@ Routing::Routing(Placement place)
 	PadRows();
 
 	//for each row, build it up
-	m_channels.resize(m_rowCount);
-	for (int i = 0; i < m_rowCount; i++)
+	m_channels.resize(m_channelCount);
+	for (int i = 0; i < m_channelCount; i++)
 	{
 		// Build the range first in case we have to change it for the V graph
 		vector<NetAndRanges> NetsAndXRanges;
@@ -75,10 +75,10 @@ void Routing::BuildRows(Placement &place)
 		}
 
 		// add the temp rows to the array
-		// the top most row should be empty
-		// the bottom most row should be empty
-		this->m_BotRow[i] = RowBottomTemp;
-		this->m_TopRow[i + 1] = RowTopTemp;
+		// m_BotRow[0] should be empty
+		// m_TopRow[m_channelCount] should be empty
+		this->m_BotRow[i + 1] = RowBottomTemp;
+		this->m_TopRow[i] = RowTopTemp;
 
 		if (m_TopRow[i].RowCells.size() > maxCols)
 			maxCols = (int)m_TopRow[i].RowCells.size();
@@ -385,34 +385,26 @@ void Routing::BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAnd
 		}
 	}
 
-	vector<int> DeleteS;
-
-	//check each set to see if its contained in another set
+	// Mark any non-maximial sets to be removed
+	set<int> columnsToRemove;
 	for (int j = 0; j < S.size(); j++)
 	{
-		/*
-		if (S[j].nets.size() < 2) {
-			DeleteS.push_back(j);
-		}
-		*/
-
 		for (int k = 0; k < S.size(); k++)
 		{
+			//check each set to see if its contained in another set
 			if (includes(S[j].nets.begin(), S[j].nets.end(),
 						 S[k].nets.begin(), S[k].nets.end()))
 			{
-
-				DeleteS.push_back(j);
+				columnsToRemove.insert(j);
 			}
 		}
 	}
 
-	//if a set is contained within another, delete it
-	for (int j = (int)(DeleteS.size() - 1); j >= 0; j--)
-		S.erase(S.begin() + DeleteS[j]);
-	//remove(S.begin(), S.end(), DeleteS[j]);
-
-	return;
+	// Remove columns from the back of the vector
+	for (auto it = columnsToRemove.rbegin(); it != columnsToRemove.rend(); it++)
+	{
+		S.erase(S.begin() + (*it));
+	}
 }
 
 // Debug Printing I suppose
