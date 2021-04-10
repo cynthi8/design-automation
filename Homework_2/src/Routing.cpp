@@ -356,6 +356,10 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 			continue;
 		}
 
+		if (netIDT == 386 || netIDB == 386) {
+			int test = 1;
+		}
+
 		// if net is a net, and the bottom is either a net or a spacer
 		if (netIDT > SPACING_TERMINAL && netIDB > SPACING_TERMINAL)
 		{
@@ -368,14 +372,15 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 				}
 				else
 				{
-					for (int l = 0; l < V[k].size(); l++)
-					{
+					//for (int l = 0; l < V[k].size(); l++)
+					//{
+					int l = (int) V[k].size() - 1;
 						if (V[k][l] == netIDT)
 						{
 							V[k].push_back(netIDB);
 							goto EndOuterForLoop;
 						}
-					}
+					//}
 				}
 			}
 			V.push_back({netIDT, netIDB});

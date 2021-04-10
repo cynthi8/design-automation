@@ -215,10 +215,10 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Magic(TestBenchmarks[0]);
+        //Test_Magic(TestBenchmarks[0]);
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
-        PlaceAndRoute(Benchmarks[0]);
+        PlaceAndRoute(Benchmarks[2]);
     }
     catch (invalid_argument &e)
     {
