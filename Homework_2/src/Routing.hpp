@@ -118,10 +118,10 @@ public:
 	}
 };
 
-class NetAndRanges
+class Span
 {
 public:
-	NetAndRanges(int net, vector<pair<int, int>> Range)
+	Span(int net, vector<pair<int, int>> Range)
 		: net(net), ranges(Range) {}
 
 	int net;
@@ -156,12 +156,12 @@ public:
 
 	void BuildRows(Placement &place);
 
-	NetAndRanges ColumnsCrossed(int i, int j, int netID, bool isTop);
-	void BuildRange(int i, vector<NetAndRanges> &NetsAndXVals);
-	void BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAndXVals);
+	Span CalculateSpan(int i, int j, int netID, bool isTop);
+	void BuildSpans(int i, vector<Span> &NetsAndXVals);
+	void BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals);
 	void BuildV(int i, vector<vector<int>> &V);
-	void FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
-	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges);
+	void FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
+	void RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &NetsAndXRanges);
 
 	void Print();
 

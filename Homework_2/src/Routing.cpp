@@ -17,8 +17,8 @@ Routing::Routing(Placement place)
 	for (int i = 0; i < m_channelCount; i++)
 	{
 		// Build the range first in case we have to change it for the V graph
-		vector<NetAndRanges> NetsAndXRanges;
-		BuildRange(i, NetsAndXRanges);
+		vector<Span> NetsAndXRanges;
+		BuildSpans(i, NetsAndXRanges);
 
 		// Build the V Graph
 		vector<vector<int>> V;
@@ -91,7 +91,7 @@ void Routing::BuildRows(Placement &place)
 }
 
 // Route the nets through the channel
-void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
+void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
@@ -201,7 +201,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<N
 }
 
 // Fix any doglegs that appear by splitting the range of the nets
-void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &NetsAndXRanges)
+void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRanges)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
@@ -218,7 +218,7 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<NetAndRanges> &Ne
 			int netIDEnd = *(V[i].rbegin());
 
 			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-								[netIDProb](NetAndRanges const &item) { return item.net == netIDProb; });
+								[netIDProb](Span const &item) { return item.net == netIDProb; });
 			int idx = (int)(iter - NetsAndXRanges.begin());
 			pair<int, int> ORange = NetsAndXRanges[idx].ranges[0];
 
@@ -288,11 +288,11 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 	return;
 }
 
-// Build all the ranges of the nets
-void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
+// Build the spans for a channel
+void Routing::BuildSpans(int channelIndex, vector<Span> &Spans)
 {
-	vector<int> &rowT = m_TopRow[i].RowNets;
-	vector<int> &rowB = m_BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[channelIndex].RowNets;
+	vector<int> &rowB = m_BotRow[channelIndex].RowNets;
 
 	//find the range of every net
 	for (int col = 0; col < m_colCount; col++)
@@ -300,37 +300,39 @@ void Routing::BuildRange(int i, vector<NetAndRanges> &NetsAndXRanges)
 		int netID = rowT[col];
 		if (netID != UNCONNECTED_TERMINAL)
 		{
-			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-								[netID](NetAndRanges const &span) { return span.net == netID; });
+			// Find if there is a span with this netID in Spans already
+			auto iter = find_if(Spans.begin(), Spans.end(), [netID](Span const &span) {
+				return span.net == netID;
+			});
 
-			//if the net doesn't exist in the list, add it
-			if (iter == NetsAndXRanges.end())
+			// If the netID isn't in spans, add it
+			if (iter == Spans.end())
 			{
-				NetsAndXRanges.push_back(ColumnsCrossed(i, col, netID, true));
+				Spans.push_back(CalculateSpan(channelIndex, col, netID, true));
 			}
 		}
 
 		netID = rowB[col];
 		if (netID != UNCONNECTED_TERMINAL)
 		{
-			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
-								[netID](NetAndRanges const &item) { return item.net == netID; });
+			auto iter = find_if(Spans.begin(), Spans.end(),
+								[netID](Span const &item) { return item.net == netID; });
 
 			//if the net doesn't exist in the list, add it
-			if (iter == NetsAndXRanges.end())
+			if (iter == Spans.end())
 			{
-				NetsAndXRanges.push_back(ColumnsCrossed(i, col, netID, false));
+				Spans.push_back(CalculateSpan(channelIndex, col, netID, false));
 			}
 		}
 	}
 }
 
 // Find the columns a particular net crosses
-NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
+Span Routing::CalculateSpan(int channelIndex, int col, int netID, bool isTop)
 {
 	//Get the X columns for each net
-	vector<int> &rowT = m_TopRow[i].RowNets;
-	vector<int> &rowB = m_BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[channelIndex].RowNets;
+	vector<int> &rowB = m_BotRow[channelIndex].RowNets;
 
 	//in case the other terminal for the net is actually in the same column
 	int TopAdj = 0, BotAdj = 0;
@@ -339,34 +341,34 @@ NetAndRanges Routing::ColumnsCrossed(int i, int j, int netID, bool isTop)
 	else
 		BotAdj++;
 
-	vector<int>::iterator iter1 = rowT.begin() + j + TopAdj;
-	vector<int>::iterator iter2 = rowB.begin() + j + BotAdj;
+	vector<int>::iterator topIter = rowT.begin() + col + TopAdj;
+	vector<int>::iterator bottomIter = rowB.begin() + col + BotAdj;
 
 	int x2 = -1;
 
 	//look through top and bottom row for the next instance of the id
-	iter1 = find(iter1, rowT.end(), netID);
-	iter2 = find(iter2, rowB.end(), netID);
+	topIter = find(topIter, rowT.end(), netID);
+	bottomIter = find(bottomIter, rowB.end(), netID);
 
-	//net is only in top
-	if (iter1 != rowT.end())
+	//net is in top
+	if (topIter != rowT.end())
 	{
-		x2 = (int)(find(iter1, rowT.end(), netID) - rowB.begin());
+		x2 = topIter - rowT.begin();
 	}
-	//net is only in bottom
-	else if (iter2 != rowB.end())
+	//net is in bottom
+	else if (bottomIter != rowB.end())
 	{
-		x2 = (int)(find(iter2, rowB.end(), netID) - rowB.begin());
+		x2 = bottomIter - rowB.begin();
 	}
 
 	if (x2 == -1)
 		throw invalid_argument("Placement is borked; Missing Nets in Row.");
 
-	return NetAndRanges(netID, {{j, x2}});
+	return Span(netID, {{col, x2}});
 }
 
 // Build the HCG Graph, ie what nets cannot be on the same track as one another
-void Routing::BuildS(int i, vector<SSet> &S, const vector<NetAndRanges> &NetsAndXVals)
+void Routing::BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals)
 {
 	//if the range of the net overlaps a column, add it to the HGraph
 	for (int j = 0; j < m_colCount; j++)
