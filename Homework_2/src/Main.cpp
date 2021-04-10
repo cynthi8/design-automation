@@ -181,7 +181,8 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
     Routing routing(placement);
     routing.Print();
 
-    Magic magic(placement, routing, BenchNum);
+    Magic magic(placement, routing);
+    magic.Output(".", "output.mag");
 
     int msPassed = MilisecondsPassed(start);
 
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
         Test_Magic(TestBenchmarks.back());
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
-        PlaceAndRoute(Benchmarks[0], 1);
+        //PlaceAndRoute(Benchmarks[0], 1);
     }
     catch (invalid_argument &e)
     {
