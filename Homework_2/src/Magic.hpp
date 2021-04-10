@@ -66,7 +66,7 @@ public:
         outputString += " " + to_string(xbot);
         outputString += " " + to_string(ybot);
         outputString += " " + to_string(xtop);
-        outputString += " " + to_string(xbot);
+        outputString += " " + to_string(ytop);
 
         return outputString;
     }
