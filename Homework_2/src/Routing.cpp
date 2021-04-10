@@ -94,7 +94,7 @@ void Routing::BuildRows(Placement &place)
 }
 
 // Route the nets through the channel
-void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &Spans)
+void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Span> &Spans)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
@@ -107,8 +107,6 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 
 	for (int j = 0; j < Spans.size(); j++)
 	{
-		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
-		NetTracks.insert({ Spans[j].net, -1});
 		int k = Spans[j].ranges.size();
 		Spans[j].n_tracks.resize(k);
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
@@ -119,15 +117,19 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 	int j = 0;
 	bool Done = false;
 
+	//While all nets haven't been placed
 	while (!Done)
 	{
+		//If this net has been completely placed, go to next net
 		if (netsDone[j])
 		{
 			j++;
 			continue;
 		}
+
 		int netID = Spans[j].net;
 
+		//Go through all spans on this net
 		for (int rangeID = 0; rangeID < Spans[j].ranges.size(); rangeID++)
 		{
 			bool inS = false;
@@ -146,6 +148,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 					inV = true;
 					break;
 				}
+				//else if it is the last one, then we are good to remove it from V
 				else if (iter == V[k].end() - 1)
 				{
 					removefromV = (int)(iter - V[k].begin());
@@ -154,6 +157,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 				//else its not in it
 			}
 
+			//value is in a VCG
 			if (inV)
 				continue;
 
@@ -161,9 +165,12 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			int maxtrack = 0;
 			for (int k = 0; k < S.size(); k++)
 			{
+				//if we find the net in S, then it must be on a different track than the rest
 				if (S[k].nets.find({netID, rangeID}) != S[k].nets.end() && S[k].nets.size() > 1)
 				{
+					//go through all nets
 					for (auto l : S[k].nets)
+						//find the largest track a net in this S has already been assigned to
 						if (NetTracks[l.first] > maxtrack)
 							maxtrack = NetTracks[l.first] + 1;
 
@@ -171,19 +178,28 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 				}
 			}
 
+			//Set this net and track to this available track
 			NetTracks[netID] = maxtrack;
+
+			//resize the channel if this track is larger than the number of elements in it
 			if (maxtrack > m_channels[i].m_tracks.size())
 				m_channels[i].m_tracks.resize(maxtrack + 1);
 
+			//add this net and its range to the track
 			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
+
+			//If we need to, remove this net from the VCG
 			if (Vidx >= 0)
 				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
+			//This specific range is done
 			netsRangesDone[j][rangeID] = true;
 
+			//keep the assigned track of this span for Magic
 			Spans[j].n_tracks[rangeID] = maxtrack;
 		}
 
+		//Go thru all spans on this net, if any aren't done, this set netsDone to false
 		netsDone[j] = true;
 		for (auto k : netsRangesDone[j])
 		{
@@ -194,6 +210,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			}
 		}
 
+		//Go thru all netsDone, if any aren't done, this set Done to false
 		Done = true;
 		for (auto k : netsDone)
 		{
@@ -204,6 +221,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			}
 		}
 
+		//Increment j, and see if its larger than the number of nets, if so wrap back around
 		if (++j >= Spans.size())
 			j = 0;
 	}

@@ -123,7 +123,26 @@ void Magic::CreateLayout(Routing route, Placement place, Graph graph)
                 mbranchL.x = newLeft;
                 mbranchR.x = newRight;
 
-                if(k == 0)
+                int botNetID = route.m_BotRow[i].RowCells[left].NetID;
+                int topNetID = route.m_TopRow[i].RowCells[left].NetID;
+                if (k == 0 || k == (j.ranges.size() - 1)) {
+                    if (mnet.netID == botNetID) 
+                    {
+
+                    }
+                    else if (mnet.netID == topNetID)
+                    {
+
+                    }
+                    else if (mnet.netID == topNetID)
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                }
                 
                 mbranchL.y_locs = {};
                 mbranchR.y_locs = {};
