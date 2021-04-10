@@ -31,6 +31,7 @@ public:
     string makeMetal1();
     string makeMetal2();
     string makeMetal2Contact();
+    string makeLabel();
 };
 
 class MCell

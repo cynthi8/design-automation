@@ -170,10 +170,38 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
     // Begin File
     Header(outputStream);
 
+    // Write Net M1
+    outputStream << "<< metal1 >>" << endl;
+    for (auto net : m_MNets)
+    {
+        outputStream << net.makeMetal1();
+    }
+
+    // Write Net M2
+    outputStream << "<< metal2 >>" << endl;
+    for (auto net : m_MNets)
+    {
+        outputStream << net.makeMetal2();
+    }
+
+    // Write Net M2c
+    outputStream << "<< m2contact >>" << endl;
+    for (auto net : m_MNets)
+    {
+        outputStream << net.makeMetal2Contact();
+    }
+
     // Write cells
     for (auto cell : m_MCells)
     {
         outputStream << cell.makeCell();
+    }
+
+    // Write net labels
+    outputStream << "<< labels >>" << endl;
+    for (auto net : m_MNets)
+    {
+        outputStream << net.makeLabel();
     }
 
     // Exit and close
