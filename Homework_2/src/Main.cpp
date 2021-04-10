@@ -182,8 +182,8 @@ void PlaceAndRoute(Benchmark benchmark)
     // Do Placement and Collect Data
     Placement placement(graph, benchmark.gridWidth);
     int originalPlacementCost = placement.CalculatePlacementCost();
-    //placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
-    placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     int postSimulatedAnealingCost = placement.CalculatePlacementCost();
     placement.GreedyFlipping(10);
     int postFlippingCost = placement.CalculatePlacementCost();

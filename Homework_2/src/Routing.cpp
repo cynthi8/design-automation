@@ -10,7 +10,7 @@ Routing::Routing(Placement place)
 	BuildRows(place);
 
 	//issue with cell 20, net 22, terminal 1
-	place.m_netlist.printTrace(place.m_netlist.m_cells["20"].getTerminal(1));
+	//place.m_netlist.printTrace(place.m_netlist.m_cells["20"].getTerminal(1));
 
 	// Pad the rows with zeros
 	PadRows();
@@ -136,6 +136,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 
 	Track track;
 
+	vector<vector<int>> test = V;
+
 	vector<vector<bool>> netsRangesDone(Spans.size());
 	vector<bool> netsDone(Spans.size());
 	map<int, int> NetTracks;
@@ -174,7 +176,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 		{
 			bool inS = false;
 			bool inV = false;
-			vector<int> removefromV;
+			vector<vector<int>> removefromV;
 			vector<int> Vidx;
 			pair<int, int> range = Spans[j].ranges[rangeID];
 
@@ -193,16 +195,16 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 					break;
 				}
 				//else if it is the last one, then we are good to remove it from V
-				else if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
-					//removefromV = (int)(iter + 1 - V[k].begin());
-					removefromV.push_back((int)(iter + 1 - V[k].begin()));
-					removefromV.push_back((int)(iter - V[k].begin()));
+				if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
+					vector<int> removes;
+					removes.push_back((int)(iter + 1 - V[k].begin()));
+					removes.push_back((int)(iter - V[k].begin()));
+					removefromV.push_back(removes);
 					Vidx.push_back(k);
 				}
-				else if (iter == V[k].end() - 1)
+				if (iter == V[k].end() - 1)
 				{
-					//removefromV = (int)(iter - V[k].begin());
-					removefromV.push_back((int)(iter - V[k].begin()));
+					removefromV.push_back({ (int)(iter - V[k].begin()) });
 					Vidx.push_back(k);
 				}
 				//else its not in it
@@ -241,8 +243,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 
 			//If we need to, remove this net from the VCG
 			for (int m = 0; m < Vidx.size(); m++) {
-				for (int n = 0; n < removefromV.size(); n++) {
-					V[Vidx[m]].erase(V[Vidx[m]].begin() + removefromV[n]);
+				for (int n = 0; n < removefromV[m].size(); n++) {
+					V[Vidx[m]].erase(V[Vidx[m]].begin() + removefromV[m][n]);
 				}
 			}
 
@@ -350,7 +352,7 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 		}
 
 		if (netIDT == netIDB) {
-			cout << "hmm" << endl;
+			//cout << "hmm" << endl;
 			continue;
 		}
 
@@ -528,15 +530,16 @@ void Routing::Print()
 	for (auto i : m_channels)
 	{
 		int track = 0;
+		cout << "Section " << channel << endl;
 		for (auto j : i.m_tracks)
 		{
-			cout << "Track " << track << endl;
+			cout << "\tTrack " << track << endl;
 			for (auto k = 0; k < j.m_nets.size(); k++)
 			{
 				int netID = j.m_nets[k];
 				pair<int, int> locs = j.m_locs[k];
 
-				cout << "Net " << netID << ": Range(" << locs.first << ", " << locs.second << ")" << endl;
+				cout << "\t\tNet " << netID << ":   \tRange(" << locs.first << ", " << locs.second << ")" << endl;
 			}
 			track++;
 		}
