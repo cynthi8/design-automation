@@ -10,8 +10,7 @@ using namespace std;
 Magic::Magic(Placement place, Routing route)
 {
 
-    CreateLayout(route, place);
-    Output("", "");
+    //CreateLayout(route, place);
 }
 
 // Create a standard Header for Magic
@@ -186,23 +185,21 @@ void Magic::OutputFeedCell(string szDirectory)
     Header(outputStream);
 
     // Terminals = rect xbot ybot xtop ytop
+    MagRect cell(0, 0, 3, 6);
     MagRect T1(1, 0, 2, 1);
     MagRect T3(1, 5, 2, 6);
     vector<MagRect> Terms = {T1, T3};
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
-    string type = "rect";
-
-    for (auto &i : Terms)
-        i.outputRect(outputStream, type);
+    for (auto &term : Terms)
+        outputStream << term.makeRect();
 
     // Label Rectangles
     outputStream << "<< labels >>" << endl;
-    type = "rlabel metal1";
-
-    for (unsigned int i = 0; i < Terms.size(); i++)
-        Terms[i].outputLabel(outputStream, type, i);
+    outputStream << cell.makeRlabel("metal1", ".");
+    outputStream << Terms[0].makeRlabel("metal1", 1);
+    outputStream << Terms[1].makeRlabel("metal1", 3);
 
     // Exit and close
     Footer(outputStream);
@@ -221,6 +218,7 @@ void Magic::OutputStandardCell(string szDirectory)
     Header(outputStream);
 
     // Terminals = rect xbot ybot xtop ytop
+    MagRect cell(0, 0, 6, 6);
     MagRect T1(1, 5, 2, 6);
     MagRect T2(4, 5, 5, 6);
     MagRect T3(1, 0, 2, 1);
@@ -229,17 +227,21 @@ void Magic::OutputStandardCell(string szDirectory)
 
     // Metal Rectangles
     outputStream << "<< metal1 >>" << endl;
-    string type = "rect";
-
-    for (auto &i : Terms)
-        i.outputRect(outputStream, type);
+    for (auto &term : Terms)
+    {
+        outputStream << term.makeRect();
+    }
 
     // Label Rectangles
     outputStream << "<< labels >>" << endl;
-    type = "rlabel metal1";
+    outputStream << cell.makeRlabel("metal1", ".");
 
-    for (unsigned int i = 0; i < Terms.size(); i++)
-        Terms[i].outputLabel(outputStream, type, i);
+    int termId = 1;
+    for (auto &term : Terms)
+    {
+        outputStream << term.makeRlabel("metal1", termId);
+        termId++;
+    }
 
     // Exit and close
     Footer(outputStream);

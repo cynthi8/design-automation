@@ -60,9 +60,9 @@ public:
     int xtop;
     int ytop;
 
-    string szRect(string type)
+    string makeBoundingBox()
     {
-        string outputString = type;
+        string outputString;
         outputString += " " + to_string(xbot);
         outputString += " " + to_string(ybot);
         outputString += " " + to_string(xtop);
@@ -70,18 +70,19 @@ public:
 
         return outputString;
     }
-    void outputRect(std::ostream &outputStream, string type)
+
+    string makeRect()
     {
-        outputStream << szRect(type) << endl;
+        return "rect" + makeBoundingBox() + '\n';
     }
 
-    void outputLabel(std::ostream &outputStream, string type, int i)
+    string makeRlabel(string layer, int text)
     {
-        outputStream << szRect(type) << " 0 " << i << endl;
+        return "rlabel " + layer + makeBoundingBox() + " 0 " + to_string(text) + '\n';
     }
-    void outputLabel(std::ostream &outputStream, string type, string i)
+    string makeRlabel(string layer, string text)
     {
-        outputStream << szRect(type) << " 0 " << i << endl;
+        return "rlabel " + layer + makeBoundingBox() + " 0 " + text + '\n';
     }
 };
 
