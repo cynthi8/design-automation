@@ -17,22 +17,22 @@ Routing::Routing(Placement place)
 	for (int i = 0; i < m_channelCount; i++)
 	{
 		// Build the range first in case we have to change it for the V graph
-		vector<Span> NetsAndXRanges;
-		BuildSpans(i, NetsAndXRanges);
+		vector<Span> Spans;
+		BuildSpans(i, Spans);
 
 		// Build the V Graph
 		vector<vector<int>> V;
 		BuildV(i, V);
 
 		// Fix Doglegs by changing range
-		FixDogLegs(i, V, NetsAndXRanges);
+		FixDogLegs(i, V, Spans);
 
 		// Build the S / H Graph
 		vector<SSet> S(m_colCount);
-		BuildS(i, S, NetsAndXRanges);
+		BuildS(i, S, Spans);
 
 		// Finally Route the nets
-		RouteNets(i, S, V, NetsAndXRanges);
+		RouteNets(i, S, V, Spans);
 	}
 
 	return;
@@ -91,21 +91,21 @@ void Routing::BuildRows(Placement &place)
 }
 
 // Route the nets through the channel
-void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &NetsAndXRanges)
+void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<Span> &Spans)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	Track track;
 
-	vector<vector<bool>> netsRangesDone(NetsAndXRanges.size());
-	vector<bool> netsDone(NetsAndXRanges.size());
+	vector<vector<bool>> netsRangesDone(Spans.size());
+	vector<bool> netsDone(Spans.size());
 	map<int, int> NetTracks;
 
-	for (int j = 0; j < NetsAndXRanges.size(); j++)
+	for (int j = 0; j < Spans.size(); j++)
 	{
-		netsRangesDone[j].insert(netsRangesDone[j].begin(), NetsAndXRanges[j].ranges.size(), false);
-		NetTracks.insert({NetsAndXRanges[j].net, -1});
+		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
+		NetTracks.insert({Spans[j].net, -1});
 	}
 	int j = 0;
 	bool Done = false;
@@ -117,15 +117,15 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			j++;
 			continue;
 		}
-		int netID = NetsAndXRanges[j].net;
+		int netID = Spans[j].net;
 
-		for (int rangeID = 0; rangeID < NetsAndXRanges[j].ranges.size(); rangeID++)
+		for (int rangeID = 0; rangeID < Spans[j].ranges.size(); rangeID++)
 		{
 			bool inS = false;
 			bool inV = false;
 			int removefromV = -1;
 			int Vidx = -1;
-			pair<int, int> range = NetsAndXRanges[j].ranges[rangeID];
+			pair<int, int> range = Spans[j].ranges[rangeID];
 
 			//Check if this net is in a VCG
 			for (int k = 0; k < V.size(); k++)
@@ -193,7 +193,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 			}
 		}
 
-		if (++j >= NetsAndXRanges.size())
+		if (++j >= Spans.size())
 			j = 0;
 	}
 
@@ -201,7 +201,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> &V, vector<S
 }
 
 // Fix any doglegs that appear by splitting the range of the nets
-void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRanges)
+void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &Spans)
 {
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
@@ -217,10 +217,10 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRa
 			int netIDProb = *(V[i].rbegin() + 1);
 			int netIDEnd = *(V[i].rbegin());
 
-			auto iter = find_if(NetsAndXRanges.begin(), NetsAndXRanges.end(),
+			auto iter = find_if(Spans.begin(), Spans.end(),
 								[netIDProb](Span const &item) { return item.net == netIDProb; });
-			int idx = (int)(iter - NetsAndXRanges.begin());
-			pair<int, int> ORange = NetsAndXRanges[idx].ranges[0];
+			int idx = (int)(iter - Spans.begin());
+			pair<int, int> ORange = Spans[idx].ranges[0];
 
 			//Need to find an empty place to split it
 			int j;
@@ -231,8 +231,8 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &NetsAndXRa
 			}
 			pair<int, int> NewRange1 = {ORange.first, j};
 			pair<int, int> NewRange2 = {j, ORange.second};
-			NetsAndXRanges[idx].ranges[0] = NewRange1;
-			NetsAndXRanges[idx].ranges.push_back(NewRange2);
+			Spans[idx].ranges[0] = NewRange1;
+			Spans[idx].ranges.push_back(NewRange2);
 
 			//remove the last two elements causing the dogleg problem
 			V[i].pop_back();
