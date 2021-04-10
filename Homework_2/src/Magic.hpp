@@ -9,6 +9,22 @@
 
 using namespace std;
 
+class MagRect
+{
+public:
+    MagRect() : xbot(0), ybot(0), xtop(0), ytop(0){};
+    MagRect(int xbot, int ybot, int xtop, int ytop) : xbot(xbot), ybot(ybot), xtop(xtop), ytop(ytop){};
+    int xbot;
+    int ybot;
+    int xtop;
+    int ytop;
+
+    string makeBoundingBox();
+    string makeRect();
+    string makeRlabel(string layer, int text);
+    string makeRlabel(string layer, string text);
+};
+
 struct MBranch
 {
 public:
@@ -62,22 +78,6 @@ public:
     string m_cellId;
     Flips m_orientation;
     string m_transformString;
-};
-
-class MagRect
-{
-public:
-    MagRect(int xbot, int ybot, int xtop, int ytop)
-        : xbot(xbot), ybot(ybot), xtop(xtop), ytop(ytop) {}
-    int xbot;
-    int ybot;
-    int xtop;
-    int ytop;
-
-    string makeBoundingBox();
-    string makeRect();
-    string makeRlabel(string layer, int text);
-    string makeRlabel(string layer, string text);
 };
 
 class Magic
