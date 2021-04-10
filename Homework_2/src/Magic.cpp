@@ -117,8 +117,6 @@ void Magic::CreateLayout(Routing route, Placement place)
                 newMNet.m_contacts.push_back(contact);
             }
 
-
-
             // Build Left Most Branch
             MBranch leftMostBranch;
             leftMostBranch.x = span.ranges[0].first;
@@ -334,7 +332,6 @@ void MCell::updateTransformString()
     m_transformString = string("transform") + " " + to_string(a) + " " + to_string(b) + " " + to_string(c) + " " + to_string(d) + " " + to_string(e) + " " + to_string(f) + '\n';
 }
 
-
 string MCell::makeCell()
 {
     /*
@@ -370,10 +367,12 @@ string MCell::makeCell()
 
 string MNet::makeMetal1()
 {
-    string netBranches = "rect";
+    string netBranches;
 
-    for (auto& i : m_branches) {
-        MagRect T1(i.x, i.y_locs.first, i.x+1, i.y_locs.second+1);
+    for (auto &i : m_branches)
+    {
+        netBranches += "rect";
+        MagRect T1(i.x, i.y_locs.first, i.x + 1, i.y_locs.second + 1);
         i.rect = T1;
         netBranches += T1.makeBoundingBox();
         netBranches += "\n";
@@ -387,7 +386,8 @@ string MNet::makeLabel()
     //flabel space 0 11 6 17 0 FreeSans 8 0 0 0 Cell4
     string Labels;
 
-    for (int i = 0; i < m_trunks.size(); i++) {
+    for (unsigned int i = 0; i < m_trunks.size(); i++)
+    {
         if (abs(m_trunks[i].x_locs.second - m_trunks[i].x_locs.first) > 1)
         {
             Labels += "rlabel ";
@@ -398,7 +398,8 @@ string MNet::makeLabel()
             Labels += "\n";
         }
     }
-    for (int i = 0; i < m_branches.size(); i++) {
+    for (unsigned int i = 0; i < m_branches.size(); i++)
+    {
         if (abs(m_branches[i].y_locs.second - m_branches[i].y_locs.first) > 1)
         {
             Labels += "rlabel ";
@@ -414,10 +415,12 @@ string MNet::makeLabel()
 
 string MNet::makeMetal2()
 {
-    string netTrunks = "rect";
+    string netTrunks;
 
-    for (auto& i : m_trunks) {
-        MagRect T1(i.x_locs.first, i.y, i.x_locs.second+1, i.y+1);
+    for (auto &i : m_trunks)
+    {
+        netTrunks += "rect";
+        MagRect T1(i.x_locs.first, i.y, i.x_locs.second + 1, i.y + 1);
         i.rect = T1;
         netTrunks += T1.makeBoundingBox();
         netTrunks += "\n";
@@ -428,10 +431,12 @@ string MNet::makeMetal2()
 
 string MNet::makeMetal2Contact()
 {
-    string netContacts = "rect";
+    string netContacts;
 
-    for (auto& i : m_contacts) {
-        MagRect T1(i.x, i.y, i.x+1, i.y+1);
+    for (auto &i : m_contacts)
+    {
+        netContacts = "rect";
+        MagRect T1(i.x, i.y, i.x + 1, i.y + 1);
         netContacts += T1.makeBoundingBox();
         netContacts += "\n";
     }
