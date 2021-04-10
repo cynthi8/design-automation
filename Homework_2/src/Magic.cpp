@@ -365,7 +365,7 @@ string MNet::makeMetal1()
 
     string netBranches = "rect";
     for (auto& i : m_branches) {
-        MagRect T1(i.x, i.y_locs.first, i.x, i.y_locs.second);
+        MagRect T1(i.x, i.y_locs.first, i.x+1, i.y_locs.second+1);
         netBranches += T1.makeBoundingBox();
         netBranches += "\n";
     }
@@ -379,7 +379,7 @@ string MNet::makeMetal2()
 
     string netTrunks = "rect";
     for (auto& i : m_trunks) {
-        MagRect T1(i.x_locs.first, i.y, i.x_locs.second, i.y);
+        MagRect T1(i.x_locs.first, i.y, i.x_locs.second+1, i.y+1);
         netTrunks += T1.makeBoundingBox();
         netTrunks += "\n";
     }
@@ -393,7 +393,7 @@ string MNet::makeMetal2Contact()
 
     string netContacts = "rect";
     for (auto& i : m_contacts) {
-        MagRect T1(i.x, i.y, i.x, i.y);
+        MagRect T1(i.x, i.y, i.x+1, i.y+1);
         netContacts += T1.makeBoundingBox();
         netContacts += "\n";
     }
