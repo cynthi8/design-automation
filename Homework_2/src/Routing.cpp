@@ -13,7 +13,7 @@ Routing::Routing(Placement place)
 	PadRows(); 
 
 	//for each row, build it up
-	m_Channel.resize(m_rowCount);
+	m_channels.resize(m_rowCount);
 	for (int i = 0; i < m_rowCount; i++)
 	{
 

@@ -13,7 +13,7 @@ using namespace std;
 Graph::Graph(string fileName)
 {
     ifstream fs;
-    //string test = "test.txt";
+    this->szFileName = fileName;
     fs.open(fileName.c_str(), ios::in);
 
     if (!fs.is_open())
