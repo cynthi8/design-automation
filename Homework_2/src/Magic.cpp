@@ -437,7 +437,7 @@ string MNet::makeMetal2Contact()
 
     for (auto &i : m_contacts)
     {
-        netContacts = "rect";
+        netContacts += "rect";
         MagRect T1(i.x, i.y, i.x + 1, i.y + 1);
         netContacts += T1.makeBoundingBox();
         netContacts += "\n";
