@@ -174,8 +174,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 		{
 			bool inS = false;
 			bool inV = false;
-			vector<int> removefromV;
-			vector<int> Vidx;
+			int removefromV = -1;
+			int Vidx = -1;
 			pair<int, int> range = Spans[j].ranges[rangeID];
 
 			//Check if this net is in a VCG
@@ -194,16 +194,13 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 				}
 				//else if it is the last one, then we are good to remove it from V
 				else if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
-					//removefromV = (int)(iter + 1 - V[k].begin());
-					removefromV.push_back((int)(iter + 1 - V[k].begin()));
-					removefromV.push_back((int)(iter - V[k].begin()));
-					Vidx.push_back(k);
+					removefromV = (int)(iter + 1 - V[k].begin());
+					Vidx = k;
 				}
 				else if (iter == V[k].end() - 1)
 				{
-					//removefromV = (int)(iter - V[k].begin());
-					removefromV.push_back((int)(iter - V[k].begin()));
-					Vidx.push_back(k);
+					removefromV = (int)(iter - V[k].begin());
+					Vidx = k;
 				}
 				//else its not in it
 			}
@@ -240,11 +237,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
 
 			//If we need to, remove this net from the VCG
-			for (int m = 0; m < Vidx.size(); m++) {
-				for (int n = 0; n < removefromV.size(); n++) {
-					V[Vidx[m]].erase(V[Vidx[m]].begin() + removefromV[n]);
-				}
-			}
+			if (Vidx >= 0)
+				V[Vidx].erase(V[Vidx].begin() + removefromV);
 
 			//This specific range is done
 			netsRangesDone[j][rangeID] = true;

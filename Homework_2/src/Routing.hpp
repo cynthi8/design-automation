@@ -50,13 +50,13 @@ public:
 
 	bool AddNet(int net, pair<int, int> locs)
 	{
-		if (!TrackOverlap(locs))
-		{
+		//if (!TrackOverlap(locs))
+		//{
 			this->m_nets.push_back(net);
 			this->m_locs.push_back(locs);
 			return true;
-		}
-		return false;
+		//}
+		//return false;
 	}
 };
 
