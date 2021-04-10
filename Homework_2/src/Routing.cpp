@@ -182,7 +182,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 			NetTracks[netID] = maxtrack;
 
 			//resize the channel if this track is larger than the number of elements in it
-			if (maxtrack > m_channels[i].m_tracks.size())
+			if (maxtrack >= m_channels[i].m_tracks.size())
 				m_channels[i].m_tracks.resize(maxtrack + 1);
 
 			//add this net and its range to the track
