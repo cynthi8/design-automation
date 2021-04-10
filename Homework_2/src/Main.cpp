@@ -22,6 +22,17 @@ struct Benchmark
     int gridWidth;
 };
 
+vector<Benchmark> TestBenchmarks{
+    {"Benchmarks/b_routing_easy", 2},
+    {"Benchmarks/b_tiny", 2},
+    {"Benchmarks/b_feedthrough_0", 2},
+    {"Benchmarks/b_feedthrough_1_left", 2},
+    {"Benchmarks/b_feedthrough_1_right", 2},
+    {"Benchmarks/b_feedthrough_2_left", 2},
+    {"Benchmarks/b_feedthrough_2_right", 2},
+    {"Benchmarks/b_feedthrough_3_right", 2},
+    {"Benchmarks/b_feedthrough_multi", 2}};
+
 vector<Benchmark> Benchmarks{
     {"Benchmarks/b_50_50", (int)sqrt(50) * 2},
     {"Benchmarks/b_100_100", (int)sqrt(100) * 2},
@@ -62,31 +73,6 @@ void Test_FeedthroughRouting()
     Test_FixPlacement(placement);
     placement.InsertFeedthroughs();
     placement.m_netlist.printTrace(placement.m_netlist.m_cells["1"].getTerminal(4));
-}
-
-void Test_InsertFeedthrough(string fileName, const int gridWidth)
-{
-    cout << "Testing " << fileName << endl;
-    Graph graph(fileName);
-    Placement placement(graph, gridWidth);
-    Test_FixPlacement(placement);
-    cout << "Cost before feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-    placement.InsertFeedthroughs();
-    cout << "Cost after feedthrough insertion: " << placement.CalculatePlacementCost() << endl;
-    placement.Print();
-    cout << endl;
-}
-
-void Test_InsertFeedthroughs()
-{
-    // These should have Feedthrough cells inserted. No automated testing yet.
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_0", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_1_left", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_1_right", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_2_left", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_2_right", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_3_right", 2);
-    Test_InsertFeedthrough("Benchmarks/b_feedthrough_multi", 2);
 }
 
 void Test_Placement(string fileName, const int gridWidth)
@@ -209,6 +195,9 @@ void Test_Magic(Benchmark benchmark)
 
     // Do Placement and Collect Data
     Placement placement(graph, benchmark.gridWidth);
+    placement.SimulatedAnealingPlace(1000, 1, .95, 100);
+    placement.GreedyFlipping(10);
+    placement.InsertFeedthroughs();
     placement.Print();
 
     // Do Routing
@@ -226,9 +215,9 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        //Test_Magic({"Benchmarks/b_routing_easy", 2});
+        Test_Magic(TestBenchmarks[0]);
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
-        
+
         PlaceAndRoute(Benchmarks[0]);
     }
     catch (invalid_argument &e)
