@@ -215,7 +215,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 				continue;
 
 			//Check if this net and its range is in S
-			int maxtrack = 0;
+			//int maxtrack = 0;
+			vector<int> usedTracks;
 			for (int k = 0; k < S.size(); k++)
 			{
 				//if we find the net in S, then it must be on a different track than the rest
@@ -223,14 +224,26 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 				{
 					//go through all nets
 					for (auto l : S[k].nets)
+						if(NetTracks[l.first] != -1)
+							usedTracks.push_back(NetTracks[l.first]);
 						//find the largest track a net in this S has already been assigned to
-						if (NetTracks[l.first] >= maxtrack)
-							maxtrack = NetTracks[l.first] + 1;
+						//if (NetTracks[l.first] >= maxtrack)
+							//maxtrack = NetTracks[l.first] + 1;
 
+					//break;
+				}
+			}
+			sort(usedTracks.begin(), usedTracks.end());
+
+			int maxtrack = 0;
+			for (int usedTrackiter = 0; usedTrackiter < usedTracks.size(); usedTrackiter++) {
+				if (usedTracks[usedTrackiter] == maxtrack) {
+					maxtrack++;
+				}
+				else if (usedTracks[usedTrackiter] > maxtrack) {
 					break;
 				}
 			}
-
 			//Set this net and track to this available track
 			NetTracks[netID] = maxtrack;
 
@@ -356,6 +369,10 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 			continue;
 		}
 
+		if (netIDT == 386 || netIDB == 386) {
+			int test = 1;
+		}
+
 		// if net is a net, and the bottom is either a net or a spacer
 		if (netIDT > SPACING_TERMINAL && netIDB > SPACING_TERMINAL)
 		{
@@ -368,14 +385,15 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 				}
 				else
 				{
-					for (int l = 0; l < V[k].size(); l++)
-					{
+					//for (int l = 0; l < V[k].size(); l++)
+					//{
+					int l = (int) V[k].size() - 1;
 						if (V[k][l] == netIDT)
 						{
 							V[k].push_back(netIDB);
 							goto EndOuterForLoop;
 						}
-					}
+					//}
 				}
 			}
 			V.push_back({netIDT, netIDB});

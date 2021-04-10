@@ -168,8 +168,8 @@ void PlaceAndRoute(Benchmark benchmark)
     // Do Placement and Collect Data
     Placement placement(graph, benchmark.gridWidth);
     int originalPlacementCost = placement.CalculatePlacementCost();
-    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
-    //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
+    //placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     int postSimulatedAnealingCost = placement.CalculatePlacementCost();
     placement.GreedyFlipping(10);
     int postFlippingCost = placement.CalculatePlacementCost();
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Magic(TestBenchmarks[0]);
+        //Test_Magic(TestBenchmarks[0]);
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
         PlaceAndRoute(Benchmarks[0]);
