@@ -324,3 +324,28 @@ string MCell::makeCell()
 
     return cellGroup;
 }
+
+string MagRect::makeBoundingBox()
+{
+    string outputString;
+    outputString += ' ' + to_string(xbot);
+    outputString += ' ' + to_string(ybot);
+    outputString += ' ' + to_string(xtop);
+    outputString += ' ' + to_string(ytop);
+
+    return outputString;
+}
+
+string MagRect::makeRect()
+{
+    return "rect" + makeBoundingBox() + '\n';
+}
+
+string MagRect::makeRlabel(string layer, int text)
+{
+    return "rlabel " + layer + makeBoundingBox() + " 0 " + to_string(text) + '\n';
+}
+string MagRect::makeRlabel(string layer, string text)
+{
+    return "rlabel " + layer + makeBoundingBox() + " 0 " + text + '\n';
+}

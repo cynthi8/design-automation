@@ -9,25 +9,6 @@
 
 using namespace std;
 
-class MCell
-{
-public:
-    MCell(int x, int y, bool isFeed, string cellId, Flips m_orientation)
-        : x(x), y(y), isFeed(isFeed), m_cellId(cellId), m_orientation(m_orientation)
-    {
-        updateTransformString();
-    }
-    void updateTransformString();
-    string makeCell();
-
-    int x;
-    int y;
-    bool isFeed;
-    string m_cellId;
-    Flips m_orientation;
-    string m_transformString;
-};
-
 struct MBranch
 {
 public:
@@ -49,6 +30,25 @@ public:
     vector<MBranch> m_branches;
 };
 
+class MCell
+{
+public:
+    MCell(int x, int y, bool isFeed, string cellId, Flips m_orientation)
+        : x(x), y(y), isFeed(isFeed), m_cellId(cellId), m_orientation(m_orientation)
+    {
+        updateTransformString();
+    }
+    void updateTransformString();
+    string makeCell();
+
+    int x;
+    int y;
+    bool isFeed;
+    string m_cellId;
+    Flips m_orientation;
+    string m_transformString;
+};
+
 class MagRect
 {
 public:
@@ -59,30 +59,10 @@ public:
     int xtop;
     int ytop;
 
-    string makeBoundingBox()
-    {
-        string outputString;
-        outputString += ' ' + to_string(xbot);
-        outputString += ' ' + to_string(ybot);
-        outputString += ' ' + to_string(xtop);
-        outputString += ' ' + to_string(ytop);
-
-        return outputString;
-    }
-
-    string makeRect()
-    {
-        return "rect" + makeBoundingBox() + '\n';
-    }
-
-    string makeRlabel(string layer, int text)
-    {
-        return "rlabel " + layer + makeBoundingBox() + " 0 " + to_string(text) + '\n';
-    }
-    string makeRlabel(string layer, string text)
-    {
-        return "rlabel " + layer + makeBoundingBox() + " 0 " + text + '\n';
-    }
+    string makeBoundingBox();
+    string makeRect();
+    string makeRlabel(string layer, int text);
+    string makeRlabel(string layer, string text);
 };
 
 class Magic
