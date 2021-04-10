@@ -90,9 +90,41 @@ public:
 	// Add a terminal and associated Net ID to the Row Cell vector
 	void AddRowVal(Terminal Term, int NetID)
 	{
+		if (NetID == UNCONNECTED_TERMINAL)
+			AddUnusedVal();
+		else
+			AddDummyVal();
+
 		RowCell cell(Term, NetID);
 		RowCells.push_back(cell);
 		RowNets.push_back(NetID);
+
+		if (NetID == UNCONNECTED_TERMINAL)
+			AddUnusedVal();
+		else
+			AddDummyVal();
+		return;
+	}
+
+	void AddDummyVal()
+	{
+		Terminal Spacing("", 0);
+		int NetIDSpacing = 0;
+
+		RowCell cell(Spacing, NetIDSpacing);
+		RowCells.push_back(cell);
+		RowNets.push_back(NetIDSpacing);
+		return;
+	}
+
+	void AddUnusedVal()
+	{
+		Terminal Spacing("", -1);
+		int NetIDSpacing = -1;
+
+		RowCell cell(Spacing, NetIDSpacing);
+		RowCells.push_back(cell);
+		RowNets.push_back(NetIDSpacing);
 		return;
 	}
 

@@ -30,6 +30,7 @@ Routing::Routing(Placement place)
 
 		// Build the S / H Graph
 		vector<SSet> S(m_colCount);
+		//vector<SSet> S;
 		BuildS(i, S, Spans);
 
 		// Finally Route the nets
@@ -65,16 +66,31 @@ void Routing::BuildRows(Placement &place)
 			cell_id = place.m_grid[Location(i, j)].m_cellId;
 			Cell cell = place.m_netlist.m_cells[cell_id];
 
+			string cell_id2 = " ";
+			if(j > 0)
+				cell_id2 = place.m_grid[Location(i, j-1)].m_cellId;
+
 			// Add terminals and nets to row in order
 			for (auto terminal : cell.getSortedTerminals())
 			{
 				// Even if the terminal is not connected, add it to the terminal row
 				int NetID = place.m_netlist.GetNetID(terminal);
-				if (cell.isTerminalTop(terminal))
-					// If the terminal is at the top of the cell, it will be at the bottom of the channel
+
+				// If the terminal is at the top of the cell, it will be at the bottom of the channel
+				if (cell.isTerminalTop(terminal)) 
+				{
+					if(!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2))
+						bottomTerminalRowTemp.AddUnusedVal();
+
 					bottomTerminalRowTemp.AddRowVal(terminal, NetID);
-				else
+				}
+				else 
+				{
+					if (!isFeedthru(cell_id) && j > 0 && !isFeedthru(cell_id2))
+						bottomTerminalRowTemp.AddUnusedVal();
+
 					topTerminalRowTemp.AddRowVal(terminal, NetID);
+				}
 			}
 		}
 
@@ -91,6 +107,15 @@ void Routing::BuildRows(Placement &place)
 	}
 
 	this->m_colCount = maxCols;
+}
+
+bool isFeedthru(string id)
+{
+	if (id[0] == 'F')
+	{
+		return true;
+	}
+	return false;
 }
 
 // Route the nets through the channel
@@ -203,27 +228,13 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 			Spans[j].n_tracks[rangeID] = maxtrack;
 		}
 
-		//Go thru all spans on this net, if any aren't done, this set netsDone to false
-		netsDone[j] = true;
-		for (auto k : netsRangesDone[j])
-		{
-			if (k != true)
-			{
-				netsDone[j] = false;
-				break;
-			}
-		}
+		//Go thru all spans on this net, if any spans aren't done, then set that net to false
+		bool testDone = all_of(netsRangesDone[j].begin(), netsRangesDone[j].end(), [](bool v) { return v; });
+		netsDone[j] = testDone;
 
-		//Go thru all netsDone, if any aren't done, this set Done to false
-		Done = true;
-		for (auto k : netsDone)
-		{
-			if (k != true)
-			{
-				Done = false;
-				break;
-			}
-		}
+		//Go thru all netsDone, if any aren't done, then set Done to false
+		testDone = all_of(netsDone.begin(), netsDone.end(), [](bool v) { return v; });
+		Done = testDone;
 
 		//Increment j, and see if its larger than the number of nets, if so wrap back around
 		if (++j >= Spans.size())
@@ -259,7 +270,7 @@ void Routing::FixDogLegs(int i, vector<vector<int>> &V, vector<Span> &Spans)
 			int j;
 			for (j = ORange.first; j <= ORange.second; j++)
 			{
-				if (rowT[j] <= 0 || rowB[j] <= 0)
+				if (rowT[j] <= UNCONNECTED_TERMINAL || rowB[j] <= UNCONNECTED_TERMINAL)
 					break;
 			}
 			pair<int, int> NewRange1 = {ORange.first, j};
@@ -285,12 +296,21 @@ void Routing::BuildV(int i, vector<vector<int>> &V)
 	vector<int> &rowB = m_BotRow[i].RowNets;
 
 	//find the range of every net
-	for (int j = 0; j < m_colCount; j++)
+	for (int j = 1; j < m_colCount-1; j++) //Middle as the end bits will always be spacers
 	{
 		int netIDT = rowT[j];
-		int netIDB = rowB[j];
+		int netIDB = SPACING_TERMINAL;
 
-		if (netIDT > 0 && netIDB > 0)
+		//find where a terminal is either directly below or one to left or right
+		for (int k = -1; k < 2; k++) {
+			if (rowB[j + k] != SPACING_TERMINAL && rowB[j + k] != UNCONNECTED_TERMINAL) {
+				netIDB = rowB[j + k];
+				break;
+			}
+		}
+
+		// if net is a net, and the bottom is either a net or a spacer
+		if (netIDT > SPACING_TERMINAL && netIDB > SPACING_TERMINAL)
 		{
 			for (int k = 0; k < V.size(); k++)
 			{
@@ -331,7 +351,7 @@ void Routing::BuildSpans(int channelIndex, vector<Span> &Spans)
 	for (int col = 0; col < m_colCount; col++)
 	{
 		int netID = rowT[col];
-		if (netID != UNCONNECTED_TERMINAL)
+		if (netID != UNCONNECTED_TERMINAL && netID != SPACING_TERMINAL)
 		{
 			// Find if there is a span with this netID in Spans already
 			auto iter = find_if(Spans.begin(), Spans.end(), [netID](Span const &span) {
@@ -346,7 +366,7 @@ void Routing::BuildSpans(int channelIndex, vector<Span> &Spans)
 		}
 
 		netID = rowB[col];
-		if (netID != UNCONNECTED_TERMINAL)
+		if (netID != UNCONNECTED_TERMINAL && netID != SPACING_TERMINAL)
 		{
 			auto iter = find_if(Spans.begin(), Spans.end(),
 								[netID](Span const &item) { return item.net == netID; });
@@ -411,7 +431,7 @@ void Routing::BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals)
 			int iter = 0;
 			for (auto &l : k.ranges)
 			{ //all ranges for each net
-				if (l.first >= j && l.second <= j)
+				if (l.first <= j && l.second >= j)
 				{ //check if net's x ranges overlap this col
 					//S[j].insert({ k.net,iter });		//push net
 					S[j].addSet(j, {k.net, iter}); //push net
@@ -427,11 +447,18 @@ void Routing::BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals)
 	{
 		for (int k = 0; k < S.size(); k++)
 		{
+			//already going to delete this col, move on
+			if (columnsToRemove.size() > 0 && 
+				columnsToRemove.find(k) != columnsToRemove.end())
+				continue;
+
 			//check each set to see if its contained in another set
-			if (includes(S[j].nets.begin(), S[j].nets.end(),
+			if (S[j].nets.size() < 1 ||
+				includes(S[j].nets.begin(), S[j].nets.end(),
 						 S[k].nets.begin(), S[k].nets.end()))
 			{
 				columnsToRemove.insert(j);
+				break;
 			}
 		}
 	}
@@ -455,7 +482,7 @@ void Routing::Print()
 				int netID = j.m_nets[k];
 				pair<int, int> locs = j.m_locs[k];
 
-				cout << netID << ": " << locs.first << ", " << locs.second << " ";
+				cout << "Net " << netID << ": Range(" << locs.first << ", " << locs.second << "),";
 			}
 		}
 		cout << endl;

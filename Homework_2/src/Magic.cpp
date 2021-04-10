@@ -9,7 +9,7 @@ using namespace std;
 // Magic Intro Function
 Magic::Magic(Placement place, Routing route)
 {
-
+    return;
     CreateLayout(route, place);
     Output("", "");
 }
@@ -60,6 +60,7 @@ void Magic::CreateLayout(Routing route, Placement place)
 {
     vector<vector<MCell>> MagCells;
     vector<vector<MNet>> MagNets;
+    vector<vector<int>> colsTransformation(route.m_colCount);
 
     int totalTracks = 0;
     int y = 0;
@@ -68,7 +69,7 @@ void Magic::CreateLayout(Routing route, Placement place)
         int x = 0;
         totalTracks += route.m_channels[i].m_tracks.size();
         y = i * 6 + totalTracks * 2 + 1;
-        vector<int> colsTransformation(route.m_colCount);
+        
         for (int j = 0; j < route.m_colCount; j++)
         {
             string cellIDL = "";
@@ -83,7 +84,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                     if (cell.isFeedthrough())
                         x += 3;
                     else
-                        x += 7;
+                        x += 9; //uh oh
+                        //x += 7;
                 }
                 else
                 {
@@ -99,7 +101,7 @@ void Magic::CreateLayout(Routing route, Placement place)
                 MagCells[i].push_back(mcell);
             }
 
-            colsTransformation[j] = x;
+            colsTransformation[i][j] = x;
         }
 
         // go thru all nets
@@ -115,8 +117,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                 MTrunk m_trunk;
                 int left = j.ranges[k].first;
                 int right = j.ranges[k].second;
-                int newLeft = colsTransformation[left];
-                int newRight = colsTransformation[right];
+                int newLeft = colsTransformation[i][left];
+                int newRight = colsTransformation[i][right];
                 m_trunk.x_locs = {newLeft, newRight};
 
                 m_trunk.y = i * 6 + j.n_tracks[k] * 2;

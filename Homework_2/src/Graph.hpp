@@ -9,6 +9,7 @@
 
 using namespace std;
 
+#define SPACING_TERMINAL 0
 #define UNCONNECTED_TERMINAL -1
 #define FEED_THROUGH_TOP_TERMINAL 1
 #define FEED_THROUGH_BOTTOM_TERMINAL 3
@@ -99,6 +100,8 @@ public:
     int m_connectivity;
     Flips m_orientation;
 };
+
+bool isFeedthru(string id);
 
 class Graph
 {
