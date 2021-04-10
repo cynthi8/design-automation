@@ -22,12 +22,19 @@ struct MTrunk
     int y;
 };
 
+struct MContact
+{
+    int x;
+    int y;
+};
+
 class MNet
 {
 public:
     int netID;
     vector<MTrunk> m_trunks;
     vector<MBranch> m_branches;
+    vector<MContact> m_contacts;
     string makeMetal1();
     string makeMetal2();
     string makeMetal2Contact();
