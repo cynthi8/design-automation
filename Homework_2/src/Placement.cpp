@@ -336,27 +336,15 @@ void Placement::SimulatedAnealingPlace(float initialTemperature, float freezingT
 			string cell1Id = to_string(cell1);
 
 			int deltaCost = CalculateDeltaCost(cell0Id, cell1Id);
-			if (deltaCost < 0)
+			if (deltaCost >= 0)
 			{
-				m_cost -= deltaCost;
-				//numAccepted++;
-			}
-			else
-			{
-				if (m_unitDistribution(m_generator) < pow(boltzmanLimit, deltaCost + 1)) // Add 1 to deltaCost so 0 is not auto-accepted
+				if (m_unitDistribution(m_generator) > pow(boltzmanLimit, deltaCost + 1)) // Add 1 to deltaCost so 0 is not auto-accepted
 				{
-					// Probablistically accept increases in cost
-					m_cost -= deltaCost;
-					//numAccepted++;
-				}
-				else
-				{
-					// Swap back
+					// Reject the move, Swap back
 					Swap(cell0Id, cell1Id);
 				}
 			}
 		}
-		//float acceptProportion = (float)numAccepted / (float)movesPerStep;
 		temperature *= heatRetention;
 	}
 }
