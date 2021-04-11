@@ -189,6 +189,9 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 		//Go through all spans on this net
 		for (int rangeID = 0; rangeID < Spans[j].ranges.size(); rangeID++)
 		{
+			if (netsRangesDone[j][rangeID] == true)
+				continue;
+
 			bool inS = false;
 			bool inV = false;
 			vector<vector<int>> removefromV;
@@ -293,7 +296,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			netsRangesDone[j][rangeID] = true;
 
 			//keep the assigned track of this span for Magic
-			Spans[j].n_tracks[rangeID] = maxtrack;
+			Spans[j].n_tracks[rangeID] = NetTracks[{netID, rangeID}];
 		}
 
 		//Go thru all spans on this net, if any spans aren't done, then set that net to false
@@ -389,9 +392,9 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 1;
+			int rangeVal = 0;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 0;
+				rangeVal = 1;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
@@ -569,7 +572,7 @@ void Routing::BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals)
 			int iter = 0;
 			for (auto &l : k.ranges)
 			{ //all ranges for each net
-				if (l.first - 1 <= j && l.second + 1 >= j) 
+				if (l.first - 1 <= j && l.second + 1 >= j)
 					//&& k.net!= SPACING_TERMINAL && k.net != UNCONNECTED_TERMINAL)
 				{ //check if net's x ranges overlap this col
 					//S[j].insert({ k.net,iter });		//push net
