@@ -131,7 +131,7 @@ void Magic::CreateLayout(Routing route, Placement place)
             {
                 // Construct a branch down
                 //leftMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks[0] + 1};
-                leftMostBranch.y_locs = { channelTop, channelTop - (2 * span.n_tracks[0] + 1) };
+                leftMostBranch.y_locs = { channelBottom, channelTop - (2 * span.n_tracks[0] + 1) };
             }
             else if (netId == route.m_TopRow[channelIndex].RowCells[leftMostBranch.x].NetID)
             {
@@ -151,7 +151,7 @@ void Magic::CreateLayout(Routing route, Placement place)
             if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch up
-                //rightMostBranch.y_locs = {channelBottom + 2 * span.n_tracks.back() + 1, channelTop};
+                //rightMostBranch.y_locs = { channelBottom + 2 * span.n_tracks.back() + 1, channelTop };
                 //rightMostBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelBottom };
                 rightMostBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelTop };
             }
@@ -159,7 +159,7 @@ void Magic::CreateLayout(Routing route, Placement place)
             {
                 // Construct a branch down
                 //rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
-                rightMostBranch.y_locs = { channelTop, channelTop - (2 * span.n_tracks.back() + 1) };
+                rightMostBranch.y_locs = { channelBottom, channelTop - (2 * span.n_tracks.back() + 1) };
             }
             else
             {
@@ -173,7 +173,7 @@ void Magic::CreateLayout(Routing route, Placement place)
                 MBranch middleBranch;
                 middleBranch.x = span.ranges[0].second;
                 //middleBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelBottom + 2 * span.n_tracks.back() + 1};
-                middleBranch.y_locs = { channelTop - (2 * span.n_tracks[0] + 1), channelTop - (2 * span.n_tracks.back() + 1) };
+                middleBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelTop - (2 * span.n_tracks[0] + 1)};
                 newMNet.m_branches.push_back(middleBranch);
             }
 
