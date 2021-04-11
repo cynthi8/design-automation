@@ -34,7 +34,8 @@ const vector<Benchmark> TestBenchmarks{
     {"Benchmarks/b_feedthrough_multi", 2},
     {"Benchmarks/b_vertical_dependency", 2},
     {"Benchmarks/b_basic_dogleg", 1},
-    {"Benchmarks/b_dogleg_with_space", 2}};
+    {"Benchmarks/b_dogleg_with_space", 2},
+    {"Benchmarks/b_double_doglegs", 2}};
 
 const vector<Benchmark> Benchmarks{
     {"Benchmarks/b_50_50", (int)(sqrt(50) * 1.5)},
@@ -235,7 +236,7 @@ int main(int argc, char *argv[])
     */
 
     //Test_Magic(Benchmarks[2]);
-    Test_Routing(TestBenchmarks[10]);
+    Test_Routing(TestBenchmarks[12]);
     PlaceAndRoute(Benchmarks[2], 2);
     return 0;
 }
