@@ -165,32 +165,25 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
     // Process Graph
     Graph graph(benchmark.fileName);
 
-    // Do Placement and Collect Data
+    // Do Placement
     Placement placement(graph, benchmark.gridWidth);
-    int originalPlacementCost = placement.CalculatePlacementCost();
-    //placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
-    placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
-    int postSimulatedAnealingCost = placement.CalculatePlacementCost();
-
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     placement.GreedyFlipping(10);
-    int postFlippingCost = placement.CalculatePlacementCost();
-
     placement.InsertFeedthroughs();
-    int postFeedthroughsCost = placement.CalculatePlacementCost();
-
     int feedthroughCount = placement.m_feedthroughCount;
 
     // Do Routing
     Routing routing(placement);
-    routing.Print();
 
+    // Do Magic
     Magic magic(placement, routing);
     magic.Output("Output", to_string(BenchNum) + ".mag");
+
     int msPassed = MilisecondsPassed(start);
 
     // Print out
-    cout << benchmark.fileName << "\t" << originalPlacementCost << "\t\t\t" << postSimulatedAnealingCost << "\t\t\t"
-         << postFlippingCost << "\t\t\t" << postFeedthroughsCost << "\t\t" << feedthroughCount << "\t\t" << msPassed << endl;
+    cout << benchmark.fileName << "\t" << feedthroughCount << "\t" << msPassed << endl;
 }
 
 void Test_Magic(Benchmark benchmark)
@@ -216,19 +209,16 @@ void Test_Magic(Benchmark benchmark)
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    try
+    /*
+    int BenchNum = 1;
+    cout << "fileName feedthroughCount msPassed" << endl;
+    for (auto benchmark : Benchmarks)
     {
-        //Test_Placements();
-        //Test_FeedthroughCounts();
-        Test_Magic(Benchmarks[2]);
-        //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
+        PlaceAndRoute(benchmark, BenchNum);
+        BenchNum++;
+    }
+    */
 
-        //PlaceAndRoute(Benchmarks[0], 1);
-    }
-    catch (invalid_argument &e)
-    {
-        cerr << e.what() << endl;
-        return 1;
-    }
+    Test_Magic(Benchmarks[2]);
     return 0;
 }
