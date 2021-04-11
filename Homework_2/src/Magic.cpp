@@ -105,6 +105,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                 newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
                 //newTrunk.y = channelTop - (2 * span.n_tracks[trunk] + 1);
                 newTrunk.x_locs = span.ranges[trunk];
+                if(span.ranges[trunk].second < span.ranges[trunk].first)
+                    newTrunk.x_locs = { span.ranges[trunk].second, span.ranges[trunk].first };
 
                 //Skip building any 0 width trunks
                 if (newTrunk.x_locs.first == newTrunk.x_locs.second)
