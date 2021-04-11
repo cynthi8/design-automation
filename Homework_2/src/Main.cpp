@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
     {
         //Test_Placements();
         //Test_FeedthroughCounts();
-        Test_Magic(TestBenchmarks.back());
+        Test_Magic(Benchmarks[0]);
         //PlaceAndRoute({ "Benchmarks/b_tiny", 4 });
 
         //PlaceAndRoute(Benchmarks[0], 1);

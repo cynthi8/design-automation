@@ -105,7 +105,7 @@ void Magic::CreateLayout(Routing route, Placement place)
             for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
             {
                 MTrunk newTrunk;
-                newTrunk.y = channelBottom + span.n_tracks[trunk] * 2;
+                newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
                 newTrunk.x_locs = span.ranges[trunk];
                 newMNet.m_trunks.push_back(newTrunk);
 
