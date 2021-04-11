@@ -159,6 +159,7 @@ public:
 	int net;
 	vector<pair<int, int>> ranges;
 	vector<int> n_tracks;
+	//vector<int> r_order;
 };
 
 class SSet
@@ -196,6 +197,8 @@ public:
 	void BuildV(int i, vector<vector<pair<int, int>>>&V);
 	void FixDogLegs(int i, vector<vector<pair<int, int>>>&V, vector<Span> &NetsAndXRanges);
 	void RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V, vector<Span> &NetsAndXRanges);
+
+	void SortSpans(vector<Span>& NetsAndXRanges);
 
 	void Print();
 

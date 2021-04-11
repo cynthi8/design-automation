@@ -40,9 +40,20 @@ Routing::Routing(Placement place)
 		// Finally Route the nets
 		RouteNets(i, S, V, Spans);
 
+		SortSpans(Spans);
+
 		m_Spans[i] = Spans;
 	}
 
+	return;
+}
+
+void Routing::SortSpans(vector<Span>& NetsAndXRanges)
+{
+	//for (auto& i : NetsAndXRanges)
+	//{
+	//	sort(i.begin)
+	//}
 	return;
 }
 
@@ -147,6 +158,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 	{
 		int k = Spans[j].ranges.size();
 		Spans[j].n_tracks.resize(k);
+		//Spans[j].r_order.resize(k);
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
 		NetTracks.insert({Spans[j].net, -1});
 	}
@@ -180,7 +192,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			vector<vector<int>> removefromV;
 			vector<int> Vidx;
 			pair<int, int> range = Spans[j].ranges[rangeID];
-
+			//int ord = 0;
 			//Check if this net is in a VCG
 			for (int k = 0; k < V.size(); k++)
 			{
@@ -319,15 +331,21 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 
 			//Need to find an empty place to split it
 			int j;
-			for (j = ORange.first; j <= ORange.second; j++)
+			for (j = ORange.first; j < ORange.second; j++)
 			{
 				if (rowT[j] <= UNCONNECTED_TERMINAL || rowB[j] <= UNCONNECTED_TERMINAL)
 					break;
 			}
 			pair<int, int> NewRange1 = {ORange.first, j};
 			pair<int, int> NewRange2 = {j, ORange.second};
-			Spans[idx].ranges[0] = NewRange1;
-			Spans[idx].ranges.push_back(NewRange2);
+			if (netIDProb == rowT[ORange.first]) {
+				Spans[idx].ranges[0] = NewRange2;
+				Spans[idx].ranges.push_back(NewRange1);
+			}
+			else {
+				Spans[idx].ranges[0] = NewRange1;
+				Spans[idx].ranges.push_back(NewRange2);
+			}
 
 			//remove the last two elements causing the dogleg problem
 			//V[i].pop_back();
