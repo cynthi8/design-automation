@@ -34,12 +34,12 @@ const vector<Benchmark> TestBenchmarks{
     {"Benchmarks/b_feedthrough_multi", 2}};
 
 const vector<Benchmark> Benchmarks{
-    {"Benchmarks/b_50_50", (int)sqrt(50) * 2},
-    {"Benchmarks/b_100_100", (int)sqrt(100) * 2},
-    {"Benchmarks/b_400_400", (int)sqrt(400) * 2},
+    {"Benchmarks/b_50_50", (int)(sqrt(50) * 1.5)},
+    {"Benchmarks/b_100_100", (int)(sqrt(100) * 1.5)},
+    {"Benchmarks/b_400_400", (int)(sqrt(400) * 1.7)},
     {"Benchmarks/b_600_1000", (int)sqrt(600) * 2},
-    {"Benchmarks/b_900_800", (int)sqrt(900) * 2},
-    {"Benchmarks/b_1000_1000", (int)sqrt(1000) * 2},
+    {"Benchmarks/b_900_800", (int)(sqrt(900) * 1.8)},
+    {"Benchmarks/b_1000_1000", (int)(sqrt(1000) * 1.9)},
     {"Benchmarks/b_1000_1200", (int)sqrt(1000) * 2},
     {"Benchmarks/b_1200_1500", (int)sqrt(1200) * 2},
     {"Benchmarks/b_1500_1500", (int)sqrt(1500) * 2},
