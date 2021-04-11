@@ -200,6 +200,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 				//auto iter = find(V[k].begin(), V[k].end(), netID);
 				auto iter = find_if(V[k].begin(), V[k].end(), [netID, rangeID](auto & vnet)
 					{ return (vnet.first == netID && vnet.second == rangeID); });
+					//{ return (vnet.first == netID); });
 
 				if (V[k].size() == 0)
 					continue;
@@ -361,9 +362,9 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 1;
+			int rangeVal = 0;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 0;
+				rangeVal = 1;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
