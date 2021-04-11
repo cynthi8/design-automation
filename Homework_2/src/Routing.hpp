@@ -198,7 +198,7 @@ public:
 	void FixDogLegs(int i, vector<vector<pair<int, int>>>&V, vector<Span> &NetsAndXRanges);
 	void RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V, vector<Span> &NetsAndXRanges);
 
-	void SortSpans(vector<Span>& NetsAndXRanges);
+	//void SortSpans(vector<Span>& NetsAndXRanges);
 
 	void Print();
 

@@ -31,6 +31,7 @@ Routing::Routing(Placement place)
 
 		// Fix Doglegs by changing range
 		FixDogLegs(i, V, Spans);
+		//FixDogLegs(i, V, Spans);
 
 		// Build the S / H Graph
 		vector<SSet> S(m_colCount);
@@ -40,20 +41,9 @@ Routing::Routing(Placement place)
 		// Finally Route the nets
 		RouteNets(i, S, V, Spans);
 
-		SortSpans(Spans);
-
 		m_Spans[i] = Spans;
 	}
 
-	return;
-}
-
-void Routing::SortSpans(vector<Span>& NetsAndXRanges)
-{
-	//for (auto& i : NetsAndXRanges)
-	//{
-	//	sort(i.begin)
-	//}
 	return;
 }
 
@@ -201,21 +191,18 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			//Check if this net is in a VCG
 			for (int k = 0; k < V.size(); k++)
 			{
-				//if the value is in the VCG and isn't the very last one, then skip it
-				//auto iter = find(V[k].begin(), V[k].end(), netID);
-				auto iter = find_if(V[k].begin(), V[k].end(), [netID, rangeID](auto & vnet)
-					{ return (vnet.first == netID && vnet.second == rangeID); });
-					//{ return (vnet.first == netID); });
-
 				if (V[k].size() == 0)
 					continue;
 
+				//if the value is in the VCG and isn't the very last one, then skip it
+				auto iter = find_if(V[k].begin(), V[k].end(), [netID, rangeID](auto & vnet)
+					{ return (vnet.first == netID && vnet.second == rangeID); });
+
 				//if we find a vleg that wasn't at the end or its the second to last and it equals
-				if (iter < V[k].end() - 1 && *(iter) != *(iter+1))
+				if (iter < V[k].end() - 1 && *(iter) != *(iter+1) && V[k].size() != 1)
 				{
 					inV = true;
-					//continue;
-					break;
+					//break;
 				}
 				
 				if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
@@ -324,23 +311,29 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 	vector<int> &rowT = m_TopRow[channelIndex].RowNets;
 	vector<int> &rowB = m_BotRow[channelIndex].RowNets;
 
-	vector<int> Doglegs;
+	vector<pair<int,int>> Doglegs;
 	vector<vector<pair<int, int>>> NewVs;
 	vector<int> rangeVals;
 
 	//Go though all values in the V graph
 	for (auto i = 0; i < V.size(); i++)
 	{
-
+		int front = V[i][0].first;
+		auto piter = find_if(V[i].begin()+1, V[i].end(), [front](auto& vnet)
+			{ return (vnet.first == front); });
 		//if the first and last element are the same, then we have a dogleg
-		if (V[i][0].first == V[i].back().first)
+		//if (V[i][0].first == V[i].back().first)
+		if (piter != V[i].end())
 		{
+			auto pidx = piter - V[i].begin();
 			//split the second to last net's x range into two
-			pair <int,int> netIDProbP = *(V[i].rbegin() + 1);
+			//pair <int,int> netIDProbP = *(V[i].rbegin() + 1);
+			pair <int, int> netIDProbP = V[i][pidx - 1];
 			int netIDProb = netIDProbP.first;
 			//int netIDProb = *(V[i].rbegin() + 1);
 
-			pair <int, int> netIDEndP = *(V[i].rbegin());
+			//pair <int, int> netIDEndP = *(V[i].rbegin());
+			pair <int, int> netIDEndP = V[i][pidx];
 			int netIDEnd = netIDEndP.first;
 			//int netIDEnd = *(V[i].rbegin());
 
@@ -395,30 +388,42 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 0;
-			if (netIDProb == rowT[ORange.first])
-				rangeVal = 1;
-			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
+			int rangeVal = 1;
+			//if (netIDProb == rowT[ORange.first])
+			//	rangeVal = 0;
+
+			vector<pair<int, int>> nv = { { netIDProb, rangeVal } };
+			copy(piter, V[i].end(), back_inserter(nv));
+			NewVs.push_back(nv);
+
 			//NewVs.push_back( {netIDEnd, 0} );
-			Doglegs.push_back(i);
+			Doglegs.push_back({ i , pidx });
 			rangeVals.push_back(rangeVal);
+			//i = 0;
 		}
 	}
 
-	for (int j = 0; j < Doglegs.size(); j++) {
-		int Didx = Doglegs[j];
-		V[Didx].pop_back();
+	for (int j = Doglegs.size()-1; j >= 0; j--) {
+		int Didx = Doglegs[j].first;
+		int PBidx = Doglegs[j].second;
+		V[Didx].erase(V[Didx].begin() + PBidx, V[Didx].end());
+		//V[Didx].pop_back();
 		int Vsize = V[Didx].size() - 1;
 
-		int rangeVal = 0;
-		if (rangeVals[j] == 0)
-			rangeVal = 1;
+		//int rangeVal = 0;
+		//if (rangeVals[j] == 0)
+		//	rangeVal = 1;
 
-		V[Didx][Vsize].second = rangeVal;
+		//V[Didx][PBidx].second = rangeVal;
 		V.push_back(NewVs[j]);
 	}
 
-
+	//If we need to, remove this net from the VCG
+	//for (int m = V.size() - 1; m >= 0; m--) {
+	//	if (V[m].size() == 1) {
+	//		V[m].erase(V[m].begin());
+	//	}
+	//}
 	return;
 }
 
@@ -477,6 +482,61 @@ void Routing::BuildV(int i, vector<vector<pair<int, int>>>&V)
 	EndOuterForLoop:
 		continue;
 	}
+
+	/**/
+	vector<int> VFidx;
+	vector<int> VLidx;
+	for (int j = 0; j < V.size(); j++)
+	{
+		for (int k = 0; k < V.size(); k++)
+		{
+			if (j == k)
+				continue;
+
+			//if the first element of any v is the last element of any other v, then add it to that
+			if (V[k][0] == V[j].back()) {
+				VFidx.push_back(k);
+				VLidx.push_back(j);
+			}
+		}
+	}
+
+	//If we need to, remove this net from the VCG
+	for (int m = VFidx.size()-1; m >= 0; m--) {
+		int first = VFidx[m];
+		int last = VLidx[m];
+		vector<vector<pair<int, int>>> Vf = V;
+		//vector<vector<pair<int, int>>> Vl = V;
+		if (V[first].size() > 1) {
+			V[last].insert(V[last].end(), Vf[first].begin() + 1, Vf[first].end());
+			//V.erase(V.begin() + first);
+		}
+		else
+		{
+			//V[last].insert(V[last].end(), V[first].begin(), V[first].begin());
+			//V.erase(V.begin() + first);
+		}
+	}
+
+	sort(VFidx.begin(), VFidx.end());
+	//If we need to, remove this net from the VCG
+	for (int m = VFidx.size() - 1; m >= 0; m--) {
+		int first = VFidx[m];
+		//int last = VLidx[m];
+		vector<vector<pair<int, int>>> Vf = V;
+		//vector<vector<pair<int, int>>> Vl = V;
+		if (V[first].size() > 1) {
+			//V[last].insert(V[last].end(), Vf[first].begin() + 1, Vf[first].end());
+			V.erase(V.begin() + first);
+		}
+		else
+		{
+			//V[last].insert(V[last].end(), V[first].begin(), V[first].begin());
+			//V.erase(V.begin() + first);
+		}
+	}
+
+	/**/
 
 	return;
 }
