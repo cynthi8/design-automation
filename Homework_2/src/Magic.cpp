@@ -126,10 +126,16 @@ void Magic::CreateLayout(Routing route, Placement place)
 
             // Build Left Most Branch
             MBranch leftMostBranch;
-            if(span.ranges[0].first < span.ranges.back().first)
-                leftMostBranch.x = span.ranges[0].first;
+            if(span.ranges[0].first == span.ranges.back().second)
+                if(span.ranges.back().first < span.ranges[0].second)
+                    leftMostBranch.x = span.ranges.back().first;
+                else
+                    leftMostBranch.x = span.ranges[0].second;
             else
-                leftMostBranch.x = span.ranges.back().first;
+                if (span.ranges[0].first < span.ranges.back().second)
+                    leftMostBranch.x = span.ranges[0].first;
+                else
+                    leftMostBranch.x = span.ranges.back().second;
 
             if (netId == route.m_BotRow[channelIndex].RowCells[leftMostBranch.x].NetID)
             {
@@ -149,10 +155,21 @@ void Magic::CreateLayout(Routing route, Placement place)
 
             // Build Right Most Branch
             MBranch rightMostBranch;
-            if (span.ranges[0].second < span.ranges.back().second)
-                rightMostBranch.x = span.ranges.back().second;
+            //if (span.ranges[0].second < span.ranges.back().second)
+            //    rightMostBranch.x = span.ranges.back().second;
+            //else
+            //    rightMostBranch.x = span.ranges[0].second;
+
+            if (span.ranges[0].first == span.ranges.back().second)
+                if (span.ranges.back().first > span.ranges[0].second)
+                    rightMostBranch.x = span.ranges.back().first;
+                else
+                    rightMostBranch.x = span.ranges[0].second;
             else
-                rightMostBranch.x = span.ranges[0].second;
+                if (span.ranges[0].first > span.ranges.back().second)
+                    rightMostBranch.x = span.ranges[0].first;
+                else
+                    rightMostBranch.x = span.ranges.back().second;
 
             if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {

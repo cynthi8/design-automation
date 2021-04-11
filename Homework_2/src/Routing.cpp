@@ -350,6 +350,31 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 				if (rowT[j] <= UNCONNECTED_TERMINAL || rowB[j] <= UNCONNECTED_TERMINAL)
 					break;
 			}
+
+			
+			if (j == ORange.second) {
+				int newR = 0;
+				int MoreRight = 0;
+				int MoreLeft = 0;
+				for (newR = 0; newR < m_colCount; newR++) {
+					MoreRight = ORange.second + newR;
+					MoreLeft = ORange.first - newR;
+					if (MoreRight < m_colCount)
+					{
+						if (rowT[MoreRight] <= UNCONNECTED_TERMINAL || rowB[MoreRight] <= UNCONNECTED_TERMINAL) {
+							j = MoreRight;
+							break;
+						}
+					}
+					else if (MoreLeft > 0) {
+						if (rowT[MoreLeft] <= UNCONNECTED_TERMINAL || rowB[MoreLeft] <= UNCONNECTED_TERMINAL) {
+							j = MoreLeft;
+							break;
+						}
+					}
+				}
+			}
+			
 			pair<int, int> NewRange1 = {ORange.first, j};
 			pair<int, int> NewRange2 = {j, ORange.second};
 			if (netIDProb == rowT[ORange.first]) {

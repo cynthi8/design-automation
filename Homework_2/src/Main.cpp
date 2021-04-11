@@ -232,6 +232,6 @@ int main(int argc, char *argv[])
     */
 
     //Test_Magic(Benchmarks[2]);
-    PlaceAndRoute(Benchmarks[2], 2);
+    PlaceAndRoute(Benchmarks[3], 2);
     return 0;
 }
