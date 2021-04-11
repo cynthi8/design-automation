@@ -200,7 +200,7 @@ void Test_Magic(Benchmark benchmark)
 
     // Do Placement and Collect Data
     Placement placement(graph, benchmark.gridWidth);
-    placement.SimulatedAnealingPlace(1000, 1, .95, 10000);
+    placement.SimulatedAnealingPlace(1000, 1, .95, 1000);
     placement.GreedyFlipping(10);
     placement.InsertFeedthroughs();
     //placement.Print();
@@ -226,6 +226,6 @@ int main(int argc, char *argv[])
     }
     */
 
-    Test_Magic(Benchmarks[3]);
+    Test_Magic(Benchmarks[2]);
     return 0;
 }
