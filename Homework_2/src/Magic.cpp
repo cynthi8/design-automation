@@ -111,7 +111,7 @@ void Magic::CreateLayout(Routing route, Placement place)
 
                 //Build the Contacts, 2 contacts per trunk
                 MContact contact;
-                contact.y = channelBottom + span.n_tracks[trunk] * 2;
+                contact.y = channelBottom + span.n_tracks[trunk] * 2 + 1;
                 contact.x = span.ranges[trunk].first;
                 newMNet.m_contacts.push_back(contact);
 
