@@ -102,7 +102,8 @@ void Magic::CreateLayout(Routing route, Placement place)
             for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
             {
                 MTrunk newTrunk;
-                newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
+                //newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
+                newTrunk.y = channelTop - (2 * span.n_tracks[trunk] + 1);
                 newTrunk.x_locs = span.ranges[trunk];
 
                 //Skip building any 0 width trunks
@@ -129,12 +130,14 @@ void Magic::CreateLayout(Routing route, Placement place)
             if (netId == route.m_BotRow[channelIndex].RowCells[leftMostBranch.x].NetID)
             {
                 // Construct a branch down
-                leftMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks[0] + 1};
+                //leftMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks[0] + 1};
+                leftMostBranch.y_locs = { channelBottom, channelTop - (2 * span.n_tracks[0] + 1) };
             }
             else if (netId == route.m_TopRow[channelIndex].RowCells[leftMostBranch.x].NetID)
             {
                 // Construct a branch up
-                leftMostBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelTop};
+                //leftMostBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelTop};
+                leftMostBranch.y_locs = { channelTop - (2 * span.n_tracks[0] + 1), channelTop };
             }
             else
             {
@@ -148,12 +151,15 @@ void Magic::CreateLayout(Routing route, Placement place)
             if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch up
-                rightMostBranch.y_locs = {channelBottom + 2 * span.n_tracks.back() + 1, channelTop};
+                //rightMostBranch.y_locs = { channelBottom + 2 * span.n_tracks.back() + 1, channelTop };
+                //rightMostBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelBottom };
+                rightMostBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelTop };
             }
             else if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch down
-                rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
+                //rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
+                rightMostBranch.y_locs = { channelBottom, channelTop - (2 * span.n_tracks.back() + 1) };
             }
             else
             {
@@ -166,7 +172,8 @@ void Magic::CreateLayout(Routing route, Placement place)
                 // Build the branch between the trunks
                 MBranch middleBranch;
                 middleBranch.x = span.ranges[0].second;
-                middleBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelBottom + 2 * span.n_tracks.back() + 1};
+                //middleBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelBottom + 2 * span.n_tracks.back() + 1};
+                middleBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelTop - (2 * span.n_tracks[0] + 1)};
                 newMNet.m_branches.push_back(middleBranch);
             }
 
