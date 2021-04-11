@@ -173,7 +173,7 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
 
     // Do Placement
     Placement placement(graph, benchmark.gridWidth);
-    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    placement.SimulatedAnealingPlace(1000, 1, .975, 1000);
     //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     placement.GreedyFlipping(10);
     placement.InsertFeedthroughs();
@@ -206,7 +206,7 @@ void Test_Magic(Benchmark benchmark)
 
     // Do Placement and Collect Data
     Placement placement(graph, benchmark.gridWidth);
-    placement.SimulatedAnealingPlace(1000, 1, .95, 1000);
+    placement.SimulatedAnealingPlace(1000, 1, .95, 10000);
     placement.GreedyFlipping(10);
     placement.InsertFeedthroughs();
     //placement.Print();

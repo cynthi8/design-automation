@@ -566,8 +566,8 @@ void Routing::BuildS(int i, vector<SSet> &S, const vector<Span> &NetsAndXVals)
 			int iter = 0;
 			for (auto &l : k.ranges)
 			{ //all ranges for each net
-				if (l.first - 1 <= j && l.second + 1 >= j 
-					&& k.net!= SPACING_TERMINAL && k.net != UNCONNECTED_TERMINAL)
+				if (l.first - 1 <= j && l.second + 1 >= j) 
+					//&& k.net!= SPACING_TERMINAL && k.net != UNCONNECTED_TERMINAL)
 				{ //check if net's x ranges overlap this col
 					//S[j].insert({ k.net,iter });		//push net
 					S[j].addSet(j, {k.net, iter}); //push net
