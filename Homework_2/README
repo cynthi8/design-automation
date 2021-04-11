@@ -1,0 +1,7 @@
+The program is designed in mind such that there are two directories at the location of the executable.
+1. Benchmarks
+2. Output
+
+The Benchmarks must be in the Benchmarks Folder.
+
+The Output folder will contain the Output Magic Files and any necessary sub Magic files that are required.
