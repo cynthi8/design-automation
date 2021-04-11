@@ -105,13 +105,13 @@ void Magic::CreateLayout(Routing route, Placement place)
             for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
             {
                 MTrunk newTrunk;
-                newTrunk.y = channelBottom + span.n_tracks[trunk];
+                newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
                 newTrunk.x_locs = span.ranges[trunk];
                 newMNet.m_trunks.push_back(newTrunk);
 
                 //Build the Contacts, 2 contacts per trunk
                 MContact contact;
-                contact.y = channelBottom + span.n_tracks[trunk];
+                contact.y = newTrunk.y;
                 contact.x = span.ranges[trunk].first;
                 newMNet.m_contacts.push_back(contact);
 
@@ -214,7 +214,7 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
     outputStream << "<< labels >>" << endl;
     for (auto net : m_MNets)
     {
-        //outputStream << net.makeLabel();
+        outputStream << net.makeLabel();
     }
 
     // Exit and close
