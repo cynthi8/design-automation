@@ -175,8 +175,8 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
 
     // Do Placement
     Placement placement(graph, benchmark.gridWidth);
-    //placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
-    placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
     placement.GreedyFlipping(10);
     placement.InsertFeedthroughs();
     int feedthroughCount = placement.m_feedthroughCount;
@@ -224,7 +224,7 @@ void Test_Magic(Benchmark benchmark)
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    /*
+    
     int BenchNum = 1;
     cout << "fileName boundingBoxDimensions boundingBoxArea feedthroughCount wirelength viaCount msPassed" << endl;
     for (auto benchmark : Benchmarks)
@@ -232,10 +232,10 @@ int main(int argc, char *argv[])
         PlaceAndRoute(benchmark, BenchNum);
         BenchNum++;
     }
-    */
+    
 
     //Test_Magic(Benchmarks[2]);
-    Test_Routing(TestBenchmarks[10]);
-    PlaceAndRoute(Benchmarks[2], 2);
+    //Test_Routing(TestBenchmarks[10]);
+    //PlaceAndRoute(Benchmarks[2], 2);
     return 0;
 }

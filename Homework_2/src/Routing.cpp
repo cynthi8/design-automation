@@ -360,13 +360,13 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 					MoreLeft = ORange.first - newR;
 					if (MoreRight < m_colCount)
 					{
-						if (rowT[MoreRight] <= UNCONNECTED_TERMINAL || rowB[MoreRight] <= UNCONNECTED_TERMINAL) {
+						if (rowT[MoreRight] <= UNCONNECTED_TERMINAL && rowB[MoreRight] <= UNCONNECTED_TERMINAL) {
 							j = MoreRight;
 							break;
 						}
 					}
 					else if (MoreLeft > 0) {
-						if (rowT[MoreLeft] <= UNCONNECTED_TERMINAL || rowB[MoreLeft] <= UNCONNECTED_TERMINAL) {
+						if (rowT[MoreLeft] <= UNCONNECTED_TERMINAL && rowB[MoreLeft] <= UNCONNECTED_TERMINAL) {
 							j = MoreLeft;
 							break;
 						}
