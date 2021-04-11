@@ -419,11 +419,11 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 // Build the VCG Graph
 void Routing::BuildV(int i, vector<vector<pair<int, int>>>&V)
 {
-	//vector<int> &rowT = m_TopRow[i].RowNets;
-	//vector<int> &rowB = m_BotRow[i].RowNets;
+	vector<int> &rowT = m_TopRow[i].RowNets;
+	vector<int> &rowB = m_BotRow[i].RowNets;
 
-	vector<int>& rowB = m_TopRow[i].RowNets;
-	vector<int>& rowT = m_BotRow[i].RowNets;
+	//vector<int>& rowB = m_TopRow[i].RowNets;
+	//vector<int>& rowT = m_BotRow[i].RowNets;
 
 	//find the range of every net
 	for (int j = 1; j < m_colCount-1; j++) //Middle as the end bits will always be spacers
