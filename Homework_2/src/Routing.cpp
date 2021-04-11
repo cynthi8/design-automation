@@ -152,7 +152,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 
 	vector<vector<bool>> netsRangesDone(Spans.size());
 	vector<bool> netsDone(Spans.size());
-	map<int, int> NetTracks;
+	//map<int, int> NetTracks;
+	map<pair<int, int>, int> NetTracks;
 
 	for (int j = 0; j < Spans.size(); j++)
 	{
@@ -160,7 +161,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 		Spans[j].n_tracks.resize(k);
 		//Spans[j].r_order.resize(k);
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
-		NetTracks.insert({Spans[j].net, -1});
+		for(int rgx = 0; rgx < Spans[j].ranges.size(); rgx++)
+			NetTracks.insert({ {Spans[j].net, rgx}, -1 });
 	}
 
 	int j = 0;
@@ -242,8 +244,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 				{
 					//go through all nets
 					for (auto l : S[k].nets)
-						if(NetTracks[l.first] != -1)
-							usedTracks.push_back(NetTracks[l.first]);
+						if (NetTracks[{l.first, rangeID}] != -1)
+							usedTracks.push_back(NetTracks[{l.first, rangeID}]);
 				}
 			}
 			sort(usedTracks.begin(), usedTracks.end());
@@ -262,16 +264,16 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			for (int idx = 0; idx < Vidx.size(); idx++)
 			{
 				for (auto thing : CopyV[Vidx[idx]]) {
-					if (NetTracks[thing.first] >= tempMax)
-						tempMax = NetTracks[thing.first] + 1;
+					if (NetTracks[thing] >= tempMax)
+						tempMax = NetTracks[thing] + 1;
 				}
 			}
 
 			//Set this net and track to this available track
 			if(tempMax > maxtrack)
-				NetTracks[netID] = tempMax;
+				NetTracks[{netID, rangeID}] = tempMax;
 			else
-				NetTracks[netID] = maxtrack;
+				NetTracks[{netID, rangeID}] = maxtrack;
 
 			//resize the channel if this track is larger than the number of elements in it
 			if (maxtrack >= m_channels[i].m_tracks.size())
@@ -362,9 +364,9 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 0;
+			int rangeVal = 1;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 1;
+				rangeVal = 0;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
