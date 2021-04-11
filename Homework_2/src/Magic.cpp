@@ -105,13 +105,13 @@ void Magic::CreateLayout(Routing route, Placement place)
             for (unsigned int trunk = 0; trunk < span.ranges.size(); trunk++)
             {
                 MTrunk newTrunk;
-                newTrunk.y = channelBottom + span.n_tracks[trunk];
+                newTrunk.y = channelBottom + span.n_tracks[trunk] * 2;
                 newTrunk.x_locs = span.ranges[trunk];
                 newMNet.m_trunks.push_back(newTrunk);
 
                 //Build the Contacts, 2 contacts per trunk
                 MContact contact;
-                contact.y = channelBottom + span.n_tracks[trunk];
+                contact.y = channelBottom + span.n_tracks[trunk] * 2;
                 contact.x = span.ranges[trunk].first;
                 newMNet.m_contacts.push_back(contact);
 
@@ -185,36 +185,36 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
 
     // Write Net M1
     outputStream << "<< metal1 >>" << endl;
-    for (auto net : m_MNets)
+    for (auto& net : m_MNets)
     {
         outputStream << net.makeMetal1();
     }
 
     // Write Net M2
     outputStream << "<< metal2 >>" << endl;
-    for (auto net : m_MNets)
+    for (auto& net : m_MNets)
     {
         outputStream << net.makeMetal2();
     }
 
     // Write Net M2c
     outputStream << "<< m2contact >>" << endl;
-    for (auto net : m_MNets)
+    for (auto& net : m_MNets)
     {
         outputStream << net.makeMetal2Contact();
     }
 
     // Write cells
-    for (auto cell : m_MCells)
+    for (auto& cell : m_MCells)
     {
         outputStream << cell.makeCell();
     }
 
     // Write net labels
     outputStream << "<< labels >>" << endl;
-    for (auto net : m_MNets)
+    for (auto& net : m_MNets)
     {
-        //outputStream << net.makeLabel();
+        outputStream << net.makeLabel();
     }
 
     // Exit and close
