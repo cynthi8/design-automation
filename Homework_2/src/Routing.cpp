@@ -210,11 +210,12 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 				if (V[k].size() == 0)
 					continue;
 
+				//if we find a vleg that wasn't at the end or its the second to last and it equals
 				if (iter < V[k].end() - 1 && *(iter) != *(iter+1))
 				{
 					inV = true;
 					//continue;
-					//break;
+					break;
 				}
 				
 				if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
@@ -253,7 +254,16 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			}
 			sort(usedTracks.begin(), usedTracks.end());
 
-			int maxtrack = 0;
+			int tempMax = 0;
+			for (int idx = 0; idx < Vidx.size(); idx++)
+			{
+				for (auto thing : CopyV[Vidx[idx]]) {
+					if (NetTracks[thing] >= tempMax)
+						tempMax = NetTracks[thing] + 1;
+				}
+			}
+
+			int maxtrack = tempMax;
 			for (int usedTrackiter = 0; usedTrackiter < usedTracks.size(); usedTrackiter++) {
 				if (usedTracks[usedTrackiter] == maxtrack) {
 					maxtrack++;
@@ -263,14 +273,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 				}
 			}
 
-			int tempMax = 0;
-			for (int idx = 0; idx < Vidx.size(); idx++)
-			{
-				for (auto thing : CopyV[Vidx[idx]]) {
-					if (NetTracks[thing] >= tempMax)
-						tempMax = NetTracks[thing] + 1;
-				}
-			}
+
 
 			//Set this net and track to this available track
 			if(tempMax > maxtrack)
