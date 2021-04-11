@@ -148,7 +148,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 
 	Track track;
 
-	//vector<vector<int>> test = V;
+	vector<vector<pair<int, int>>> CopyV = V;
 
 	vector<vector<bool>> netsRangesDone(Spans.size());
 	vector<bool> netsDone(Spans.size());
@@ -256,11 +256,21 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 					break;
 				}
 			}
-			//if(usedTracks.size() > 0)
-			//	maxtrack = usedTracks.back() + 1;
+
+			int tempMax = 0;
+			for (int idx = 0; idx < Vidx.size(); idx++)
+			{
+				for (auto thing : CopyV[Vidx[idx]]) {
+					if (NetTracks[thing.first] >= tempMax)
+						tempMax = NetTracks[thing.first] + 1;
+				}
+			}
 
 			//Set this net and track to this available track
-			NetTracks[netID] = maxtrack;
+			if(tempMax > maxtrack)
+				NetTracks[netID] = tempMax;
+			else
+				NetTracks[netID] = maxtrack;
 
 			//resize the channel if this track is larger than the number of elements in it
 			if (maxtrack >= m_channels[i].m_tracks.size())

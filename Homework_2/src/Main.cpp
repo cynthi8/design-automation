@@ -226,6 +226,6 @@ int main(int argc, char *argv[])
     }
     */
 
-    Test_Magic(Benchmarks[2]);
+    Test_Magic(Benchmarks[3]);
     return 0;
 }
