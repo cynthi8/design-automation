@@ -210,7 +210,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 					//continue;
 					//break;
 				}
-				//else if it is the last one, then we are good to remove it from V
+				
 				if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
 					vector<int> removes;
 					removes.push_back((int)(iter + 1 - V[k].begin()));
@@ -218,7 +218,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 					removefromV.push_back(removes);
 					Vidx.push_back(k);
 				}
-				if (iter == V[k].end() - 1)
+				//else if it is the last one, then we are good to remove it from V
+				else if (iter == V[k].end() - 1)
 				{
 					removefromV.push_back({ (int)(iter - V[k].begin()) });
 					Vidx.push_back(k);
@@ -227,7 +228,8 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			}
 
 			//value is in a VCG
-			if (inV && Vidx.size() < 1)
+			//if (inV && Vidx.size() < 1)
+			if (inV)
 				continue;
 
 			//Check if this net and its range is in S
@@ -254,6 +256,9 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 					break;
 				}
 			}
+			//if(usedTracks.size() > 0)
+			//	maxtrack = usedTracks.back() + 1;
+
 			//Set this net and track to this available track
 			NetTracks[netID] = maxtrack;
 
@@ -346,9 +351,9 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 1;
+			int rangeVal = 0;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 0;
+				rangeVal = 1;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
