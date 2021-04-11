@@ -351,9 +351,9 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 			//remove the last two elements causing the dogleg problem
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 0;
+			int rangeVal = 1;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 1;
+				rangeVal = 0;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
