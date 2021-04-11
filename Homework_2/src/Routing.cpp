@@ -254,6 +254,9 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 					break;
 				}
 			}
+
+			maxtrack = usedTracks.back() + 1;
+
 			//Set this net and track to this available track
 			NetTracks[netID] = maxtrack;
 
