@@ -178,7 +178,7 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
 
     // Do Magic
     Magic magic(placement, routing);
-    magic.Output("Output", to_string(BenchNum) + ".mag");
+    magic.Output("output", to_string(BenchNum) + ".mag");
     int msPassed = MilisecondsPassed(start);
 
     // Collect Info
