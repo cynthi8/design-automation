@@ -40,9 +40,20 @@ Routing::Routing(Placement place)
 		// Finally Route the nets
 		RouteNets(i, S, V, Spans);
 
+		SortSpans(Spans);
+
 		m_Spans[i] = Spans;
 	}
 
+	return;
+}
+
+void Routing::SortSpans(vector<Span>& NetsAndXRanges)
+{
+	//for (auto& i : NetsAndXRanges)
+	//{
+	//	sort(i.begin)
+	//}
 	return;
 }
 
@@ -147,6 +158,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 	{
 		int k = Spans[j].ranges.size();
 		Spans[j].n_tracks.resize(k);
+		//Spans[j].r_order.resize(k);
 		netsRangesDone[j].insert(netsRangesDone[j].begin(), Spans[j].ranges.size(), false);
 		NetTracks.insert({Spans[j].net, -1});
 	}
@@ -180,7 +192,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			vector<vector<int>> removefromV;
 			vector<int> Vidx;
 			pair<int, int> range = Spans[j].ranges[rangeID];
-
+			//int ord = 0;
 			//Check if this net is in a VCG
 			for (int k = 0; k < V.size(); k++)
 			{
@@ -191,10 +203,6 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 
 				if (V[k].size() == 0)
 					continue;
-
-				//int idx = (int)(iter - V[k].begin());
-				//if (iter != V[k].end() && V[k][idx].second != rangeID)
-					//continue;
 
 				if (iter < V[k].end() - 1 && *(iter) != *(iter+1))
 				{
@@ -319,25 +327,28 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 
 			//Need to find an empty place to split it
 			int j;
-			for (j = ORange.first; j <= ORange.second; j++)
+			for (j = ORange.first; j < ORange.second; j++)
 			{
 				if (rowT[j] <= UNCONNECTED_TERMINAL || rowB[j] <= UNCONNECTED_TERMINAL)
 					break;
 			}
 			pair<int, int> NewRange1 = {ORange.first, j};
 			pair<int, int> NewRange2 = {j, ORange.second};
-			Spans[idx].ranges[0] = NewRange1;
-			Spans[idx].ranges.push_back(NewRange2);
+			if (netIDProb == rowT[ORange.first]) {
+				Spans[idx].ranges[0] = NewRange2;
+				Spans[idx].ranges.push_back(NewRange1);
+			}
+			else {
+				Spans[idx].ranges[0] = NewRange1;
+				Spans[idx].ranges.push_back(NewRange2);
+			}
 
 			//remove the last two elements causing the dogleg problem
-			//V[i].pop_back();
-			//V[i].pop_back();
-			//V.push_back({netIDProb, netIDEnd});
 			
 			//if the problem net is on top, it has to be routed last
-			int rangeVal = 0;
+			int rangeVal = 1;
 			if (netIDProb == rowT[ORange.first])
-				rangeVal = 1;
+				rangeVal = 0;
 			NewVs.push_back({ {netIDProb, rangeVal}, {netIDEnd, 0} });
 			//NewVs.push_back( {netIDEnd, 0} );
 			Doglegs.push_back(i);
@@ -346,7 +357,6 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 	}
 
 	for (int j = 0; j < Doglegs.size(); j++) {
-		//V[Doglegs[j]].pop_back();
 		int Didx = Doglegs[j];
 		V[Didx].pop_back();
 		int Vsize = V[Didx].size() - 1;
@@ -366,7 +376,6 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<pair<int, int>>>&V, vec
 // Build the VCG Graph
 void Routing::BuildV(int i, vector<vector<pair<int, int>>>&V)
 {
-	//vector<vector<int>> V;
 	vector<int> &rowT = m_TopRow[i].RowNets;
 	vector<int> &rowB = m_BotRow[i].RowNets;
 
@@ -388,13 +397,8 @@ void Routing::BuildV(int i, vector<vector<pair<int, int>>>&V)
 		}
 
 		if (netIDT == netIDB) {
-			//cout << "hmm" << endl;
 			continue;
 		}
-
-		//if (netIDT == 386 || netIDB == 386) {
-		//	int test = 1;
-		//}
 
 		// if net is a net, and the bottom is either a net or a spacer
 		if (netIDT > SPACING_TERMINAL && netIDB > SPACING_TERMINAL)
@@ -406,20 +410,16 @@ void Routing::BuildV(int i, vector<vector<pair<int, int>>>&V)
 					V[k].insert(V[k].begin(), { netIDT, 0 });
 					goto EndOuterForLoop;
 				}
-				else
+			}
+			for (int k = 0; k < V.size(); k++)
+			{
+				if (V[k].back().first == netIDT)
 				{
-					//for (int l = 0; l < V[k].size(); l++)
-					//{
-					int l = (int) V[k].size() - 1;
-						if (V[k][l].first == netIDT)
-						{
-							V[k].push_back({ netIDB,0 });
-							goto EndOuterForLoop;
-						}
-					//}
+					V[k].push_back({ netIDB, 0 });
+					goto EndOuterForLoop;
 				}
 			}
-			V.push_back({ { netIDT,0 }, { netIDB,0 } });
+			V.push_back({ { netIDT, 0 }, { netIDB, 0 } });
 		}
 
 	EndOuterForLoop:
