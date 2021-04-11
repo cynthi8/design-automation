@@ -23,31 +23,31 @@ struct Benchmark
 };
 
 const vector<Benchmark> TestBenchmarks{
-    {"Benchmarks/b_routing_easy", 2},
-    {"Benchmarks/b_tiny", 2},
-    {"Benchmarks/b_feedthrough_0", 2},
-    {"Benchmarks/b_feedthrough_1_left", 2},
-    {"Benchmarks/b_feedthrough_1_right", 2},
-    {"Benchmarks/b_feedthrough_2_left", 2},
-    {"Benchmarks/b_feedthrough_2_right", 2},
-    {"Benchmarks/b_feedthrough_3_right", 2},
-    {"Benchmarks/b_feedthrough_multi", 2},
-    {"Benchmarks/b_vertical_dependency", 2},
-    {"Benchmarks/b_basic_dogleg", 1},
-    {"Benchmarks/b_dogleg_with_space", 2},
-    {"Benchmarks/b_double_doglegs", 2}};
+    {"benchmarks/b_routing_easy", 2},
+    {"benchmarks/b_tiny", 2},
+    {"benchmarks/b_feedthrough_0", 2},
+    {"benchmarks/b_feedthrough_1_left", 2},
+    {"benchmarks/b_feedthrough_1_right", 2},
+    {"benchmarks/b_feedthrough_2_left", 2},
+    {"benchmarks/b_feedthrough_2_right", 2},
+    {"benchmarks/b_feedthrough_3_right", 2},
+    {"benchmarks/b_feedthrough_multi", 2},
+    {"benchmarks/b_vertical_dependency", 2},
+    {"benchmarks/b_basic_dogleg", 1},
+    {"benchmarks/b_dogleg_with_space", 2},
+    {"benchmarks/b_double_doglegs", 2}};
 
 const vector<Benchmark> Benchmarks{
-    {"Benchmarks/b_50_50", (int)(sqrt(50) * 1.5)},
-    {"Benchmarks/b_100_100", (int)(sqrt(100) * 1.5)},
-    {"Benchmarks/b_400_400", (int)(sqrt(400) * 1.7)},
-    {"Benchmarks/b_600_1000", (int)sqrt(600) * 2},
-    {"Benchmarks/b_900_800", (int)(sqrt(900) * 1.8)},
-    {"Benchmarks/b_1000_1000", (int)(sqrt(1000) * 1.9)},
-    {"Benchmarks/b_1000_1200", (int)sqrt(1000) * 2},
-    {"Benchmarks/b_1200_1500", (int)sqrt(1200) * 2},
-    {"Benchmarks/b_1500_1500", (int)sqrt(1500) * 2},
-    {"Benchmarks/b_2000_2000", (int)sqrt(2000) * 2}};
+    {"benchmarks/b_50_50", (int)(sqrt(50) * 1.5)},
+    {"benchmarks/b_100_100", (int)(sqrt(100) * 1.5)},
+    {"benchmarks/b_400_400", (int)(sqrt(400) * 1.7)},
+    {"benchmarks/b_600_1000", (int)sqrt(600) * 2},
+    {"benchmarks/b_900_800", (int)(sqrt(900) * 1.8)},
+    {"benchmarks/b_1000_1000", (int)(sqrt(1000) * 1.9)},
+    {"benchmarks/b_1000_1200", (int)sqrt(1000) * 2},
+    {"benchmarks/b_1200_1500", (int)sqrt(1200) * 2},
+    {"benchmarks/b_1500_1500", (int)sqrt(1500) * 2},
+    {"benchmarks/b_2000_2000", (int)sqrt(2000) * 2}};
 
 int MilisecondsPassed(chrono::system_clock::time_point start)
 {
@@ -225,7 +225,6 @@ void Test_Magic(Benchmark benchmark)
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    
     int BenchNum = 1;
     cout << "fileName boundingBoxDimensions boundingBoxArea feedthroughCount wirelength viaCount msPassed" << endl;
     for (auto benchmark : Benchmarks)
@@ -233,10 +232,5 @@ int main(int argc, char *argv[])
         PlaceAndRoute(benchmark, BenchNum);
         BenchNum++;
     }
-    
-
-    //Test_Magic(Benchmarks[2]);
-    //Test_Routing(TestBenchmarks[10]);
-    //PlaceAndRoute(Benchmarks[2], 2);
     return 0;
 }

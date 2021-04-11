@@ -7,7 +7,7 @@ DEPS := $(wildcard $(SRC_DIR)/*.hpp)
 SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
-EXEC := main
+EXEC := placeandroute
 
 $(EXEC): $(OBJ_FILES)
 	$(CC) -o $@ $^

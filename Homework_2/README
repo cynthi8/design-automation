@@ -1,7 +1,13 @@
 The program is designed in mind such that there are two directories at the location of the executable.
-1. Benchmarks
-2. Output
+Directory names are CASE-SENSITIVE
+1. benchmarks
+2. output
 
-The Benchmarks must be in the Benchmarks Folder.
+The Benchmarks must be in the benchmarks Folder.
 
-The Output folder will contain the Output Magic Files and any necessary sub Magic files that are required.
+The output folder will contain the output Magic files and any necessary sub Magic files that are required.
+
+After building with
+make
+The program should be called with 
+./placeandroute
