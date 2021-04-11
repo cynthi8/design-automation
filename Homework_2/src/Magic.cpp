@@ -313,6 +313,55 @@ void Magic::OutputStandardCell(string szDirectory)
     return;
 }
 
+pair<int, int> Magic::CalculateBoundingBox()
+{
+    int largestX = 0;
+    int largestY = 0;
+    for (auto cell : m_MCells)
+    {
+        int extentionX = 6;
+        int extentionY = 6;
+        if (cell.isFeed)
+        {
+            extentionX = 3;
+        }
+        largestX = max(cell.x + extentionX, largestX);
+        largestY = max(cell.y + extentionY, largestY);
+    }
+
+    for (auto net : m_MNets)
+    {
+        // trunks will always be further than the branches
+        for (auto trunk : net.m_trunks)
+        {
+            largestX = max(trunk.x_locs.second, largestX);
+            largestY = max(trunk.y, largestY);
+        }
+    }
+
+    return pair<int, int>(largestX, largestY);
+}
+
+int Magic::CalculateWirelength()
+{
+    int wirelength = 0;
+    for (auto net : m_MNets)
+    {
+        wirelength += net.CalculateWirelength();
+    }
+    return wirelength;
+}
+
+int Magic::CalculateViaCount()
+{
+    int viaCount = 0;
+    for (auto net : m_MNets)
+    {
+        viaCount += net.CalculateViaCount();
+    }
+    return viaCount;
+}
+
 // Create a Transformation string for the cell
 void MCell::updateTransformString()
 {
@@ -458,6 +507,45 @@ string MNet::makeMetal2Contact()
     }
 
     return netContacts;
+}
+
+int MNet::CalculateWirelength()
+{
+    int wirelength = 0;
+    for (auto branch : m_branches)
+    {
+        wirelength += branch.y_locs.second - branch.y_locs.first;
+    }
+
+    for (auto trunk : m_trunks)
+    {
+        wirelength += trunk.x_locs.second - trunk.x_locs.first;
+    }
+
+    // Remove overlap based on the net case
+    switch (m_trunks.size())
+    {
+    case 0:
+        wirelength += -1;
+        break;
+
+    case 1:
+        wirelength += -2;
+        break;
+
+    case 2:
+        wirelength += -4;
+        break;
+
+    default:
+        break;
+    }
+    return wirelength;
+}
+
+int MNet::CalculateViaCount()
+{
+    return m_contacts.size();
 }
 
 string MagRect::makeBoundingBox()

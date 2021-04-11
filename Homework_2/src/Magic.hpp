@@ -58,6 +58,9 @@ public:
     string makeMetal2();
     string makeMetal2Contact();
     string makeLabel();
+
+    int CalculateWirelength();
+    int CalculateViaCount();
 };
 
 class MCell
@@ -93,6 +96,10 @@ public:
 
     void CreateLayout(Routing route, Placement place);
     void OutputLayout(string szDirectory, string szFileName);
+
+    pair<int, int> CalculateBoundingBox();
+    int CalculateWirelength();
+    int CalculateViaCount();
 
 private:
     vector<MCell> m_MCells;

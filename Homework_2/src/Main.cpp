@@ -178,12 +178,19 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
 
     // Do Magic
     Magic magic(placement, routing);
-    magic.Output("Output", to_string(BenchNum) + ".mag");
-
+    magic.Output("output", to_string(BenchNum) + ".mag");
     int msPassed = MilisecondsPassed(start);
 
+    // Collect Info
+    pair<int, int> boundingBox = magic.CalculateBoundingBox();
+    int boundingBoxArea = boundingBox.first * boundingBox.second;
+    string boundingBoxDimensions = to_string(boundingBox.first) + "x" + to_string(boundingBox.second);
+    int wirelength = magic.CalculateWirelength();
+    int viaCount = magic.CalculateViaCount();
+
     // Print out
-    cout << benchmark.fileName << "\t" << feedthroughCount << "\t" << msPassed << endl;
+    cout << benchmark.fileName << "\t" << boundingBoxDimensions << "\t" << boundingBoxArea << "\t"
+         << feedthroughCount << "\t" << wirelength << "\t" << viaCount << "\t" << msPassed << endl;
 }
 
 void Test_Magic(Benchmark benchmark)
@@ -211,7 +218,7 @@ int main(int argc, char *argv[])
 {
     /*
     int BenchNum = 1;
-    cout << "fileName feedthroughCount msPassed" << endl;
+    cout << "fileName boundingBoxDimensions boundingBoxArea feedthroughCount wirelength viaCount msPassed" << endl;
     for (auto benchmark : Benchmarks)
     {
         PlaceAndRoute(benchmark, BenchNum);
