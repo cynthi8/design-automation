@@ -279,11 +279,11 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 				NetTracks[{netID, rangeID}] = maxtrack;
 
 			//resize the channel if this track is larger than the number of elements in it
-			if (maxtrack >= m_channels[i].m_tracks.size())
-				m_channels[i].m_tracks.resize(maxtrack + 1);
+			if (NetTracks[{netID, rangeID}] >= m_channels[i].m_tracks.size())
+				m_channels[i].m_tracks.resize(NetTracks[{netID, rangeID}] + 1);
 
 			//add this net and its range to the track
-			m_channels[i].m_tracks[maxtrack].AddNet(netID, range);
+			m_channels[i].m_tracks[NetTracks[{netID, rangeID}]].AddNet(netID, range);
 
 			//If we need to, remove this net from the VCG
 			for (int m = 0; m < Vidx.size(); m++) {
