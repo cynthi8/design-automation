@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
     */
 
     //Test_Magic(Benchmarks[2]);
-    Test_Routing(TestBenchmarks[9]);
-    //PlaceAndRoute(Benchmarks[2], 2);
+    //Test_Routing(TestBenchmarks[9]);
+    PlaceAndRoute(Benchmarks[2], 2);
     return 0;
 }
