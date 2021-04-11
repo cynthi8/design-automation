@@ -191,7 +191,12 @@ void Magic::CreateLayout(Routing route, Placement place)
             {
                 // Build the branch between the trunks
                 MBranch middleBranch;
-                middleBranch.x = span.ranges[0].second;
+                if (span.ranges[0].first == span.ranges.back().second)
+                    middleBranch.x = span.ranges[0].first;
+                else
+                    middleBranch.x = span.ranges[1].first;
+
+                //middleBranch.x = span.ranges[0].second;
                 middleBranch.y_locs = {channelBottom + 2 * span.n_tracks[0] + 1, channelBottom + 2 * span.n_tracks.back() + 1};
                 //middleBranch.y_locs = { channelTop - (2 * span.n_tracks.back() + 1), channelTop - (2 * span.n_tracks[0] + 1)};
                 newMNet.m_branches.push_back(middleBranch);
