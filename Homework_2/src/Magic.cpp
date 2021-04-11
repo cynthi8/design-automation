@@ -85,12 +85,12 @@ void Magic::CreateLayout(Routing route, Placement place)
     /***********************
     * Create MNets
     ***********************/
-    int nextChannelBottom = 0;
+    int nextChannelBottom = -1;
     for (int channelIndex = 0; channelIndex < route.m_channelCount; channelIndex++)
     {
         int channelBottom = nextChannelBottom;
-        int channelTop = nextChannelBottom + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
-        nextChannelBottom = channelTop + 6;
+        int channelTop = nextChannelBottom + 2 * route.m_channels[channelIndex].m_tracks.size();
+        nextChannelBottom = channelTop + 7;
         for (auto span : route.m_Spans[channelIndex])
         {
             /* Assumption: All the ranges are in ascending order (left to right) and there is a max of 2 */
@@ -108,7 +108,7 @@ void Magic::CreateLayout(Routing route, Placement place)
 
                 //Build the Contacts, 2 contacts per trunk
                 MContact contact;
-                contact.y = channelBottom + span.n_tracks[trunk] * 2;
+                contact.y = newTrunk.y;
                 contact.x = span.ranges[trunk].first;
                 newMNet.m_contacts.push_back(contact);
 
@@ -182,34 +182,34 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
 
     // Write Net M1
     outputStream << "<< metal1 >>" << endl;
-    for (auto& net : m_MNets)
+    for (auto &net : m_MNets)
     {
         outputStream << net.makeMetal1();
     }
 
     // Write Net M2
     outputStream << "<< metal2 >>" << endl;
-    for (auto& net : m_MNets)
+    for (auto &net : m_MNets)
     {
         outputStream << net.makeMetal2();
     }
 
     // Write Net M2c
     outputStream << "<< m2contact >>" << endl;
-    for (auto& net : m_MNets)
+    for (auto &net : m_MNets)
     {
         outputStream << net.makeMetal2Contact();
     }
 
     // Write cells
-    for (auto& cell : m_MCells)
+    for (auto &cell : m_MCells)
     {
         outputStream << cell.makeCell();
     }
 
     // Write net labels
     outputStream << "<< labels >>" << endl;
-    for (auto& net : m_MNets)
+    for (auto &net : m_MNets)
     {
         outputStream << net.makeLabel();
     }
