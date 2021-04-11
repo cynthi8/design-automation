@@ -191,8 +191,9 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 
 				if (iter < V[k].end() - 1 && *(iter) != *(iter+1))
 				{
+					//if(rangeID == 0 && )
 					inV = true;
-					break;
+					//break;
 				}
 				//else if it is the last one, then we are good to remove it from V
 				if (iter < V[k].end() - 1 && *(iter) == *(iter + 1)) {
@@ -211,7 +212,7 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<int>> V, vector<Sp
 			}
 
 			//value is in a VCG
-			if (inV)
+			if (inV && Vidx.size() < 1)
 				continue;
 
 			//Check if this net and its range is in S
@@ -331,7 +332,7 @@ void Routing::FixDogLegs(int channelIndex, vector<vector<int>> &V, vector<Span> 
 	}
 
 	for (int j = 0; j < Doglegs.size(); j++) {
-		V[Doglegs[j]].pop_back();
+		//V[Doglegs[j]].pop_back();
 		V[Doglegs[j]].pop_back();
 		V.push_back(NewVs[j]);
 	}
