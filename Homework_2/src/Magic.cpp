@@ -90,10 +90,7 @@ void Magic::CreateLayout(Routing route, Placement place)
     {
         int channelBottom = nextChannelBottom;
         int channelTop = nextChannelBottom + 2 * route.m_channels[channelIndex].m_tracks.size() - 1;
-
-        int tracksInChannel = route.m_channels[channelIndex].m_tracks.size();
-        nextChannelBottom += tracksInChannel * 2;
-        nextChannelBottom += 6 + 1;
+        nextChannelBottom = channelTop + 6;
         for (auto span : route.m_Spans[channelIndex])
         {
             /* Assumption: All the ranges are in ascending order (left to right) and there is a max of 2 */
