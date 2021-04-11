@@ -186,15 +186,15 @@ void Routing::RouteNets(int i, vector<SSet> &S, vector<vector<pair<int, int>>> V
 			{
 				//if the value is in the VCG and isn't the very last one, then skip it
 				//auto iter = find(V[k].begin(), V[k].end(), netID);
-				auto iter = find_if(V[k].begin(), V[k].end(), [netID](auto & vnet) 
-					{ return vnet.first == netID; });
+				auto iter = find_if(V[k].begin(), V[k].end(), [netID, rangeID](auto & vnet)
+					{ return (vnet.first == netID && vnet.second == rangeID); });
 
 				if (V[k].size() == 0)
 					continue;
 
-				int idx = (int)(iter - V[k].begin());
-				if (iter != V[k].end() && V[k][idx].second != rangeID)
-					continue;
+				//int idx = (int)(iter - V[k].begin());
+				//if (iter != V[k].end() && V[k][idx].second != rangeID)
+					//continue;
 
 				if (iter < V[k].end() - 1 && *(iter) != *(iter+1))
 				{
