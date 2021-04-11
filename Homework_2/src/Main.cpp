@@ -31,7 +31,8 @@ const vector<Benchmark> TestBenchmarks{
     {"Benchmarks/b_feedthrough_2_left", 2},
     {"Benchmarks/b_feedthrough_2_right", 2},
     {"Benchmarks/b_feedthrough_3_right", 2},
-    {"Benchmarks/b_feedthrough_multi", 2}};
+    {"Benchmarks/b_feedthrough_multi", 2},
+    {"Benchmarks/b_vertical_dependency", 2}};
 
 const vector<Benchmark> Benchmarks{
     {"Benchmarks/b_50_50", (int)(sqrt(50) * 1.5)},
@@ -149,13 +150,17 @@ void Test_Routing(Benchmark benchmark)
     // Process Graph
     Graph graph(benchmark.fileName);
 
-    // Do Placement and Collect Data
+    // Do Placement
     Placement placement(graph, benchmark.gridWidth);
+    Test_FixPlacement(placement);
     placement.Print();
 
     // Do Routing
     Routing routing(placement);
     routing.Print();
+
+    Magic magic(placement, routing);
+    magic.Output("output", "output.mag");
 }
 
 void PlaceAndRoute(Benchmark benchmark, int BenchNum)
@@ -227,5 +232,6 @@ int main(int argc, char *argv[])
     */
 
     Test_Magic(Benchmarks[2]);
+    Test_Routing(TestBenchmarks[9]);
     return 0;
 }
