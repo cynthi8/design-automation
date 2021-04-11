@@ -153,6 +153,7 @@ void Test_Routing(Benchmark benchmark)
     // Do Placement
     Placement placement(graph, benchmark.gridWidth);
     Test_FixPlacement(placement);
+    placement.InsertFeedthroughs();
     placement.Print();
 
     // Do Routing
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
     }
     */
 
-    Test_Magic(Benchmarks[2]);
+    //Test_Magic(Benchmarks[2]);
     Test_Routing(TestBenchmarks[9]);
     return 0;
 }
