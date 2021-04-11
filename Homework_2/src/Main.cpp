@@ -203,7 +203,7 @@ void Test_Magic(Benchmark benchmark)
     placement.SimulatedAnealingPlace(1000, 1, .95, 100);
     placement.GreedyFlipping(10);
     placement.InsertFeedthroughs();
-    placement.Print();
+    //placement.Print();
 
     // Do Routing
     Routing routing(placement);
