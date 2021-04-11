@@ -104,6 +104,13 @@ void Magic::CreateLayout(Routing route, Placement place)
                 MTrunk newTrunk;
                 newTrunk.y = channelBottom + 2 * span.n_tracks[trunk] + 1;
                 newTrunk.x_locs = span.ranges[trunk];
+
+                //Skip building any 0 width trunks
+                if (newTrunk.x_locs.first == newTrunk.x_locs.second)
+                {
+                    continue;
+                }
+
                 newMNet.m_trunks.push_back(newTrunk);
 
                 //Build the Contacts, 2 contacts per trunk
@@ -138,15 +145,15 @@ void Magic::CreateLayout(Routing route, Placement place)
             // Build Right Most Branch
             MBranch rightMostBranch;
             rightMostBranch.x = span.ranges.back().second;
-            if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
-            {
-                // Construct a branch down
-                rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
-            }
-            else if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch up
                 rightMostBranch.y_locs = {channelBottom + 2 * span.n_tracks.back() + 1, channelTop};
+            }
+            else if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            {
+                // Construct a branch down
+                rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
             }
             else
             {
