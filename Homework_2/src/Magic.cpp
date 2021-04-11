@@ -145,12 +145,12 @@ void Magic::CreateLayout(Routing route, Placement place)
             // Build Right Most Branch
             MBranch rightMostBranch;
             rightMostBranch.x = span.ranges.back().second;
-            if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch up
                 rightMostBranch.y_locs = {channelBottom + 2 * span.n_tracks.back() + 1, channelTop};
             }
-            else if (netId == route.m_TopRow[channelIndex].RowCells[rightMostBranch.x].NetID)
+            else if (netId == route.m_BotRow[channelIndex].RowCells[rightMostBranch.x].NetID)
             {
                 // Construct a branch down
                 rightMostBranch.y_locs = {channelBottom, channelBottom + 2 * span.n_tracks.back() + 1};
