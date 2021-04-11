@@ -166,12 +166,9 @@ void Placement::InsertCell(Location location, string cellId)
 	// Create the new GridCell
 	GridCell newGridCell(cellId);
 
-	// If needed, add some buffer to the row
+	// Bound the insertion location to the end of the current row
 	vector<GridCell> &gridRow = m_grid.m_grid[location.row];
-	while (gridRow.size() < (size_t)location.column)
-	{
-		gridRow.push_back(GridCell());
-	}
+	location.column = min(location.column, (int)gridRow.size());
 
 	// Insert the newly created GridCell
 	auto it = gridRow.insert(gridRow.begin() + location.column, newGridCell);
