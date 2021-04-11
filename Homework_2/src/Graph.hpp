@@ -57,7 +57,7 @@ public:
 class Cell
 {
 public:
-    Cell() : m_id("null"), m_connectivity(0), m_orientation(FlipNone){};
+    Cell() : m_id(""), m_connectivity(0), m_orientation(FlipNone){};
     Cell(string id) : m_id(id), m_connectivity(0), m_orientation(FlipNone){};
 
     // Get the topological location of a terminal by its ID
