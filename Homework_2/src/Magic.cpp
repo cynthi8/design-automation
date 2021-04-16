@@ -234,7 +234,7 @@ void Magic::CreateLayout(Routing route, Placement place)
 // Output the Final Result
 void Magic::OutputLayout(string szDirectory, string szFileName)
 {
-    string filePath = szDirectory + '/' + szFileName;
+    string filePath = szDirectory + szFileName;
     fstream outputStream;
     outputStream.open(filePath, ios::out);
 
@@ -285,7 +285,7 @@ void Magic::OutputLayout(string szDirectory, string szFileName)
 // Create a 3x6 2 terminal Feed Cell for reference
 void Magic::OutputFeedCell(string szDirectory)
 {
-    string filePath = szDirectory + "/FeedCell.mag";
+    string filePath = szDirectory + "FeedCell.mag";
     fstream outputStream;
     outputStream.open(filePath, ios::out);
 
@@ -318,7 +318,7 @@ void Magic::OutputFeedCell(string szDirectory)
 // Create a standard 6x6 4 terminal Cell for reference
 void Magic::OutputStandardCell(string szDirectory)
 {
-    string filePath = szDirectory + "/Cell.mag";
+    string filePath = szDirectory + "Cell.mag";
     fstream outputStream;
     outputStream.open(filePath, ios::out);
 

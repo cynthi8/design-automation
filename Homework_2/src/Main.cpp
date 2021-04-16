@@ -187,7 +187,7 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
 
     // Do Magic
     Magic magic(placement, routing);
-    magic.Output("output", to_string(BenchNum) + ".mag");
+    magic.Output("output/", to_string(BenchNum) + ".mag");
     int msPassed = MilisecondsPassed(start);
 
     // Collect Info
@@ -200,6 +200,85 @@ void PlaceAndRoute(Benchmark benchmark, int BenchNum)
     // Print out
     cout << benchmark.fileName << "\t" << boundingBoxDimensions << "\t" << boundingBoxArea << "\t"
          << feedthroughCount << "\t" << wirelength << "\t" << viaCount << "\t" << msPassed << endl;
+}
+
+int gridWidthCalc(Graph& graph)
+{
+
+    const vector<pair<int, double>> BenchVals{
+    {   50,     1.5 },
+    {   100,    1.5 },
+    {   400,    1.7 },
+    {   600,    2   },
+    {   900,    1.8 },
+    {   1000,   1.9 },
+    {   1200,   2   },
+    {   1200,   2   },
+    {   1500,   2   },
+    {   2000,   2   } };
+
+    if (graph.m_cellCount > BenchVals.back().first) {
+        return (int)(sqrt(graph.m_cellCount) * BenchVals.back().second);
+    }
+    else if (graph.m_cellCount < BenchVals[0].first) {
+        return (int)(sqrt(graph.m_cellCount) * BenchVals[0].second);
+    }
+    
+    for (int i = 0; i < BenchVals.size(); i++)
+    {
+        int size = BenchVals[i].first;
+        double adjust = BenchVals[i].second;
+        if (graph.m_cellCount == size)
+        {
+            return (int)(sqrt(size) * adjust);
+        }
+        else if (i < BenchVals.size() - 1 && 
+                 graph.m_cellCount > size && 
+                 graph.m_cellCount < BenchVals[i + 1].first)
+        {
+            double adjust2 = (adjust + BenchVals[i + 1].second) / 2;
+            return (int)(sqrt(graph.m_cellCount) * adjust2);
+        }
+    }
+    
+    
+    return (int)(sqrt(graph.m_cellCount) * 1.75);;
+}
+
+void PlaceAndRoute(string szfilenameUse, string szfilenameSave)
+{
+    auto start = chrono::system_clock::now();
+
+    // Process Graph
+    Graph graph(szfilenameUse);
+    int gridWidth = gridWidthCalc(graph);
+
+    // Do Placement
+    Placement placement(graph, gridWidth);
+    placement.SimulatedAnealingPlace(1000, 1, .975, 10000);
+    //placement.SimulatedAnealingPlace(1000, 1, .95, 100); //debug only
+    placement.GreedyFlipping(10);
+    placement.InsertFeedthroughs();
+    int feedthroughCount = placement.m_feedthroughCount;
+
+    // Do Routing
+    Routing routing(placement);
+
+    // Do Magic
+    Magic magic(placement, routing);
+    magic.Output("", szfilenameSave);
+    int msPassed = MilisecondsPassed(start);
+
+    // Collect Info
+    pair<int, int> boundingBox = magic.CalculateBoundingBox();
+    int boundingBoxArea = boundingBox.first * boundingBox.second;
+    string boundingBoxDimensions = to_string(boundingBox.first) + "x" + to_string(boundingBox.second);
+    int wirelength = magic.CalculateWirelength();
+    int viaCount = magic.CalculateViaCount();
+
+    // Print out
+    cout << szfilenameUse << "\t" << boundingBoxDimensions << "\t" << boundingBoxArea << "\t"
+        << feedthroughCount << "\t" << wirelength << "\t" << viaCount << "\t" << msPassed << endl;
 }
 
 void Test_Magic(Benchmark benchmark)
@@ -222,11 +301,27 @@ void Test_Magic(Benchmark benchmark)
     magic.Output("output", "output.mag");
 }
 
+
+
 // Entry point for code
 int main(int argc, char *argv[])
 {
-    int BenchNum = 1;
+    vector<string> vargv(argv, argv + argc);
+    string szfilenameUse = "";
+    string szfilenameSave = "";
+
     cout << "fileName boundingBoxDimensions boundingBoxArea feedthroughCount wirelength viaCount msPassed" << endl;
+
+    if (argc == 3) {
+        szfilenameUse = vargv[1];  //what file to load
+        szfilenameSave = vargv[2]; //what file to save
+        cout << szfilenameUse << " " << szfilenameSave << endl;
+        PlaceAndRoute(szfilenameUse, szfilenameSave);
+        return 0;
+    }
+
+
+    int BenchNum = 1;
     for (auto benchmark : Benchmarks)
     {
         PlaceAndRoute(benchmark, BenchNum);
